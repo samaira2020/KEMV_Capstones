@@ -4,121 +4,496 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Game Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+            padding: 0;
+            margin: 0;
+        }
+        .container-fluid {
+            padding: 20px;
+        }
+        .sidebar {
+            background-color: #2d2d2d;
+            padding: 20px;
+            border-radius: 10px;
+            color: #ffffff;
+        }
+        .main-content {
+            padding: 20px;
+        }
+        .card {
+            background-color: #2d2d2d;
+            border: none;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            padding: 20px;
+        }
+        .card-title {
+            color: #ffffff;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        .big-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #00aaff; /* Highlight color */
+            text-align: center;
+        }
+        canvas {
+            background-color: #2d2d2d;
+            border-radius: 10px;
+            padding: 10px;
+        }
+        /* Add some spacing between rows */
+        .row + .row {
+            margin-top: 20px;
+        }
+         /* Style for filter dropdowns */
+        .form-select {
+            background-color: #1e1e1e;
+            color: #ffffff;
+            border: 1px solid #444;
+        }
+        .form-select option {
+            background-color: #1e1e1e;
+            color: #ffffff;
+        }
+         /* Style for slider */
+         .slider-container {
+             margin-bottom: 20px;
+         }
+         .slider-container label {
+             display: block;
+             margin-bottom: 10px;
+         }
+
+    </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar for Filters -->
+            <div class="col-md-3">
         <div class="sidebar">
             <h3>Filter Data</h3>
-            <div class="filter-section">
-                <label for="genre-filter">Select Genre(s):</label>
-                <select id="genre-filter" multiple>
+                    <form id="filter-form" method="GET" action="/">
+                         <div class="mb-3">
+                            <label for="genre-filter" class="form-label">Select Genre(s)</label>
+                            <select class="form-select" id="genre-filter" name="genre" multiple>
                     {% for genre in all_genres %}
-                        <option value="{{ genre }}">{{ genre }}</option>
+                                    <option value="{{ genre }}" {% if genre in selected_genres %}selected{% endif %}>{{ genre }}</option>
                     {% endfor %}
                 </select>
             </div>
-            <div class="filter-section">
-                <label for="platform-filter">Select Platform(s):</label>
-                <select id="platform-filter" multiple>
+
+                        <div class="mb-3">
+                            <label for="platform-filter" class="form-label">Select Platform(s)</label>
+                            <select class="form-select" id="platform-filter" name="platform" multiple>
                     {% for platform in all_platforms %}
-                        <option value="{{ platform }}">{{ platform }}</option>
+                                    <option value="{{ platform }}" {% if platform in selected_platforms %}selected{% endif %}>{{ platform }}</option>
                     {% endfor %}
                 </select>
             </div>
-            <div class="filter-section">
-                <label for="year-range">Select Release Year Range:</label>
-                <div>
-                    From: <input type="number" id="year-start" value="{{ min_year_full }}" min="{{ min_year_full }}" max="{{ max_year_full }}">
-                    To: <input type="number" id="year-end" value="{{ max_year_full }}" min="{{ min_year_full }}" max="{{ max_year_full }}">
+
+                         <div class="slider-container">
+                             <label for="year-range" class="form-label">Select Release Year Range: <span id="year-range-display">{{ year_range[0] | default(min_year) }} - {{ year_range[1] | default(max_year) }}</span></label>
+                              <input type="range" class="form-range" id="year-start" name="year_start" min="{{ min_year }}" max="{{ max_year }}" value="{{ year_range[0] | default(min_year) }}">
+                              <input type="range" class="form-range" id="year-end" name="year_end" min="{{ min_year }}" max="{{ max_year }}" value="{{ year_range[1] | default(max_year) }}">
+                         </div>
+
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    </form>
                 </div>
-            </div>
-             <button id="apply-filters-btn">Apply Filters</button>
         </div>
 
+            <!-- Main Content Area -->
+            <div class="col-md-9">
         <div class="main-content">
-            <h1>Studio Performance Overview</h1>
+                    <h1 class="text-center my-4">Video Game Data Analysis Dashboard</h1>
 
-            <div class="key-insights">
-                <h3>Key Insights</h3>
-                <div class="kpis">
-                    <div class="kpi">
-                        <h4>Total Games</h4>
-                        <p>{{ total_games }}</p>
+                    {% if error %}
+                        <div class="alert alert-danger" role="alert">
+                            Error: {{ error }}
+                        </div>
+                    {% endif %}
+
+                    <!-- Key Insights Row -->
+                    <div class="row">
+                        <!-- Total Games Card -->
+                        <div class="col-md-4">
+                            <div class="card">
+                                <h5 class="card-title">Total Games Analyzed</h5>
+                                <div class="big-number">{{ stats.total_games | default(0) }}</div>
+                            </div>
                     </div>
-                    <div class="kpi">
-                        <h4>Top Publisher</h4>
-                        <p>{{ top_publisher }} ({{ top_publisher_count }} games)</p>
+
+                        <!-- Top Publisher Card -->
+                         <div class="col-md-4">
+                            <div class="card">
+                                <h5 class="card-title">Top Publisher</h5>
+                                 {% if publisher_counts and publisher_counts[0] %}
+                                     <div class="big-number">{{ publisher_counts[0]._id }}</div>
+                                     <p class="text-center text-muted">{{ publisher_counts[0].count }} games</p>
+                                 {% else %}
+                                     <p class="text-center text-muted">No publisher data available.</p>
+                                 {% endif %}
                     </div>
                 </div>
 
-                <div class="highly-rated-games">
-                    <h3>Most Highly Rated Games</h3>
-                    <ul>
-                        {% for game in top_rated_games_list %}
-                            <li>{{ loop.index }}. {{ game.Title }} <strong>{{ "%.1f" | format(game.Rating) }}</strong></li>
+                         <!-- Most Highly Rated Games List -->
+                         <div class="col-md-4">
+                             <div class="card">
+                                 <h5 class="card-title">Most Highly Rated Games</h5>
+                                 <ul class="list-unstyled">
+                                     {% for game in top_games %}
+                                         <li><strong>{{ loop.index }}.</strong> {{ game.name | default('Unknown Game') }} (Rating: {{ game.rating | default(0.0) | round(1) }})</li>
                         {% else %}
-                            <li>No highly rated games found for the selected filters.</li>
+                                         <li>No highly rated games found.</li>
                         {% endfor %}
                     </ul>
+                             </div>
+                         </div>
+                    </div>
+
+                    <hr style="border-top: 1px solid #444;">
+
+                    <!-- General Visualizations Row 1 -->
+                    <div class="row">
+                        <!-- Games Per Year Chart -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <h5 class="card-title">Games Released Per Year</h5>
+                                <canvas id="gamesPerYearChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Game Share by Publisher Chart -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <h5 class="card-title">Game Share by Publisher (Top 10)</h5>
+                                <canvas id="publisherShareChart"></canvas>
+                            </div>
                 </div>
             </div>
 
-            <hr>
+                    <!-- General Visualizations Row 2 -->
+                    <div class="row">
+                         <!-- Game Counts by Platform Chart -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <h5 class="card-title">Game Distribution by Platform</h5>
+                                <canvas id="platformChart"></canvas>
+                            </div>
+                        </div>
 
-            <div class="general-visualizations">
-                <h3>General Visualizations</h3>
-                <div class="viz-row">
-                    <div id="games-per-year-chart" class="chart-container"></div>
-                    <div id="game-share-publisher-chart" class="chart-container"></div>
+                        <!-- Game Counts by Genre Chart -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <h5 class="card-title">Game Distribution by Genre</h5>
+                                <canvas id="genreChart"></canvas>
                 </div>
-                <div class="viz-row">
-                     <div id="top-publishers-chart" class="chart-container"></div>
-                     <div id="avg-rating-platform-chart" class="chart-container"></div>
                 </div>
             </div>
 
-             <hr>
+                     <!-- Deep Dive Analysis Row -->
+                     <div class="row">
+                          <!-- Average Rating by Platform Chart -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <h5 class="card-title">Average Rating by Platform (Top 10)</h5>
+                                <canvas id="avgRatingPlatformChart"></canvas>
+                            </div>
+                        </div>
 
-            <div class="deep-dive-analysis">
-                 <h3>Deep Dive Analysis</h3>
-                 <div id="avg-rating-developer-chart" class="chart-container"></div>
+                        <!-- Average Rating by Developer Chart -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <h5 class="card-title">Average Rating by Developer (Top 10)</h5>
+                                <canvas id="avgRatingDeveloperChart"></canvas>
+                            </div>
+                        </div>
             </div>
 
-            <div class="filtered-data-table">
-                <h3>Filtered Data Table</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            {% if data %}
-                                {% for key in data[0].keys() %}
-                                    <th>{{ key }}</th>
-                                {% endfor %}
-                            {% endif %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in data %}
-                            <tr>
-                                {% for value in item.values() %}
-                                    <td>{{ value }}</td>
-                                {% endfor %}
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                    <!-- You can add sections here for mapping data if needed -->
+                    {#
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <h5 class="card-title">Publisher Mapping (Example)</h5>
+                                <pre>{{ publisher_mapping | tojson(indent=2) }}</pre>
+                            </div>
+                        </div>
+                    </div>
+                    #}
+
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Embed chart data as JSON -->
-    <script id="games-per-year-data" type="application/json">{{ games_per_year_data | safe }}</script>
-    <script id="game-share-pub-data" type="application/json">{{ game_share_pub_data | safe }}</script>
-    <script id="top-publishers-data" type="application/json">{{ top_publishers_data | safe }}</script>
-    <script id="avg-rating-platform-data" type="application/json">{{ avg_rating_platform_data | safe }}</script>
-    <script id="avg-rating-dev-data" type="application/json">{{ avg_rating_dev_data | safe }}</script>
+    <script>
+        // Data passed from Flask backend
+        const stats = {{ stats | tojson }};
+        const topGames = {{ top_games | tojson }};
+        const platformCounts = {{ platform_counts | tojson }};
+        const genreCounts = {{ genre_counts | tojson }};
+        const gamesPerYear = {{ games_per_year | tojson }};
+        const publisherCounts = {{ publisher_counts | tojson }};
+        const avgRatingPlatform = {{ avg_rating_platform | tojson }};
+        const avgRatingDeveloper = {{ avg_rating_developer | tojson }};
 
-    <script src="{{ url_for('static', filename='js/DS.js') }}"></script>
+        // Function to generate random colors
+        function generateColors(num) {
+            const colors = [];
+            for (let i = 0; i < num; i++) {
+                const color = '#' + Math.floor(Math.random()*16777215).toString(16);
+                colors.push(color);
+            }
+            return colors;
+        }
+
+        // Chart for Game Counts by Platform
+        if (platformCounts && platformCounts.length > 0) {
+            const platformCtx = document.getElementById('platformChart').getContext('2d');
+            const top10Platforms = platformCounts.slice(0, 10);
+            new Chart(platformCtx, {
+                type: 'bar',
+                data: {
+                    labels: top10Platforms.map(item => item._id),
+                    datasets: [{
+                        label: 'Number of Games',
+                        data: top10Platforms.map(item => item.count),
+                        backgroundColor: generateColors(top10Platforms.length),
+                        borderColor: '#ffffff',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: 'Game Distribution by Platform (Top 10)', color: '#ffffff' }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#ffffff' }, grid: { color: '#444' } },
+                        y: { beginAtZero: true, ticks: { color: '#ffffff' }, grid: { color: '#444' } }
+                    }
+                }
+            });
+        }
+
+        // Chart for Game Counts by Genre
+        if (genreCounts && genreCounts.length > 0) {
+            const genreCtx = document.getElementById('genreChart').getContext('2d');
+            const top10Genres = genreCounts.slice(0, 10);
+            new Chart(genreCtx, {
+                type: 'pie',
+                data: {
+                    labels: top10Genres.map(item => item._id),
+                    datasets: [{
+                        label: 'Number of Games',
+                        data: top10Genres.map(item => item.count),
+                        backgroundColor: generateColors(top10Genres.length),
+                        borderColor: '#ffffff',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    animation: false,
+                     plugins: {
+                        legend: { labels: { color: '#ffffff' } },
+                        title: { display: true, text: 'Game Distribution by Genre (Top 10)', color: '#ffffff' }
+                    }
+                }
+            });
+        }
+
+        // Chart for Top Rated Games
+        if (topGames && topGames.length > 0) {
+            const topGamesCtx = document.getElementById('topGamesChart').getContext('2d');
+            new Chart(topGamesCtx, {
+                type: 'bar',
+                data: {
+                    labels: topGames.map(item => item.name),
+                    datasets: [{
+                        label: 'Rating',
+                        data: topGames.map(item => item.rating),
+                         backgroundColor: generateColors(topGames.length),
+                        borderColor: '#ffffff',
+                        borderWidth: 1
+                    }]
+                },
+                 options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    animation: false,
+                     plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: 'Top 10 Rated Games', color: '#ffffff' }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#ffffff' }, grid: { color: '#444' } },
+                        y: { beginAtZero: true, ticks: { color: '#ffffff' }, grid: { color: '#444' }, max: 10 }
+                    }
+                }
+            });
+        }
+
+         // Chart for Games Per Year
+        if (gamesPerYear && gamesPerYear.length > 0) {
+            const gamesPerYearCtx = document.getElementById('gamesPerYearChart').getContext('2d');
+            new Chart(gamesPerYearCtx, {
+                type: 'line',
+                data: {
+                    labels: gamesPerYear.map(item => item._id),
+                    datasets: [{
+                        label: 'Number of Games',
+                        data: gamesPerYear.map(item => item.count),
+                        borderColor: '#00aaff',
+                        backgroundColor: 'rgba(0, 170, 255, 0.2)',
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: 'Games Released Per Year', color: '#ffffff' }
+                    },
+                     scales: {
+                        x: { ticks: { color: '#ffffff' }, grid: { color: '#444' } },
+                        y: { beginAtZero: true, ticks: { color: '#ffffff' }, grid: { color: '#444' } }
+                    }
+                }
+            });
+        }
+
+        // Chart for Game Share by Publisher
+        if (publisherCounts && publisherCounts.length > 0) {
+            const publisherShareCtx = document.getElementById('publisherShareChart').getContext('2d');
+            const top10Publishers = publisherCounts.slice(0, 10);
+            const otherCount = publisherCounts.slice(10).reduce((sum, item) => sum + item.count, 0);
+            const labels = top10Publishers.map(item => item._id);
+            const data = top10Publishers.map(item => item.count);
+
+            if (otherCount > 0) {
+                labels.push('Other');
+                data.push(otherCount);
+            }
+
+            new Chart(publisherShareCtx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Game Share',
+                        data: data,
+                        backgroundColor: generateColors(labels.length),
+                        borderColor: '#ffffff',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    animation: false,
+                     plugins: {
+                        legend: { labels: { color: '#ffffff' } },
+                        title: { display: true, text: 'Game Share by Publisher (Top 10)', color: '#ffffff' }
+                    }
+                }
+            });
+        }
+
+        // Chart for Average Rating by Platform
+        if (avgRatingPlatform && avgRatingPlatform.length > 0) {
+            const avgRatingPlatformCtx = document.getElementById('avgRatingPlatformChart').getContext('2d');
+             const top10Platforms = avgRatingPlatform.slice(0, 10);
+            new Chart(avgRatingPlatformCtx, {
+                type: 'bar',
+                data: {
+                    labels: top10Platforms.map(item => item._id),
+                    datasets: [{
+                        label: 'Average Rating',
+                        data: top10Platforms.map(item => item.avg_rating),
+                         backgroundColor: generateColors(top10Platforms.length),
+                        borderColor: '#ffffff',
+                        borderWidth: 1
+                    }]
+                },
+                 options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    animation: false,
+                     plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: 'Average Rating by Platform (Top 10)', color: '#ffffff' }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#ffffff' }, grid: { color: '#444' } },
+                        y: { beginAtZero: true, ticks: { color: '#ffffff' }, grid: { color: '#444' }, max: 10 }
+                    }
+                }
+            });
+        }
+
+        // Chart for Average Rating by Developer
+        if (avgRatingDeveloper && avgRatingDeveloper.length > 0) {
+            const avgRatingDeveloperCtx = document.getElementById('avgRatingDeveloperChart').getContext('2d');
+            const top10Developers = avgRatingDeveloper.slice(0, 10);
+            new Chart(avgRatingDeveloperCtx, {
+                type: 'bar',
+                data: {
+                    labels: top10Developers.map(item => item._id),
+                    datasets: [{
+                        label: 'Average Rating',
+                        data: top10Developers.map(item => item.avg_rating),
+                         backgroundColor: generateColors(top10Developers.length),
+                        borderColor: '#ffffff',
+                        borderWidth: 1
+                    }]
+                },
+                 options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    animation: false,
+                     plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: 'Average Rating by Developer (Top 10)', color: '#ffffff' }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#ffffff' }, grid: { color: '#444' } },
+                        y: { beginAtZero: true, ticks: { color: '#ffffff' }, grid: { color: '444' }, max: 10 }
+                    }
+                }
+            });
+        }
+
+         // Update year range display as sliders move
+        const yearStartSlider = document.getElementById('year-start');
+        const yearEndSlider = document.getElementById('year-end');
+        const yearRangeDisplay = document.getElementById('year-range-display');
+
+        function updateYearRangeDisplay() {
+            yearRangeDisplay.textContent = `${yearStartSlider.value} - ${yearEndSlider.value}`;
+        }
+
+        yearStartSlider.addEventListener('input', updateYearRangeDisplay);
+        yearEndSlider.addEventListener('input', updateYearRangeDisplay);
+
+
+    </script>
 </body>
 </html> 

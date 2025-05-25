@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const platformFilter = document.getElementById('platform-filter');
     const yearStartInput = document.getElementById('year-start');
     const yearEndInput = document.getElementById('year-end');
+    const filterForm = document.getElementById('filter-form');
+    const yearRangeDisplay = document.getElementById('year-range-display');
 
     // Function to fetch data from Flask back-end
     function fetchDataAndRender(filters = {}) {
@@ -160,4 +162,377 @@ document.addEventListener('DOMContentLoaded', function() {
     // is rendered directly by Jinja in index.html on the initial page load.
     // The fetchDataAndRender function currently replaces the entire main content,
     // which re-renders these sections as well.
+
+    // Update year range display as sliders are moved
+    if (yearStartInput && yearEndInput && yearRangeDisplay) {
+        yearStartInput.addEventListener('input', updateYearRangeDisplay);
+        yearEndInput.addEventListener('input', updateYearRangeDisplay);
+    }
+
+    function updateYearRangeDisplay() {
+        yearRangeDisplay.textContent = `${yearStartInput.value} - ${yearEndInput.value}`;
+    }
+
+    // --- Chart Rendering Functions using Chart.js ---
+
+    // Function to render Games Per Year Chart
+    function renderGamesPerYearChart(data) {
+        const ctx = document.getElementById('gamesPerYearChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.map(item => item._id).sort(), // Assuming _id is the year
+                datasets: [{
+                    label: 'Number of Games',
+                    data: data.map(item => item.count),
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    fill: true,
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Year'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Number of Games'
+                        },
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Games Released Per Year'
+                    }
+                }
+            }
+        });
+    }
+
+    // Function to render Game Share by Publisher Chart (Pie Chart)
+    function renderPublisherShareChart(data) {
+        // Take top 10 publishers
+        const top10Data = data.slice(0, 10);
+
+        const ctx = document.getElementById('publisherShareChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: top10Data.map(item => item._id),
+                datasets: [{
+                    label: 'Game Count',
+                    data: top10Data.map(item => item.count),
+                    backgroundColor: [
+                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966CC', '#FF9F40',
+                        '#FFCD56', '#4CC0C0', '#9666CC', '#FF9940'
+                    ],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Game Share by Publisher (Top 10)'
+                    }
+                }
+            }
+        });
+    }
+
+     // Function to render Game Distribution by Platform Chart (Bar Chart)
+     function renderPlatformChart(data) {
+        // Sort by count descending and take top N if needed, or use all data
+         const sortedData = data.sort((a, b) => b.count - a.count);
+
+         const ctx = document.getElementById('platformChart').getContext('2d');
+         new Chart(ctx, {
+             type: 'bar',
+             data: {
+                 labels: sortedData.map(item => item._id),
+                 datasets: [{
+                     label: 'Number of Games',
+                     data: sortedData.map(item => item.count),
+                     backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                     borderColor: 'rgba(54, 162, 235, 1)',
+                     borderWidth: 1
+                 }]
+             },
+             options: {
+                 responsive: true,
+                 scales: {
+                     y: {
+                         beginAtZero: true,
+                         title: {
+                             display: true,
+                             text: 'Number of Games'
+                         }
+                     },
+                     x: {
+                         title: {
+                             display: true,
+                             text: 'Platform'
+                         }
+                     }
+                 },
+                 plugins: {
+                     title: {
+                         display: true,
+                         text: 'Game Distribution by Platform'
+                     },
+                      legend: {
+                         display: false // Hide legend for single dataset bar chart
+                     }
+                 }
+             }
+         });
+     }
+
+     // Function to render Game Distribution by Genre Chart (Bar Chart)
+     function renderGenreChart(data) {
+         // Sort by count descending and take top N if needed, or use all data
+         const sortedData = data.sort((a, b) => b.count - a.count);
+
+         const ctx = document.getElementById('genreChart').getContext('2d');
+         new Chart(ctx, {
+             type: 'bar',
+             data: {
+                 labels: sortedData.map(item => item._id),
+                 datasets: [{
+                     label: 'Number of Games',
+                     data: sortedData.map(item => item.count),
+                     backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                     borderColor: 'rgba(255, 99, 132, 1)',
+                     borderWidth: 1
+                 }]
+             },
+             options: {
+                 responsive: true,
+                 scales: {
+                     y: {
+                         beginAtZero: true,
+                         title: {
+                             display: true,
+                             text: 'Number of Games'
+                         }
+                     },
+                     x: {
+                         title: {
+                             display: true,
+                             text: 'Genre'
+                         }
+                     }
+                 },
+                 plugins: {
+                     title: {
+                         display: true,
+                         text: 'Game Distribution by Genre'
+                     },
+                     legend: {
+                         display: false // Hide legend for single dataset bar chart
+                     }
+                 }
+             }
+         });
+     }
+
+     // Function to render Average Rating by Platform Chart (Bar Chart)
+     function renderAvgRatingPlatformChart(data) {
+         // Sort by average rating descending and take top 10
+         const top10Data = data.sort((a, b) => b.average_rating - a.average_rating).slice(0, 10);
+
+         const ctx = document.getElementById('avgRatingPlatformChart').getContext('2d');
+         new Chart(ctx, {
+             type: 'bar',
+             data: {
+                 labels: top10Data.map(item => item._id),
+                 datasets: [{
+                     label: 'Average Rating',
+                     data: top10Data.map(item => item.average_rating),
+                     backgroundColor: 'rgba(153, 102, 255, 0.6)',
+                     borderColor: 'rgba(153, 102, 255, 1)',
+                     borderWidth: 1
+                 }]
+             },
+             options: {
+                 responsive: true,
+                 scales: {
+                     y: {
+                         beginAtZero: true,
+                         title: {
+                             display: true,
+                             text: 'Average Rating'
+                         }
+                     },
+                     x: {
+                         title: {
+                             display: true,
+                             text: 'Platform'
+                         }
+                     }
+                 },
+                 plugins: {
+                     title: {
+                         display: true,
+                         text: 'Average Rating by Platform (Top 10)'
+                     },
+                     legend: {
+                         display: false // Hide legend
+                     }
+                 }
+             }
+         });
+     }
+
+     // Function to render Average Rating by Developer Chart (Bar Chart)
+     function renderAvgRatingDeveloperChart(data) {
+         // Sort by average rating descending and take top 10
+         const top10Data = data.sort((a, b) => b.average_rating - a.average_rating).slice(0, 10);
+
+         const ctx = document.getElementById('avgRatingDeveloperChart').getContext('2d');
+         new Chart(ctx, {
+             type: 'bar',
+             data: {
+                 labels: top10Data.map(item => item._id),
+                 datasets: [{
+                     label: 'Average Rating',
+                     data: top10Data.map(item => item.average_rating),
+                     backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                     borderColor: 'rgba(255, 159, 64, 1)',
+                     borderWidth: 1
+                 }]
+             },
+             options: {
+                 responsive: true,
+                 scales: {
+                     y: {
+                         beginAtZero: true,
+                         title: {
+                             display: true,
+                             text: 'Average Rating'
+                         }
+                     },
+                     x: {
+                         title: {
+                             display: true,
+                             text: 'Developer'
+                         }
+                     }
+                 },
+                 plugins: {
+                     title: {
+                         display: true,
+                         text: 'Average Rating by Developer (Top 10)'
+                     },
+                      legend: {
+                         display: false // Hide legend
+                     }
+                 }
+             }
+         });
+     }
+
+    // Function to render all charts using the global data variables
+    function renderAllCharts() {
+        // Clear existing charts if they exist
+        // (This is a simple approach; a more robust method would involve destroying Chart.js instances)
+        // However, since we are replacing the main-content div on filter apply, old charts are removed.
+
+        // Check if global data variables exist and are not empty before rendering
+        if (typeof gamesPerYear !== 'undefined' && gamesPerYear.length > 0) {
+             renderGamesPerYearChart(gamesPerYear);
+         } else {
+             console.warn("No data for Games Per Year chart.");
+             // Optionally display a message on the canvas
+             const ctx = document.getElementById('gamesPerYearChart').getContext('2d');
+             ctx.font = '18px Arial';
+             ctx.fillStyle = 'white';
+             ctx.textAlign = 'center';
+             ctx.fillText('No data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
+         }
+
+         if (typeof publisherCounts !== 'undefined' && publisherCounts.length > 0) {
+             renderPublisherShareChart(publisherCounts);
+         } else {
+             console.warn("No data for Publisher Share chart.");
+             const ctx = document.getElementById('publisherShareChart').getContext('2d');
+             ctx.font = '18px Arial';
+             ctx.fillStyle = 'white';
+             ctx.textAlign = 'center';
+             ctx.fillText('No data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
+         }
+
+         if (typeof platformCounts !== 'undefined' && platformCounts.length > 0) {
+             renderPlatformChart(platformCounts);
+         } else {
+             console.warn("No data for Platform Distribution chart.");
+             const ctx = document.getElementById('platformChart').getContext('2d');
+             ctx.font = '18px Arial';
+             ctx.fillStyle = 'white';
+             ctx.textAlign = 'center';
+             ctx.fillText('No data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
+         }
+
+         if (typeof genreCounts !== 'undefined' && genreCounts.length > 0) {
+             renderGenreChart(genreCounts);
+         } else {
+              console.warn("No data for Genre Distribution chart.");
+              const ctx = document.getElementById('genreChart').getContext('2d');
+              ctx.font = '18px Arial';
+              ctx.fillStyle = 'white';
+              ctx.textAlign = 'center';
+              ctx.fillText('No data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
+         }
+
+         if (typeof avgRatingPlatform !== 'undefined' && avgRatingPlatform.length > 0) {
+              renderAvgRatingPlatformChart(avgRatingPlatform);
+          } else {
+              console.warn("No data for Average Rating by Platform chart.");
+              const ctx = document.getElementById('avgRatingPlatformChart').getContext('2d');
+              ctx.font = '18px Arial';
+              ctx.fillStyle = 'white';
+              ctx.textAlign = 'center';
+              ctx.fillText('No data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
+          }
+
+          if (typeof avgRatingDeveloper !== 'undefined' && avgRatingDeveloper.length > 0) {
+              renderAvgRatingDeveloperChart(avgRatingDeveloper);
+          } else {
+              console.warn("No data for Average Rating by Developer chart.");
+              const ctx = document.getElementById('avgRatingDeveloperChart').getContext('2d');
+              ctx.font = '18px Arial';
+              ctx.fillStyle = 'white';
+              ctx.textAlign = 'center';
+              ctx.fillText('No data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
+          }
+
+    }
+
+    // Initial rendering when the page loads
+    renderAllCharts();
+
+    // Event listener for the form submission
+    if (filterForm) {
+        filterForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+            const formData = new FormData(filterForm);
+            const queryParams = new URLSearchParams(formData).toString();
+            window.location.href = '/' + (queryParams ? '?' + queryParams : ''); // Redirect with query params
+        });
+    }
+
+    // Initial update of year range display on page load
+    if (yearStartInput && yearEndInput && yearRangeDisplay) {
+        updateYearRangeDisplay();
+    }
+
 }); 
