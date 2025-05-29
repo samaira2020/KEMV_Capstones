@@ -1749,4 +1749,1184 @@ class MongoDBHandler:
             print(f"Error in get_top_rated_recent_games: {e}")
             return []
 
+    # === TACTICAL DASHBOARD METHODS ===
+    
+    def get_tactical_sankey_data(self, year_range=None):
+        """Get data for Sankey diagram: Genre → Platform → Publisher flow."""
+        try:
+            print(f"Fetching tactical Sankey data.")
+            collection = self.db.enriched_games
+            pipeline = []
+
+            # Add year extraction
+            pipeline.append({
+                '$addFields': {
+                    'extractedYear': {
+                        '$convert': {
+                            'input': {'$arrayElemAt': [{'$split': [{'$ifNull': ['$Release_Date_IGDB', '']}, '/']}, 2]},
+                            'to': 'int',
+                            'onError': None,
+                            'onNull': None
+                        }
+                    }
+                }
+            })
+
+            # Filter for valid data
+            match_conditions = {
+                'Genre': {'$exists': True, '$ne': None, '$ne': ''},
+                'Platform': {'$exists': True, '$ne': None, '$ne': ''},
+                'Publisher': {'$exists': True, '$ne': None, '$ne': ''}
+            }
+            pipeline.append({'$match': match_conditions})
+
+            # Apply year range filter
+            if year_range and len(year_range) == 2:
+                pipeline.append({
+                    '$match': {
+                        'extractedYear': {
+                            '$gte': year_range[0],
+                            '$lte': year_range[1],
+                            '$exists': True,
+                            '$ne': None,
+                            '$type': 'number'
+                        }
+                    }
+                })
+
+            # Group by Genre → Platform → Publisher
+            pipeline.append({
+                '$group': {
+                    '_id': {
+                        'genre': '$Genre',
+                        'platform': '$Platform',
+                        'publisher': '$Publisher'
+                    },
+                    'count': {'$sum': 1}
+                }
+            })
+
+            # Project for frontend
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'source': '$_id.genre',
+                    'target': '$_id.platform',
+                    'publisher': '$_id.publisher',
+                    'value': '$count'
+                }
+            })
+
+            result = list(collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Tactical Sankey data result: {len(result)} flows")
+            return result
+
+        except Exception as e:
+            print(f"Error in get_tactical_sankey_data: {e}")
+            return []
+
+    def get_tactical_venn_data(self, year_range=None):
+        """Get data for Venn diagram: Games available across multiple platforms."""
+        try:
+            print(f"Fetching tactical Venn data.")
+            collection = self.db.enriched_games
+            pipeline = []
+
+            # Add year extraction and platform array
+            pipeline.append({
+                '$addFields': {
+                    'extractedYear': {
+                        '$convert': {
+                            'input': {'$arrayElemAt': [{'$split': [{'$ifNull': ['$Release_Date_IGDB', '']}, '/']}, 2]},
+                            'to': 'int',
+                            'onError': None,
+                            'onNull': None
+                        }
+                    },
+                    'PlatformsArray': {'$split': [{'$ifNull': ['$Platform', '']}, ', ']}
+                }
+            })
+
+            # Filter for valid data
+            match_conditions = {
+                'Title': {'$exists': True, '$ne': None, '$ne': ''},
+                'Platform': {'$exists': True, '$ne': None, '$ne': ''}
+            }
+            pipeline.append({'$match': match_conditions})
+
+            # Apply year range filter
+            if year_range and len(year_range) == 2:
+                pipeline.append({
+                    '$match': {
+                        'extractedYear': {
+                            '$gte': year_range[0],
+                            '$lte': year_range[1],
+                            '$exists': True,
+                            '$ne': None,
+                            '$type': 'number'
+                        }
+                    }
+                })
+
+            # Add platform count
+            pipeline.append({
+                '$addFields': {
+                    'platform_count': {'$size': '$PlatformsArray'}
+                }
+            })
+
+            # Group by platform combinations
+            pipeline.append({
+                '$group': {
+                    '_id': '$PlatformsArray',
+                    'games': {'$push': '$Title'},
+                    'count': {'$sum': 1}
+                }
+            })
+
+            # Sort by count
+            pipeline.append({'$sort': {'count': -1}})
+
+            result = list(collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Tactical Venn data result: {len(result)} platform combinations")
+            return result
+
+        except Exception as e:
+            print(f"Error in get_tactical_venn_data: {e}")
+            return []
+
+    def get_tactical_chord_data(self, year_range=None):
+        """Get data for Chord diagram: Developer ↔ Platform ↔ Genre connections."""
+        try:
+            print(f"Fetching tactical Chord data.")
+            collection = self.db.enriched_games
+            pipeline = []
+
+            # Add year extraction
+            pipeline.append({
+                '$addFields': {
+                    'extractedYear': {
+                        '$convert': {
+                            'input': {'$arrayElemAt': [{'$split': [{'$ifNull': ['$Release_Date_IGDB', '']}, '/']}, 2]},
+                            'to': 'int',
+                            'onError': None,
+                            'onNull': None
+                        }
+                    }
+                }
+            })
+
+            # Filter for valid data
+            match_conditions = {
+                'Developer': {'$exists': True, '$ne': None, '$ne': ''},
+                'Platform': {'$exists': True, '$ne': None, '$ne': ''},
+                'Genre': {'$exists': True, '$ne': None, '$ne': ''}
+            }
+            pipeline.append({'$match': match_conditions})
+
+            # Apply year range filter
+            if year_range and len(year_range) == 2:
+                pipeline.append({
+                    '$match': {
+                        'extractedYear': {
+                            '$gte': year_range[0],
+                            '$lte': year_range[1],
+                            '$exists': True,
+                            '$ne': None,
+                            '$type': 'number'
+                        }
+                    }
+                })
+
+            # Group by Developer-Platform-Genre combinations
+            pipeline.append({
+                '$group': {
+                    '_id': {
+                        'developer': '$Developer',
+                        'platform': '$Platform',
+                        'genre': '$Genre'
+                    },
+                    'count': {'$sum': 1}
+                }
+            })
+
+            # Project for chord diagram
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'developer': '$_id.developer',
+                    'platform': '$_id.platform',
+                    'genre': '$_id.genre',
+                    'value': '$count'
+                }
+            })
+
+            result = list(collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Tactical Chord data result: {len(result)} connections")
+            return result
+
+        except Exception as e:
+            print(f"Error in get_tactical_chord_data: {e}")
+            return []
+
+    def get_tactical_dumbbell_data(self, year_range=None):
+        """Get data for Dumbbell chart: Min vs Max ratings across platforms for top genres."""
+        try:
+            print(f"Fetching tactical Dumbbell data.")
+            collection = self.db.enriched_games
+            pipeline = []
+
+            # Add year extraction and platform array
+            pipeline.append({
+                '$addFields': {
+                    'extractedYear': {
+                        '$convert': {
+                            'input': {'$arrayElemAt': [{'$split': [{'$ifNull': ['$Release_Date_IGDB', '']}, '/']}, 2]},
+                            'to': 'int',
+                            'onError': None,
+                            'onNull': None
+                        }
+                    },
+                    'PlatformsArray': {'$split': [{'$ifNull': ['$Platform', '']}, ', ']}
+                }
+            })
+
+            # Filter for valid data
+            match_conditions = {
+                'Genre': {'$exists': True, '$ne': None, '$ne': ''},
+                'Platform': {'$exists': True, '$ne': None, '$ne': ''},
+                'Rating': {'$exists': True, '$ne': None, '$type': 'number'}
+            }
+            pipeline.append({'$match': match_conditions})
+
+            # Apply year range filter
+            if year_range and len(year_range) == 2:
+                pipeline.append({
+                    '$match': {
+                        'extractedYear': {
+                            '$gte': year_range[0],
+                            '$lte': year_range[1],
+                            '$exists': True,
+                            '$ne': None,
+                            '$type': 'number'
+                        }
+                    }
+                })
+
+            # Unwind platforms
+            pipeline.append({'$unwind': '$PlatformsArray'})
+
+            # Group by Genre and Platform
+            pipeline.append({
+                '$group': {
+                    '_id': {
+                        'genre': '$Genre',
+                        'platform': '$PlatformsArray'
+                    },
+                    'min_rating': {'$min': '$Rating'},
+                    'max_rating': {'$max': '$Rating'},
+                    'avg_rating': {'$avg': '$Rating'},
+                    'count': {'$sum': 1}
+                }
+            })
+
+            # Filter for platforms with at least 5 games
+            pipeline.append({'$match': {'count': {'$gte': 5}}})
+
+            # Project for dumbbell chart
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'genre': '$_id.genre',
+                    'platform': '$_id.platform',
+                    'min_rating': {'$round': ['$min_rating', 1]},
+                    'max_rating': {'$round': ['$max_rating', 1]},
+                    'avg_rating': {'$round': ['$avg_rating', 1]},
+                    'count': 1
+                }
+            })
+
+            # Sort by genre and average rating
+            pipeline.append({'$sort': {'genre': 1, 'avg_rating': -1}})
+
+            result = list(collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Tactical Dumbbell data result: {len(result)} genre-platform combinations")
+            return result
+
+        except Exception as e:
+            print(f"Error in get_tactical_dumbbell_data: {e}")
+            return []
+
+    def get_tactical_marimekko_data(self, year_range=None):
+        """Get data for Marimekko chart: Relative genre share and platform share."""
+        try:
+            print(f"Fetching tactical Marimekko data.")
+            collection = self.db.enriched_games
+            pipeline = []
+
+            # Add year extraction and arrays
+            pipeline.append({
+                '$addFields': {
+                    'extractedYear': {
+                        '$convert': {
+                            'input': {'$arrayElemAt': [{'$split': [{'$ifNull': ['$Release_Date_IGDB', '']}, '/']}, 2]},
+                            'to': 'int',
+                            'onError': None,
+                            'onNull': None
+                        }
+                    },
+                    'GenresArray': {'$split': [{'$ifNull': ['$Genre', '']}, ', ']},
+                    'PlatformsArray': {'$split': [{'$ifNull': ['$Platform', '']}, ', ']}
+                }
+            })
+
+            # Filter for valid data
+            match_conditions = {
+                'Genre': {'$exists': True, '$ne': None, '$ne': ''},
+                'Platform': {'$exists': True, '$ne': None, '$ne': ''}
+            }
+            pipeline.append({'$match': match_conditions})
+
+            # Apply year range filter
+            if year_range and len(year_range) == 2:
+                pipeline.append({
+                    '$match': {
+                        'extractedYear': {
+                            '$gte': year_range[0],
+                            '$lte': year_range[1],
+                            '$exists': True,
+                            '$ne': None,
+                            '$type': 'number'
+                        }
+                    }
+                })
+
+            # Unwind both arrays
+            pipeline.append({'$unwind': '$GenresArray'})
+            pipeline.append({'$unwind': '$PlatformsArray'})
+
+            # Group by Genre and Platform
+            pipeline.append({
+                '$group': {
+                    '_id': {
+                        'genre': '$GenresArray',
+                        'platform': '$PlatformsArray'
+                    },
+                    'count': {'$sum': 1}
+                }
+            })
+
+            # Project for marimekko chart
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'genre': '$_id.genre',
+                    'platform': '$_id.platform',
+                    'count': 1
+                }
+            })
+
+            # Sort by count
+            pipeline.append({'$sort': {'count': -1}})
+
+            result = list(collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Tactical Marimekko data result: {len(result)} genre-platform combinations")
+            return result
+
+        except Exception as e:
+            print(f"Error in get_tactical_marimekko_data: {e}")
+            return []
+
+    # === ANALYTICAL LIFECYCLE DASHBOARD METHODS ===
+    
+    def get_lifecycle_survival_data(self, year_range=None, genres=None, platforms=None, min_rating=None, min_votes=None):
+        """Get survival curve data: % of games still getting votes N years after release."""
+        try:
+            print(f"Fetching lifecycle survival data.")
+            collection = self.db.enriched_games
+            pipeline = []
+
+            # Add year extraction
+            pipeline.append({
+                '$addFields': {
+                    'extractedYear': {
+                        '$convert': {
+                            'input': {'$arrayElemAt': [{'$split': [{'$ifNull': ['$Release_Date_IGDB', '']}, '/']}, 2]},
+                            'to': 'int',
+                            'onError': None,
+                            'onNull': None
+                        }
+                    },
+                    'currentYear': datetime.now().year
+                }
+            })
+
+            # Filter for valid data
+            match_conditions = {
+                'extractedYear': {'$exists': True, '$ne': None, '$type': 'number'},
+                'Number_of_Votes': {'$exists': True, '$ne': None, '$type': 'number', '$gt': 0}
+            }
+
+            if min_rating:
+                match_conditions['Rating'] = {'$gte': min_rating}
+            if min_votes:
+                match_conditions['Number_of_Votes']['$gte'] = min_votes
+
+            pipeline.append({'$match': match_conditions})
+
+            # Apply filters
+            if year_range and len(year_range) == 2:
+                pipeline.append({
+                    '$match': {
+                        'extractedYear': {
+                            '$gte': year_range[0],
+                            '$lte': year_range[1]
+                        }
+                    }
+                })
+
+            # Calculate years since release
+            pipeline.append({
+                '$addFields': {
+                    'yearsSinceRelease': {'$subtract': ['$currentYear', '$extractedYear']}
+                }
+            })
+
+            # Group by years since release
+            pipeline.append({
+                '$group': {
+                    '_id': '$yearsSinceRelease',
+                    'games_with_votes': {'$sum': 1},
+                    'total_votes': {'$sum': '$Number_of_Votes'},
+                    'avg_rating': {'$avg': '$Rating'}
+                }
+            })
+
+            # Sort by years since release
+            pipeline.append({'$sort': {'_id': 1}})
+
+            result = list(collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Lifecycle survival data result: {len(result)} time periods")
+            return result
+
+        except Exception as e:
+            print(f"Error in get_lifecycle_survival_data: {e}")
+            return []
+
+    def get_lifecycle_ridgeline_data(self, year_range=None, genres=None):
+        """Get ridgeline plot data: Rating distribution across genres."""
+        try:
+            print(f"Fetching lifecycle ridgeline data.")
+            collection = self.db.enriched_games
+            pipeline = []
+
+            # Add year extraction
+            pipeline.append({
+                '$addFields': {
+                    'extractedYear': {
+                        '$convert': {
+                            'input': {'$arrayElemAt': [{'$split': [{'$ifNull': ['$Release_Date_IGDB', '']}, '/']}, 2]},
+                            'to': 'int',
+                            'onError': None,
+                            'onNull': None
+                        }
+                    }
+                }
+            })
+
+            # Filter for valid data
+            match_conditions = {
+                'Genre': {'$exists': True, '$ne': None, '$ne': ''},
+                'Rating': {'$exists': True, '$ne': None, '$type': 'number'}
+            }
+            pipeline.append({'$match': match_conditions})
+
+            # Apply filters
+            if year_range and len(year_range) == 2:
+                pipeline.append({
+                    '$match': {
+                        'extractedYear': {
+                            '$gte': year_range[0],
+                            '$lte': year_range[1],
+                            '$exists': True,
+                            '$ne': None,
+                            '$type': 'number'
+                        }
+                    }
+                })
+
+            # Project for ridgeline
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'genre': '$Genre',
+                    'rating': '$Rating',
+                    'title': '$Title'
+                }
+            })
+
+            result = list(collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Lifecycle ridgeline data result: {len(result)} games")
+            return result
+
+        except Exception as e:
+            print(f"Error in get_lifecycle_ridgeline_data: {e}")
+            return []
+
+    def get_lifecycle_timeline_data(self, year_range=None, min_votes=None):
+        """Get timeline bubble chart data: Most voted games across release years."""
+        try:
+            print(f"Fetching lifecycle timeline data.")
+            collection = self.db.enriched_games
+            pipeline = []
+
+            # Add year extraction
+            pipeline.append({
+                '$addFields': {
+                    'extractedYear': {
+                        '$convert': {
+                            'input': {'$arrayElemAt': [{'$split': [{'$ifNull': ['$Release_Date_IGDB', '']}, '/']}, 2]},
+                            'to': 'int',
+                            'onError': None,
+                            'onNull': None
+                        }
+                    }
+                }
+            })
+
+            # Filter for valid data
+            match_conditions = {
+                'extractedYear': {'$exists': True, '$ne': None, '$type': 'number'},
+                'Number_of_Votes': {'$exists': True, '$ne': None, '$type': 'number', '$gt': 0},
+                'Rating': {'$exists': True, '$ne': None, '$type': 'number'},
+                'Title': {'$exists': True, '$ne': None, '$ne': ''}
+            }
+
+            if min_votes:
+                match_conditions['Number_of_Votes']['$gte'] = min_votes
+
+            pipeline.append({'$match': match_conditions})
+
+            # Apply year range filter
+            if year_range and len(year_range) == 2:
+                pipeline.append({
+                    '$match': {
+                        'extractedYear': {
+                            '$gte': year_range[0],
+                            '$lte': year_range[1]
+                        }
+                    }
+                })
+
+            # Sort by votes and limit to top games per year
+            pipeline.append({'$sort': {'Number_of_Votes': -1}})
+
+            # Project for timeline
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'title': '$Title',
+                    'year': '$extractedYear',
+                    'rating': '$Rating',
+                    'votes': '$Number_of_Votes',
+                    'genre': '$Genre'
+                }
+            })
+
+            result = list(collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Lifecycle timeline data result: {len(result)} games")
+            return result
+
+        except Exception as e:
+            print(f"Error in get_lifecycle_timeline_data: {e}")
+            return []
+
+    def get_lifecycle_hexbin_data(self, year_range=None, genres=None, platforms=None):
+        """Get hexbin plot data: Cluster of games by Rating × Number_of_Votes."""
+        try:
+            print(f"Fetching lifecycle hexbin data.")
+            collection = self.db.enriched_games
+            pipeline = []
+
+            # Add year extraction
+            pipeline.append({
+                '$addFields': {
+                    'extractedYear': {
+                        '$convert': {
+                            'input': {'$arrayElemAt': [{'$split': [{'$ifNull': ['$Release_Date_IGDB', '']}, '/']}, 2]},
+                            'to': 'int',
+                            'onError': None,
+                            'onNull': None
+                        }
+                    }
+                }
+            })
+
+            # Filter for valid data
+            match_conditions = {
+                'Rating': {'$exists': True, '$ne': None, '$type': 'number'},
+                'Number_of_Votes': {'$exists': True, '$ne': None, '$type': 'number', '$gt': 0}
+            }
+            pipeline.append({'$match': match_conditions})
+
+            # Apply filters
+            if year_range and len(year_range) == 2:
+                pipeline.append({
+                    '$match': {
+                        'extractedYear': {
+                            '$gte': year_range[0],
+                            '$lte': year_range[1],
+                            '$exists': True,
+                            '$ne': None,
+                            '$type': 'number'
+                        }
+                    }
+                })
+
+            # Project for hexbin
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'title': '$Title',
+                    'rating': '$Rating',
+                    'votes': '$Number_of_Votes',
+                    'genre': '$Genre',
+                    'year': '$extractedYear'
+                }
+            })
+
+            result = list(collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Lifecycle hexbin data result: {len(result)} games")
+            return result
+
+        except Exception as e:
+            print(f"Error in get_lifecycle_hexbin_data: {e}")
+            return []
+
+    def get_lifecycle_parallel_data(self, year_range=None, genres=None):
+        """Get parallel coordinates data: Compare genres across Rating, Votes, Platform Count."""
+        try:
+            print(f"Fetching lifecycle parallel data.")
+            collection = self.db.enriched_games
+            pipeline = []
+
+            # Add year extraction and platform count
+            pipeline.append({
+                '$addFields': {
+                    'extractedYear': {
+                        '$convert': {
+                            'input': {'$arrayElemAt': [{'$split': [{'$ifNull': ['$Release_Date_IGDB', '']}, '/']}, 2]},
+                            'to': 'int',
+                            'onError': None,
+                            'onNull': None
+                        }
+                    },
+                    'platform_count': {'$size': {'$split': [{'$ifNull': ['$Platform', '']}, ', ']}}
+                }
+            })
+
+            # Filter for valid data
+            match_conditions = {
+                'Genre': {'$exists': True, '$ne': None, '$ne': ''},
+                'Rating': {'$exists': True, '$ne': None, '$type': 'number'},
+                'Number_of_Votes': {'$exists': True, '$ne': None, '$type': 'number'}
+            }
+            pipeline.append({'$match': match_conditions})
+
+            # Apply filters
+            if year_range and len(year_range) == 2:
+                pipeline.append({
+                    '$match': {
+                        'extractedYear': {
+                            '$gte': year_range[0],
+                            '$lte': year_range[1],
+                            '$exists': True,
+                            '$ne': None,
+                            '$type': 'number'
+                        }
+                    }
+                })
+
+            # Group by genre
+            pipeline.append({
+                '$group': {
+                    '_id': '$Genre',
+                    'avg_rating': {'$avg': '$Rating'},
+                    'avg_votes': {'$avg': '$Number_of_Votes'},
+                    'avg_platform_count': {'$avg': '$platform_count'},
+                    'game_count': {'$sum': 1},
+                    'max_rating': {'$max': '$Rating'},
+                    'min_rating': {'$min': '$Rating'}
+                }
+            })
+
+            # Project for parallel coordinates
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'genre': '$_id',
+                    'avg_rating': {'$round': ['$avg_rating', 2]},
+                    'avg_votes': {'$round': ['$avg_votes', 0]},
+                    'avg_platform_count': {'$round': ['$avg_platform_count', 1]},
+                    'game_count': 1,
+                    'rating_range': {'$round': [{'$subtract': ['$max_rating', '$min_rating']}, 1]}
+                }
+            })
+
+            result = list(collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Lifecycle parallel data result: {len(result)} genres")
+            return result
+
+        except Exception as e:
+            print(f"Error in get_lifecycle_parallel_data: {e}")
+            return []
+
+    def get_lifecycle_tree_data(self, year_range=None, genres=None):
+        """Get tree diagram data: Genre → Subgenre → Platform expansion patterns."""
+        try:
+            print(f"Fetching evolution tree data.")
+            collection = self.db.enriched_games
+            pipeline = []
+
+            # Add year extraction and arrays
+            pipeline.append({
+                '$addFields': {
+                    'extractedYear': {
+                        '$convert': {
+                            'input': {'$arrayElemAt': [{'$split': [{'$ifNull': ['$Release_Date_IGDB', '']}, '/']}, 2]},
+                            'to': 'int',
+                            'onError': None,
+                            'onNull': None
+                        }
+                    },
+                    'GenresArray': {'$split': [{'$ifNull': ['$Genre', '']}, ', ']},
+                    'PlatformsArray': {'$split': [{'$ifNull': ['$Platform', '']}, ', ']}
+                }
+            })
+
+            # Filter for valid data
+            match_conditions = {
+                'Genre': {'$exists': True, '$ne': None, '$ne': ''},
+                'Platform': {'$exists': True, '$ne': None, '$ne': ''}
+            }
+            pipeline.append({'$match': match_conditions})
+
+            # Apply year range filter
+            if year_range and len(year_range) == 2:
+                pipeline.append({
+                    '$match': {
+                        'extractedYear': {
+                            '$gte': year_range[0],
+                            '$lte': year_range[1],
+                            '$exists': True,
+                            '$ne': None,
+                            '$type': 'number'
+                        }
+                    }
+                })
+
+            # Unwind arrays
+            pipeline.append({'$unwind': '$GenresArray'})
+            pipeline.append({'$unwind': '$PlatformsArray'})
+
+            # Group by genre and platform
+            pipeline.append({
+                '$group': {
+                    '_id': {
+                        'genre': '$GenresArray',
+                        'platform': '$PlatformsArray'
+                    },
+                    'count': {'$sum': 1}
+                }
+            })
+
+            # Project for tree diagram
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'parent': '$_id.genre',
+                    'child': '$_id.platform',
+                    'value': '$count'
+                }
+            })
+
+            # Sort by count
+            pipeline.append({'$sort': {'value': -1}})
+
+            result = list(collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Evolution tree data result: {len(result)} genre-platform relationships")
+            return result
+
+        except Exception as e:
+            print(f"Error in get_evolution_tree_data: {e}")
+            return []
+
+    # === ANALYTICAL EVOLUTION DASHBOARD METHODS ===
+    
+    def get_evolution_stream_data(self, year_range=None, genres=None):
+        """Get stream graph data: Genre popularity or rating trend over time."""
+        try:
+            print(f"Fetching evolution stream data.")
+            collection = self.db.enriched_games
+            pipeline = []
+
+            # Add year extraction and genre array
+            pipeline.append({
+                '$addFields': {
+                    'extractedYear': {
+                        '$convert': {
+                            'input': {'$arrayElemAt': [{'$split': [{'$ifNull': ['$Release_Date_IGDB', '']}, '/']}, 2]},
+                            'to': 'int',
+                            'onError': None,
+                            'onNull': None
+                        }
+                    },
+                    'GenresArray': {'$split': [{'$ifNull': ['$Genre', '']}, ', ']}
+                }
+            })
+
+            # Filter for valid data
+            match_conditions = {
+                'extractedYear': {'$exists': True, '$ne': None, '$type': 'number'},
+                'Genre': {'$exists': True, '$ne': None, '$ne': ''},
+                'Rating': {'$exists': True, '$ne': None, '$type': 'number'}
+            }
+            pipeline.append({'$match': match_conditions})
+
+            # Apply year range filter
+            if year_range and len(year_range) == 2:
+                pipeline.append({
+                    '$match': {
+                        'extractedYear': {
+                            '$gte': year_range[0],
+                            '$lte': year_range[1]
+                        }
+                    }
+                })
+
+            # Unwind genres
+            pipeline.append({'$unwind': '$GenresArray'})
+
+            # Group by year and genre
+            pipeline.append({
+                '$group': {
+                    '_id': {
+                        'year': '$extractedYear',
+                        'genre': '$GenresArray'
+                    },
+                    'count': {'$sum': 1},
+                    'avg_rating': {'$avg': '$Rating'}
+                }
+            })
+
+            # Project for stream graph
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'year': '$_id.year',
+                    'genre': '$_id.genre',
+                    'count': 1,
+                    'avg_rating': {'$round': ['$avg_rating', 2]}
+                }
+            })
+
+            # Sort by year and genre
+            pipeline.append({'$sort': {'year': 1, 'genre': 1}})
+
+            result = list(collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Evolution stream data result: {len(result)} year-genre combinations")
+            return result
+
+        except Exception as e:
+            print(f"Error in get_evolution_stream_data: {e}")
+            return []
+
+    def get_evolution_bubble_data(self, year_range=None, genres=None):
+        """Get bubble timeline data: High-rated game launches over time by genre."""
+        try:
+            print(f"Fetching evolution bubble data.")
+            collection = self.db.enriched_games
+            pipeline = []
+
+            # Add year extraction
+            pipeline.append({
+                '$addFields': {
+                    'extractedYear': {
+                        '$convert': {
+                            'input': {'$arrayElemAt': [{'$split': [{'$ifNull': ['$Release_Date_IGDB', '']}, '/']}, 2]},
+                            'to': 'int',
+                            'onError': None,
+                            'onNull': None
+                        }
+                    }
+                }
+            })
+
+            # Filter for high-rated games
+            match_conditions = {
+                'extractedYear': {'$exists': True, '$ne': None, '$type': 'number'},
+                'Genre': {'$exists': True, '$ne': None, '$ne': ''},
+                'Rating': {'$exists': True, '$ne': None, '$type': 'number', '$gte': 7.0},
+                'Number_of_Votes': {'$exists': True, '$ne': None, '$type': 'number', '$gt': 0},
+                'Title': {'$exists': True, '$ne': None, '$ne': ''}
+            }
+            pipeline.append({'$match': match_conditions})
+
+            # Apply year range filter
+            if year_range and len(year_range) == 2:
+                pipeline.append({
+                    '$match': {
+                        'extractedYear': {
+                            '$gte': year_range[0],
+                            '$lte': year_range[1]
+                        }
+                    }
+                })
+
+            # Project for bubble chart
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'title': '$Title',
+                    'year': '$extractedYear',
+                    'genre': '$Genre',
+                    'rating': '$Rating',
+                    'votes': '$Number_of_Votes'
+                }
+            })
+
+            # Sort by rating and votes
+            pipeline.append({'$sort': {'rating': -1, 'votes': -1}})
+
+            result = list(collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Evolution bubble data result: {len(result)} high-rated games")
+            return result
+
+        except Exception as e:
+            print(f"Error in get_evolution_bubble_data: {e}")
+            return []
+
+    def get_evolution_hexbin_data(self, year_range=None, genres=None):
+        """Get hexbin data: Votes vs rating clusters."""
+        try:
+            print(f"Fetching evolution hexbin data.")
+            collection = self.db.enriched_games
+            pipeline = []
+
+            # Add year extraction
+            pipeline.append({
+                '$addFields': {
+                    'extractedYear': {
+                        '$convert': {
+                            'input': {'$arrayElemAt': [{'$split': [{'$ifNull': ['$Release_Date_IGDB', '']}, '/']}, 2]},
+                            'to': 'int',
+                            'onError': None,
+                            'onNull': None
+                        }
+                    }
+                }
+            })
+
+            # Filter for valid data
+            match_conditions = {
+                'Rating': {'$exists': True, '$ne': None, '$type': 'number'},
+                'Number_of_Votes': {'$exists': True, '$ne': None, '$type': 'number', '$gt': 0},
+                'Genre': {'$exists': True, '$ne': None, '$ne': ''}
+            }
+            pipeline.append({'$match': match_conditions})
+
+            # Apply year range filter
+            if year_range and len(year_range) == 2:
+                pipeline.append({
+                    '$match': {
+                        'extractedYear': {
+                            '$gte': year_range[0],
+                            '$lte': year_range[1],
+                            '$exists': True,
+                            '$ne': None,
+                            '$type': 'number'
+                        }
+                    }
+                })
+
+            # Project for hexbin
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'title': '$Title',
+                    'rating': '$Rating',
+                    'votes': '$Number_of_Votes',
+                    'genre': '$Genre',
+                    'year': '$extractedYear'
+                }
+            })
+
+            result = list(collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Evolution hexbin data result: {len(result)} games")
+            return result
+
+        except Exception as e:
+            print(f"Error in get_evolution_hexbin_data: {e}")
+            return []
+
+    def get_evolution_parallel_data(self, year_range=None, genres=None):
+        """Get parallel coordinates data: Compare multiple metrics across genres."""
+        try:
+            print(f"Fetching evolution parallel data.")
+            collection = self.db.enriched_games
+            pipeline = []
+
+            # Add year extraction and platform count
+            pipeline.append({
+                '$addFields': {
+                    'extractedYear': {
+                        '$convert': {
+                            'input': {'$arrayElemAt': [{'$split': [{'$ifNull': ['$Release_Date_IGDB', '']}, '/']}, 2]},
+                            'to': 'int',
+                            'onError': None,
+                            'onNull': None
+                        }
+                    },
+                    'platform_count': {'$size': {'$split': [{'$ifNull': ['$Platform', '']}, ', ']}}
+                }
+            })
+
+            # Filter for valid data
+            match_conditions = {
+                'Genre': {'$exists': True, '$ne': None, '$ne': ''},
+                'Rating': {'$exists': True, '$ne': None, '$type': 'number'},
+                'Number_of_Votes': {'$exists': True, '$ne': None, '$type': 'number'}
+            }
+            pipeline.append({'$match': match_conditions})
+
+            # Apply year range filter
+            if year_range and len(year_range) == 2:
+                pipeline.append({
+                    '$match': {
+                        'extractedYear': {
+                            '$gte': year_range[0],
+                            '$lte': year_range[1],
+                            '$exists': True,
+                            '$ne': None,
+                            '$type': 'number'
+                        }
+                    }
+                })
+
+            # Group by genre
+            pipeline.append({
+                '$group': {
+                    '_id': '$Genre',
+                    'avg_rating': {'$avg': '$Rating'},
+                    'total_votes': {'$sum': '$Number_of_Votes'},
+                    'avg_platform_reach': {'$avg': '$platform_count'},
+                    'game_count': {'$sum': 1},
+                    'rating_volatility': {'$stdDevPop': '$Rating'}
+                }
+            })
+
+            # Project for parallel coordinates
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'genre': '$_id',
+                    'avg_rating': {'$round': ['$avg_rating', 2]},
+                    'total_votes': 1,
+                    'avg_platform_reach': {'$round': ['$avg_platform_reach', 1]},
+                    'game_count': 1,
+                    'rating_volatility': {'$round': [{'$ifNull': ['$rating_volatility', 0]}, 2]}
+                }
+            })
+
+            # Sort by average rating
+            pipeline.append({'$sort': {'avg_rating': -1}})
+
+            result = list(collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Evolution parallel data result: {len(result)} genres")
+            return result
+
+        except Exception as e:
+            print(f"Error in get_evolution_parallel_data: {e}")
+            return []
+
+    def get_evolution_tree_data(self, year_range=None, genres=None):
+        """Get tree diagram data: Genre → Subgenre → Platform expansion patterns."""
+        try:
+            print(f"Fetching evolution tree data.")
+            collection = self.db.enriched_games
+            pipeline = []
+
+            # Add year extraction and arrays
+            pipeline.append({
+                '$addFields': {
+                    'extractedYear': {
+                        '$convert': {
+                            'input': {'$arrayElemAt': [{'$split': [{'$ifNull': ['$Release_Date_IGDB', '']}, '/']}, 2]},
+                            'to': 'int',
+                            'onError': None,
+                            'onNull': None
+                        }
+                    },
+                    'GenresArray': {'$split': [{'$ifNull': ['$Genre', '']}, ', ']},
+                    'PlatformsArray': {'$split': [{'$ifNull': ['$Platform', '']}, ', ']}
+                }
+            })
+
+            # Filter for valid data
+            match_conditions = {
+                'Genre': {'$exists': True, '$ne': None, '$ne': ''},
+                'Platform': {'$exists': True, '$ne': None, '$ne': ''}
+            }
+            pipeline.append({'$match': match_conditions})
+
+            # Apply year range filter
+            if year_range and len(year_range) == 2:
+                pipeline.append({
+                    '$match': {
+                        'extractedYear': {
+                            '$gte': year_range[0],
+                            '$lte': year_range[1],
+                            '$exists': True,
+                            '$ne': None,
+                            '$type': 'number'
+                        }
+                    }
+                })
+
+            # Unwind arrays
+            pipeline.append({'$unwind': '$GenresArray'})
+            pipeline.append({'$unwind': '$PlatformsArray'})
+
+            # Group by genre and platform
+            pipeline.append({
+                '$group': {
+                    '_id': {
+                        'genre': '$GenresArray',
+                        'platform': '$PlatformsArray'
+                    },
+                    'count': {'$sum': 1}
+                }
+            })
+
+            # Project for tree diagram
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'parent': '$_id.genre',
+                    'child': '$_id.platform',
+                    'value': '$count'
+                }
+            })
+
+            # Sort by count
+            pipeline.append({'$sort': {'value': -1}})
+
+            result = list(collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Evolution tree data result: {len(result)} genre-platform relationships")
+            return result
+
+        except Exception as e:
+            print(f"Error in get_evolution_tree_data: {e}")
+            return []
+
 

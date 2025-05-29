@@ -1,0 +1,333 @@
+/* Gaming Analytics Dashboard Styles */
+
+body {
+    background-color: #1a1a2e;
+    color: #eee;
+    font-family: 'Roboto', sans-serif;
+    padding: 0;
+    margin: 0;
+    font-size: 14px;
+}
+
+.container-fluid {
+    padding: 20px;
+}
+
+.sidebar {
+    background-color: #16213e;
+    padding: 20px;
+    border-radius: 10px;
+    color: #eee;
+    border: 1px solid #0f3460;
+}
+
+.main-content {
+    padding: 20px;
+}
+
+.card {
+    background-color: #16213e;
+    border: 1px solid #0f3460;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    padding: 20px;
+    min-height: 300px;
+}
+
+.card-title {
+    color: #e94560;
+    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+    margin-bottom: 15px;
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: center;
+}
+
+.big-number {
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-weight: 700;
+    color: #f39c12;
+    text-align: center;
+    font-family: 'Orbitron', monospace;
+    line-height: 1.2;
+    word-break: break-word;
+}
+
+.chart-container {
+    position: relative;
+    height: 250px;
+    width: 100%;
+}
+
+canvas {
+    background-color: transparent !important;
+}
+
+.row + .row {
+    margin-top: 20px;
+}
+
+.form-select {
+    background-color: #1a1a2e;
+    color: #eee;
+    border: 1px solid #0f3460;
+    font-size: 0.9rem;
+}
+
+.form-select option {
+    background-color: #1a1a2e;
+    color: #eee;
+}
+
+.slider-container {
+    margin-bottom: 20px;
+}
+
+.slider-container label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+    color: #eee;
+}
+
+.text-muted {
+    color: #3498db !important;
+    font-size: clamp(0.7rem, 2vw, 0.9rem);
+}
+
+.no-data-message {
+    color: #e74c3c;
+}
+
+.btn-primary {
+    background-color: #e94560;
+    border-color: #e94560;
+    color: #fff;
+    font-weight: 600;
+    font-family: 'Orbitron', monospace;
+}
+
+.btn-primary:hover {
+    background-color: #c73650;
+    border-color: #c73650;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: #fff;
+    font-weight: 600;
+    font-family: 'Orbitron', monospace;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+}
+
+h1, h2, h3 {
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    color: #eee;
+}
+
+h1 {
+    font-size: 2.2rem;
+    color: #e94560;
+}
+
+h3 {
+    font-size: 1.3rem;
+}
+
+.form-label {
+    color: #eee;
+}
+
+.nav-tabs {
+    border-bottom: 2px solid #0f3460;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+}
+
+.nav-tabs .nav-link {
+    background-color: #0f3460;
+    color: #eee;
+    border: 1px solid #0f3460;
+    margin-right: 5px;
+    font-family: 'Orbitron', monospace;
+    font-weight: 500;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    padding: 0.5rem 0.75rem;
+}
+
+.nav-tabs .nav-link:hover {
+    background-color: #16213e;
+    color: #e94560;
+    border-color: #16213e;
+}
+
+.nav-tabs .nav-link.active {
+    background-color: #e94560;
+    color: #fff;
+    border-color: #e94560;
+    font-weight: 700;
+}
+
+.table-dark {
+    background-color: #0f3460;
+    color: #eee;
+}
+
+.table-dark th {
+    background-color: #16213e;
+    color: #e94560;
+    font-family: 'Orbitron', monospace;
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.table-dark td {
+    font-size: 0.8rem;
+}
+
+/* Multi-select styling */
+select[multiple] {
+    padding: 8px;
+    border-radius: 6px;
+}
+
+select[multiple] option {
+    padding: 4px 8px;
+    margin: 1px 0;
+    border-radius: 3px;
+}
+
+select[multiple] option:checked {
+    background-color: #e94560 !important;
+    color: #fff !important;
+}
+
+select[multiple] option:hover {
+    background-color: #16213e !important;
+    color: #8be9fd !important;
+}
+
+/* Quick selection buttons */
+.btn-outline-secondary {
+    border-color: #6c757d;
+    color: #6c757d;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: #fff;
+}
+
+/* Form controls */
+.form-control {
+    background-color: #1a1a2e;
+    color: #eee;
+    border: 1px solid #0f3460;
+}
+
+.form-control:focus {
+    background-color: #1a1a2e;
+    color: #eee;
+    border-color: #e94560;
+    box-shadow: 0 0 0 0.2rem rgba(233, 69, 96, 0.25);
+}
+
+.form-range {
+    background: transparent;
+}
+
+.form-range::-webkit-slider-track {
+    background: #0f3460;
+    border-radius: 5px;
+}
+
+.form-range::-webkit-slider-thumb {
+    background: #e94560;
+    border: none;
+    border-radius: 50%;
+}
+
+.form-range::-moz-range-track {
+    background: #0f3460;
+    border-radius: 5px;
+}
+
+.form-range::-moz-range-thumb {
+    background: #e94560;
+    border: none;
+    border-radius: 50%;
+}
+
+/* Alert styles */
+.alert-danger {
+    background-color: #2d1b1b;
+    border-color: #e74c3c;
+    color: #e74c3c;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .nav-tabs {
+        overflow-x: scroll;
+        scrollbar-width: thin;
+    }
+    
+    .nav-tabs .nav-link {
+        font-size: 0.75rem;
+        padding: 0.4rem 0.6rem;
+    }
+    
+    .card-title {
+        font-size: 0.9rem;
+    }
+    
+    .big-number {
+        font-size: 1.5rem;
+    }
+}
+
+/* Loading states */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Chart specific styles */
+.chart-container canvas {
+    max-height: 250px;
+}
+
+/* Filter section transitions */
+.filter-section {
+    transition: all 0.3s ease-in-out;
+}
+
+/* Custom scrollbar for multi-selects */
+select[multiple]::-webkit-scrollbar {
+    width: 8px;
+}
+
+select[multiple]::-webkit-scrollbar-track {
+    background: #1a1a2e;
+    border-radius: 4px;
+}
+
+select[multiple]::-webkit-scrollbar-thumb {
+    background: #0f3460;
+    border-radius: 4px;
+}
+
+select[multiple]::-webkit-scrollbar-thumb:hover {
+    background: #e94560;
+} 

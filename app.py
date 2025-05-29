@@ -38,6 +38,24 @@ logger = logging.getLogger(__name__)
 def index():
     # Determine which tab is active
     active_tab = request.args.get('tab', 'studio')
+    
+    # Map tab names to ensure consistency
+    tab_mapping = {
+        'studio': 'studio',
+        'operational': 'operational', 
+        'tactical': 'tactical',
+        'cross-platform': 'tactical',  # Alternative name
+        'analytical-lifecycle': 'analytical-lifecycle',
+        'lifecycle': 'analytical-lifecycle',  # Alternative name
+        'analytical-evolution': 'analytical-evolution',
+        'evolution': 'analytical-evolution'  # Alternative name
+    }
+    
+    active_tab = tab_mapping.get(active_tab, 'studio')
+    
+    # Debug: Print the active tab for troubleshooting
+    print(f"Active tab detected: {active_tab}")
+    print(f"Request args: {dict(request.args)}")
 
     # Initialize variables
     stats_data = {}
@@ -61,6 +79,27 @@ def index():
     monthly_activity = []
     platform_performance = []
     top_rated_recent = []
+
+    # Tactical dashboard variables
+    tactical_sankey_data = []
+    tactical_venn_data = []
+    tactical_chord_data = []
+    tactical_dumbbell_data = []
+    tactical_marimekko_data = []
+
+    # Analytical Lifecycle dashboard variables
+    lifecycle_survival_data = []
+    lifecycle_ridgeline_data = []
+    lifecycle_timeline_data = []
+    lifecycle_hexbin_data = []
+    lifecycle_parallel_data = []
+
+    # Analytical Evolution dashboard variables
+    evolution_stream_data = []
+    evolution_bubble_data = []
+    evolution_hexbin_data = []
+    evolution_parallel_data = []
+    evolution_tree_data = []
 
     try:
         # Fetch filter options data first
@@ -308,6 +347,143 @@ def index():
             print(f"Error fetching top rated recent games: {e}")
             top_rated_recent = []
 
+        # === TACTICAL DASHBOARD DATA ===
+        try:
+            # Parse tactical filters
+            tactical_year_start = request.args.get('tactical_year_start', type=int)
+            tactical_year_end = request.args.get('tactical_year_end', type=int)
+            tactical_platforms = request.args.getlist('tactical_platforms')
+            tactical_genres = request.args.getlist('tactical_genres')
+            tactical_developer = request.args.get('tactical_developer', '')
+            tactical_analysis = request.args.get('tactical_analysis', 'market_opportunity')
+            
+            # Use tactical year range if provided, otherwise use default
+            tactical_year_range = year_range
+            if tactical_year_start and tactical_year_end:
+                tactical_year_range = [tactical_year_start, tactical_year_end]
+            
+            # Always fetch tactical dashboard data for availability
+            tactical_sankey_data = list(db_handler.get_tactical_sankey_data(
+                year_range=tactical_year_range, 
+                platforms=tactical_platforms if tactical_platforms else None,
+                genres=tactical_genres if tactical_genres else None
+            ))
+            tactical_venn_data = list(db_handler.get_tactical_venn_data(
+                year_range=tactical_year_range,
+                platforms=tactical_platforms if tactical_platforms else None
+            ))
+            tactical_chord_data = list(db_handler.get_tactical_chord_data(
+                year_range=tactical_year_range,
+                genres=tactical_genres if tactical_genres else None
+            ))
+            tactical_dumbbell_data = list(db_handler.get_tactical_dumbbell_data(
+                year_range=tactical_year_range,
+                platforms=tactical_platforms if tactical_platforms else None,
+                genres=tactical_genres if tactical_genres else None
+            ))
+            tactical_marimekko_data = list(db_handler.get_tactical_marimekko_data(
+                year_range=tactical_year_range,
+                genres=tactical_genres if tactical_genres else None
+            ))
+            print(f"Tactical data fetched - Sankey: {len(tactical_sankey_data)}, Venn: {len(tactical_venn_data)}")
+        except Exception as e:
+            print(f"Error fetching tactical dashboard data: {e}")
+            tactical_sankey_data = []
+            tactical_venn_data = []
+            tactical_chord_data = []
+            tactical_dumbbell_data = []
+            tactical_marimekko_data = []
+
+        # === ANALYTICAL LIFECYCLE DASHBOARD DATA ===
+        try:
+            # Parse lifecycle filters
+            search_term = request.args.get('search_term', '')
+            lifecycle_genres = request.args.getlist('lifecycle_genres')
+            lifecycle_platforms = request.args.getlist('lifecycle_platforms')
+            min_rating = request.args.get('min_rating', type=float)
+            min_votes = request.args.get('min_votes', type=int)
+            game_type = request.args.get('game_type', '')
+            
+            # Always fetch lifecycle dashboard data for availability
+            lifecycle_survival_data = list(db_handler.get_lifecycle_survival_data(
+                year_range=year_range,
+                genres=lifecycle_genres if lifecycle_genres else None,
+                platforms=lifecycle_platforms if lifecycle_platforms else None,
+                min_rating=min_rating,
+                min_votes=min_votes
+            ))
+            lifecycle_ridgeline_data = list(db_handler.get_lifecycle_ridgeline_data(
+                year_range=year_range,
+                genres=lifecycle_genres if lifecycle_genres else None
+            ))
+            lifecycle_timeline_data = list(db_handler.get_lifecycle_timeline_data(
+                year_range=year_range,
+                min_votes=min_votes,
+                search_term=search_term if search_term else None
+            ))
+            lifecycle_hexbin_data = list(db_handler.get_lifecycle_hexbin_data(
+                year_range=year_range,
+                genres=lifecycle_genres if lifecycle_genres else None,
+                platforms=lifecycle_platforms if lifecycle_platforms else None
+            ))
+            lifecycle_parallel_data = list(db_handler.get_lifecycle_parallel_data(
+                year_range=year_range,
+                genres=lifecycle_genres if lifecycle_genres else None
+            ))
+            print(f"Lifecycle data fetched - Survival: {len(lifecycle_survival_data)}, Timeline: {len(lifecycle_timeline_data)}")
+        except Exception as e:
+            print(f"Error fetching lifecycle dashboard data: {e}")
+            lifecycle_survival_data = []
+            lifecycle_ridgeline_data = []
+            lifecycle_timeline_data = []
+            lifecycle_hexbin_data = []
+            lifecycle_parallel_data = []
+
+        # === ANALYTICAL EVOLUTION DASHBOARD DATA ===
+        try:
+            # Parse evolution filters
+            evolution_genres = request.args.getlist('evolution_genres')
+            evolution_platforms = request.args.getlist('evolution_platforms')
+            evolution_period = request.args.get('evolution_period', 'all_time')
+            evolution_metric = request.args.get('evolution_metric', 'rating_trends')
+            
+            # Adjust year range based on evolution period
+            evolution_year_range = year_range
+            if evolution_period == 'modern_era':
+                evolution_year_range = [2000, max_year_data]
+            elif evolution_period == 'recent_decade':
+                evolution_year_range = [max_year_data - 10, max_year_data]
+            
+            # Always fetch evolution dashboard data for availability
+            evolution_stream_data = list(db_handler.get_evolution_stream_data(
+                year_range=evolution_year_range,
+                genres=evolution_genres if evolution_genres else None
+            ))
+            evolution_bubble_data = list(db_handler.get_evolution_bubble_data(
+                year_range=evolution_year_range,
+                genres=evolution_genres if evolution_genres else None
+            ))
+            evolution_hexbin_data = list(db_handler.get_evolution_hexbin_data(
+                year_range=evolution_year_range,
+                genres=evolution_genres if evolution_genres else None
+            ))
+            evolution_parallel_data = list(db_handler.get_evolution_parallel_data(
+                year_range=evolution_year_range,
+                genres=evolution_genres if evolution_genres else None
+            ))
+            evolution_tree_data = list(db_handler.get_evolution_tree_data(
+                year_range=evolution_year_range,
+                genres=evolution_genres if evolution_genres else None
+            ))
+            print(f"Evolution data fetched - Stream: {len(evolution_stream_data)}, Bubble: {len(evolution_bubble_data)}")
+        except Exception as e:
+            print(f"Error fetching evolution dashboard data: {e}")
+            evolution_stream_data = []
+            evolution_bubble_data = []
+            evolution_hexbin_data = []
+            evolution_parallel_data = []
+            evolution_tree_data = []
+
         print(f"Active Tab: {active_tab}")
         print(f"Year Range: {year_range}")
         print(f"Stats: {stats_data}")
@@ -342,6 +518,21 @@ def index():
         monthly_activity = []
         platform_performance = []
         top_rated_recent = []
+        tactical_sankey_data = []
+        tactical_venn_data = []
+        tactical_chord_data = []
+        tactical_dumbbell_data = []
+        tactical_marimekko_data = []
+        lifecycle_survival_data = []
+        lifecycle_ridgeline_data = []
+        lifecycle_timeline_data = []
+        lifecycle_hexbin_data = []
+        lifecycle_parallel_data = []
+        evolution_stream_data = []
+        evolution_bubble_data = []
+        evolution_hexbin_data = []
+        evolution_parallel_data = []
+        evolution_tree_data = []
 
     return render_template('index.html', 
                          stats=stats_data, 
@@ -373,6 +564,24 @@ def index():
                          monthly_activity=monthly_activity,
                          platform_performance=platform_performance,
                          top_rated_recent=top_rated_recent,
+                         # Tactical dashboard data
+                         tactical_sankey_data=tactical_sankey_data,
+                         tactical_venn_data=tactical_venn_data,
+                         tactical_chord_data=tactical_chord_data,
+                         tactical_dumbbell_data=tactical_dumbbell_data,
+                         tactical_marimekko_data=tactical_marimekko_data,
+                         # Lifecycle dashboard data
+                         lifecycle_survival_data=lifecycle_survival_data,
+                         lifecycle_ridgeline_data=lifecycle_ridgeline_data,
+                         lifecycle_timeline_data=lifecycle_timeline_data,
+                         lifecycle_hexbin_data=lifecycle_hexbin_data,
+                         lifecycle_parallel_data=lifecycle_parallel_data,
+                         # Evolution dashboard data
+                         evolution_stream_data=evolution_stream_data,
+                         evolution_bubble_data=evolution_bubble_data,
+                         evolution_hexbin_data=evolution_hexbin_data,
+                         evolution_parallel_data=evolution_parallel_data,
+                         evolution_tree_data=evolution_tree_data,
                          error=error)
 
 @app.route('/search')
