@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 def index():
     # Determine which tab is active
     active_tab = request.args.get('tab', 'studio')
-    
+
     # Initialize variables
     stats_data = {}
     top_games = []
@@ -89,7 +89,7 @@ def index():
             # Validate selected genres and platforms
             valid_genres = [genre for genre in selected_genres if genre in all_genres]
             valid_platforms = [platform for platform in selected_platforms if platform in all_platforms]
-            
+                
             year_start = request.args.get('year_start', type=int, default=min_year_data)
             year_end = request.args.get('year_end', type=int, default=max_year_data)
             
