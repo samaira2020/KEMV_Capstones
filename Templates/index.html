@@ -6,72 +6,197 @@
     <title>Video Game Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
-            background-color: #1e1e1e;
-            color: #ffffff;
-            font-family: 'Arial', sans-serif;
+            background-color: #1a1a2e;
+            color: #eee;
+            font-family: 'Roboto', sans-serif;
             padding: 0;
             margin: 0;
+            font-size: 14px;
         }
         .container-fluid {
             padding: 20px;
         }
         .sidebar {
-            background-color: #2d2d2d;
+            background-color: #16213e;
             padding: 20px;
             border-radius: 10px;
-            color: #ffffff;
+            color: #eee;
+            border: 1px solid #0f3460;
         }
         .main-content {
             padding: 20px;
         }
         .card {
-            background-color: #2d2d2d;
-            border: none;
+            background-color: #16213e;
+            border: 1px solid #0f3460;
             border-radius: 10px;
             margin-bottom: 20px;
             padding: 20px;
+            min-height: 300px;
         }
         .card-title {
-            color: #ffffff;
-            font-size: 1.5rem;
+            color: #e94560;
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
             margin-bottom: 15px;
-        }
-        .big-number {
-            font-size: 3rem;
-            font-weight: bold;
-            color: #00aaff; /* Highlight color */
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            line-height: 1.3;
             text-align: center;
         }
-        canvas {
-            background-color: #2d2d2d;
-            border-radius: 10px;
-            padding: 10px;
+        .big-number {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 700;
+            color: #f39c12;
+            text-align: center;
+            line-height: 1.2;
+            word-break: break-word;
         }
-        /* Add some spacing between rows */
+        .chart-container {
+            position: relative;
+            height: 250px;
+            width: 100%;
+        }
+        canvas {
+            background-color: transparent !important;
+        }
         .row + .row {
             margin-top: 20px;
         }
-         /* Style for filter dropdowns */
         .form-select {
-            background-color: #1e1e1e;
-            color: #ffffff;
-            border: 1px solid #444;
+            background-color: #1a1a2e;
+            color: #eee;
+            border: 1px solid #0f3460;
+            font-size: 0.9rem;
         }
         .form-select option {
-            background-color: #1e1e1e;
-            color: #ffffff;
+            background-color: #1a1a2e;
+            color: #eee;
         }
-         /* Style for slider */
-         .slider-container {
-             margin-bottom: 20px;
-         }
-         .slider-container label {
-             display: block;
-             margin-bottom: 10px;
-         }
-
+        .slider-container {
+            margin-bottom: 20px;
+        }
+        .slider-container label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            color: #eee;
+        }
+        .text-muted {
+            color: #3498db !important;
+            font-size: clamp(0.7rem, 2vw, 0.9rem);
+        }
+        .no-data-message {
+            color: #e74c3c;
+        }
+        .btn-primary {
+            background-color: #e94560;
+            border-color: #e94560;
+            color: #fff;
+            font-weight: 600;
+            font-family: 'Orbitron', monospace;
+        }
+        .btn-primary:hover {
+            background-color: #c73650;
+            border-color: #c73650;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            color: #fff;
+            font-weight: 600;
+            font-family: 'Orbitron', monospace;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+        }
+        h1, h2, h3 {
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            color: #eee;
+        }
+        h1 {
+            font-size: 2.2rem;
+            color: #e94560;
+        }
+        h3 {
+            font-size: 1.3rem;
+        }
+        .form-label {
+            color: #eee;
+        }
+        .nav-tabs {
+            border-bottom: 2px solid #0f3460;
+        }
+        .nav-tabs .nav-link {
+            background-color: #0f3460;
+            color: #eee;
+            border: 1px solid #0f3460;
+            margin-right: 5px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        .nav-tabs .nav-link:hover {
+            background-color: #16213e;
+            color: #e94560;
+            border-color: #16213e;
+        }
+        .nav-tabs .nav-link.active {
+            background-color: #e94560;
+            color: #fff;
+            border-color: #e94560;
+            font-weight: 700;
+        }
+        .table-dark {
+            background-color: #0f3460;
+            color: #eee;
+        }
+        .table-dark th {
+            background-color: #16213e;
+            color: #e94560;
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        .table-dark td {
+            font-size: 0.8rem;
+        }
+        
+        /* Multi-select styling */
+        select[multiple] {
+            padding: 8px;
+            border-radius: 6px;
+        }
+        select[multiple] option {
+            padding: 4px 8px;
+            margin: 1px 0;
+            border-radius: 3px;
+        }
+        select[multiple] option:checked {
+            background-color: #e94560 !important;
+            color: #fff !important;
+        }
+        select[multiple] option:hover {
+            background-color: #16213e !important;
+            color: #8be9fd !important;
+        }
+        
+        /* Quick selection buttons */
+        .btn-outline-secondary {
+            border-color: #6c757d;
+            color: #6c757d;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+        .btn-outline-secondary:hover {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -79,42 +204,109 @@
         <div class="row">
             <!-- Sidebar for Filters -->
             <div class="col-md-3">
-        <div class="sidebar">
-            <h3>Filter Data</h3>
-                    <form id="filter-form" method="GET" action="/">
-                         <div class="mb-3">
-                            <label for="genre-filter" class="form-label">Select Genre(s)</label>
-                            <select class="form-select" id="genre-filter" name="genre" multiple>
-                    {% for genre in all_genres %}
-                                    <option value="{{ genre }}" {% if genre in selected_genres %}selected{% endif %}>{{ genre }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+                <div class="sidebar">
+                    <!-- Studio Performance Filters -->
+                    <div id="studio-filters">
+                        <h3>Studio Performance Filters</h3>
+                        <form id="studio-filter-form" method="GET" action="/">
+                            <input type="hidden" name="tab" value="studio">
+                            <div class="mb-3">
+                                <label for="genre-filter" class="form-label">Select Genre(s)</label>
+                                <select class="form-select" id="genre-filter" name="genre" multiple>
+                                    {% for genre in all_genres %}
+                                        <option value="{{ genre }}" {% if genre in selected_genres %}selected{% endif %}>{{ genre }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
 
-                        <div class="mb-3">
-                            <label for="platform-filter" class="form-label">Select Platform(s)</label>
-                            <select class="form-select" id="platform-filter" name="platform" multiple>
-                    {% for platform in all_platforms %}
-                                    <option value="{{ platform }}" {% if platform in selected_platforms %}selected{% endif %}>{{ platform }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+                            <div class="mb-3">
+                                <label for="platform-filter" class="form-label">Select Platform(s)</label>
+                                <select class="form-select" id="platform-filter" name="platform" multiple>
+                                    {% for platform in all_platforms %}
+                                        <option value="{{ platform }}" {% if platform in selected_platforms %}selected{% endif %}>{{ platform }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
 
-                         <div class="slider-container">
-                             <label for="year-range" class="form-label">Select Release Year Range: <span id="year-range-display">{{ year_range[0] | default(min_year) }} - {{ year_range[1] | default(max_year) }}</span></label>
-                              <input type="range" class="form-range" id="year-start" name="year_start" min="{{ min_year }}" max="{{ max_year }}" value="{{ year_range[0] | default(min_year) }}">
-                              <input type="range" class="form-range" id="year-end" name="year_end" min="{{ min_year }}" max="{{ max_year }}" value="{{ year_range[1] | default(max_year) }}">
-                         </div>
+                            <div class="slider-container">
+                                <label for="year-range" class="form-label">Release Year Range: <span id="year-range-display">{{ year_range[0] | default(min_year) }} - {{ year_range[1] | default(max_year) }}</span></label>
+                                <input type="range" class="form-range" id="year-start" name="year_start" min="{{ min_year }}" max="{{ max_year }}" value="{{ year_range[0] | default(min_year) }}">
+                                <input type="range" class="form-range" id="year-end" name="year_end" min="{{ min_year }}" max="{{ max_year }}" value="{{ year_range[1] | default(max_year) }}">
+                            </div>
 
-                        <button type="submit" class="btn btn-primary">Apply Filters</button>
-                    </form>
+                            <button type="submit" class="btn btn-primary">Apply Filters</button>
+                        </form>
+                    </div>
+
+                    <!-- Operational Dashboard Filters -->
+                    <div id="operational-filters" style="display: none;">
+                        <h3>Game Release & Ratings Activity Filters</h3>
+                        <form id="operational-filter-form" method="GET" action="/">
+                            <input type="hidden" name="tab" value="operational">
+                            
+                            <div class="mb-3">
+                                <label for="op-year-filter" class="form-label">Select Year(s)</label>
+                                <select class="form-select" id="op-year-filter" name="op_years" multiple size="5">
+                                    {% for year in range(max_year, min_year - 1, -1) %}
+                                        <option value="{{ year }}" {% if request.args.getlist('op_years') and year|string in request.args.getlist('op_years') %}selected{% endif %}>{{ year }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Hold Ctrl/Cmd to select multiple years</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="op-month-filter" class="form-label">Select Month(s)</label>
+                                <select class="form-select" id="op-month-filter" name="op_months" multiple size="6">
+                                    <option value="1" {% if request.args.getlist('op_months') and '1' in request.args.getlist('op_months') %}selected{% endif %}>January</option>
+                                    <option value="2" {% if request.args.getlist('op_months') and '2' in request.args.getlist('op_months') %}selected{% endif %}>February</option>
+                                    <option value="3" {% if request.args.getlist('op_months') and '3' in request.args.getlist('op_months') %}selected{% endif %}>March</option>
+                                    <option value="4" {% if request.args.getlist('op_months') and '4' in request.args.getlist('op_months') %}selected{% endif %}>April</option>
+                                    <option value="5" {% if request.args.getlist('op_months') and '5' in request.args.getlist('op_months') %}selected{% endif %}>May</option>
+                                    <option value="6" {% if request.args.getlist('op_months') and '6' in request.args.getlist('op_months') %}selected{% endif %}>June</option>
+                                    <option value="7" {% if request.args.getlist('op_months') and '7' in request.args.getlist('op_months') %}selected{% endif %}>July</option>
+                                    <option value="8" {% if request.args.getlist('op_months') and '8' in request.args.getlist('op_months') %}selected{% endif %}>August</option>
+                                    <option value="9" {% if request.args.getlist('op_months') and '9' in request.args.getlist('op_months') %}selected{% endif %}>September</option>
+                                    <option value="10" {% if request.args.getlist('op_months') and '10' in request.args.getlist('op_months') %}selected{% endif %}>October</option>
+                                    <option value="11" {% if request.args.getlist('op_months') and '11' in request.args.getlist('op_months') %}selected{% endif %}>November</option>
+                                    <option value="12" {% if request.args.getlist('op_months') and '12' in request.args.getlist('op_months') %}selected{% endif %}>December</option>
+                                </select>
+                                <small class="text-muted">Hold Ctrl/Cmd to select multiple months</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="op-rating-filter" class="form-label">Minimum Rating</label>
+                                <select class="form-select" id="op-rating-filter" name="op_min_rating">
+                                    <option value="" {% if not request.args.get('op_min_rating') %}selected{% endif %}>Any Rating</option>
+                                    <option value="5" {% if request.args.get('op_min_rating') == '5' %}selected{% endif %}>5.0+</option>
+                                    <option value="6" {% if request.args.get('op_min_rating') == '6' %}selected{% endif %}>6.0+</option>
+                                    <option value="7" {% if request.args.get('op_min_rating') == '7' %}selected{% endif %}>7.0+</option>
+                                    <option value="8" {% if request.args.get('op_min_rating') == '8' %}selected{% endif %}>8.0+</option>
+                                    <option value="9" {% if request.args.get('op_min_rating') == '9' %}selected{% endif %}>9.0+</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="op-timeframe" class="form-label">Analysis Timeframe</label>
+                                <select class="form-select" id="op-timeframe" name="op_timeframe">
+                                    <option value="all" {% if request.args.get('op_timeframe') == 'all' %}selected{% endif %}>All Time</option>
+                                    <option value="recent" {% if not request.args.get('op_timeframe') or request.args.get('op_timeframe') == 'recent' %}selected{% endif %}>Recent (Last 5 Years)</option>
+                                    <option value="last_decade" {% if request.args.get('op_timeframe') == 'last_decade' %}selected{% endif %}>Last Decade</option>
+                                    <option value="custom" {% if request.args.get('op_timeframe') == 'custom' %}selected{% endif %}>Custom Range (Use Year Selection)</option>
+                                </select>
+                                <small class="text-muted">Custom Range uses your selected years above</small>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Apply Filters</button>
+                            <button type="button" class="btn btn-secondary mt-2" id="reset-op-filters">Reset Filters</button>
+                        </form>
+                    </div>
                 </div>
-        </div>
+            </div>
 
             <!-- Main Content Area -->
             <div class="col-md-9">
-        <div class="main-content">
-                    <h1 class="text-center my-4">Video Game Data Analysis Dashboard</h1>
+                <div class="main-content">
+                    <h1 class="text-center my-4">Gaming Analytics Dashboard</h1>
 
                     {% if error %}
                         <div class="alert alert-danger" role="alert">
@@ -122,168 +314,562 @@
                         </div>
                     {% endif %}
 
-                    <!-- Key Insights Row -->
-                    <div class="row">
-                        <!-- Total Games Card -->
-                        <div class="col-md-4">
-                            <div class="card">
-                                <h5 class="card-title">Total Games Analyzed</h5>
-                                <div class="big-number">{{ stats.total_games | default(0) }}</div>
-                            </div>
-                    </div>
-
-                        <!-- Top Publisher Card -->
-                         <div class="col-md-4">
-                            <div class="card">
-                                <h5 class="card-title">Top Publisher</h5>
-                                 {% if publisher_counts and publisher_counts[0] %}
-                                     <div class="big-number">{{ publisher_counts[0]._id }}</div>
-                                     <p class="text-center text-muted">{{ publisher_counts[0].count }} games</p>
-                                 {% else %}
-                                     <p class="text-center text-muted">No publisher data available.</p>
-                                 {% endif %}
-                    </div>
-                </div>
-
-                         <!-- Most Highly Rated Games List -->
-                         <div class="col-md-4">
-                             <div class="card">
-                                 <h5 class="card-title">Most Highly Rated Games</h5>
-                                 <ul class="list-unstyled">
-                                     {% for game in top_games %}
-                                         <li><strong>{{ loop.index }}.</strong> {{ game.name | default('Unknown Game') }} (Rating: {{ game.rating | default(0.0) | round(1) }})</li>
-                        {% else %}
-                                         <li>No highly rated games found.</li>
-                        {% endfor %}
+                    <!-- Tab Navigation -->
+                    <ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="studio-tab" data-bs-toggle="tab" data-bs-target="#studio-performance" type="button" role="tab">
+                                Studio Performance Overview
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="operational-tab" data-bs-toggle="tab" data-bs-target="#operational-dashboard" type="button" role="tab">
+                                Game Release & Ratings Activity
+                            </button>
+                        </li>
                     </ul>
-                             </div>
-                         </div>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content" id="dashboardTabContent">
+                        <!-- Studio Performance Tab -->
+                        <div class="tab-pane fade show active" id="studio-performance" role="tabpanel">
+                            <!-- Key Insights Row -->
+                            <div class="row justify-content-center">
+                                <!-- Total Games Card -->
+                                <div class="col-md-3">
+                                    <div class="card" style="min-height: 200px;">
+                                        <h5 class="card-title">Total Games Analyzed</h5>
+                                        <div class="big-number">{{ stats.total_games | default(0) }}</div>
+                                    </div>
+                                </div>
+
+                                <!-- Top Publisher Card -->
+                                <div class="col-md-3">
+                                    <div class="card" style="min-height: 200px;">
+                                        <h5 class="card-title">Top Publisher</h5>
+                                        {% set filtered_publishers = [] %}
+                                        {% for publisher in publisher_counts %}
+                                            {% set pub_name = publisher._id | string | lower | trim %}
+                                            {% if pub_name not in ['none', 'null', '', 'undefined', 'n/a', 'unknown', 'other'] %}
+                                                {% set _ = filtered_publishers.append(publisher) %}
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if filtered_publishers and filtered_publishers[0] %}
+                                            <div class="big-number">{{ filtered_publishers[0]._id }}</div>
+                                            <p class="text-center text-muted">{{ filtered_publishers[0].count }} games</p>
+                                        {% else %}
+                                            <p class="text-center text-muted">No publisher data available.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Total Votes Card -->
+                                <div class="col-md-3">
+                                    <div class="card" style="min-height: 200px;">
+                                        <h5 class="card-title">Total Community Votes</h5>
+                                        {% if votes_analytics and votes_analytics.total_votes %}
+                                            <div class="big-number">{{ "{:,}".format(votes_analytics.total_votes) }}</div>
+                                            <p class="text-center text-muted">Avg: {{ votes_analytics.avg_votes_per_game | default(0) }} per game</p>
+                                        {% else %}
+                                            <p class="text-center text-muted">No voting data available.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Most Highly Rated and Most Voted Games Row -->
+                            <div class="row">
+                                <!-- Most Highly Rated Games List -->
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <h5 class="card-title">Most Highly Rated Games</h5>
+                                        <ul class="list-unstyled">
+                                            {% for game in top_games %}
+                                                <li style="color: #8be9fd;"><strong>{{ loop.index }}.</strong> {{ game.name | default('Unknown Game') }} (Rating: {{ game.rating | default(0.0) | round(1) }})</li>
+                                            {% else %}
+                                                <li class="no-data-message">No highly rated games found.</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Most Voted Games List -->
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <h5 class="card-title">Most Voted Games</h5>
+                                        <ul class="list-unstyled">
+                                            {% for game in most_voted_games %}
+                                                <li style="color: #8be9fd;"><strong>{{ loop.index }}.</strong> {{ game.name | default('Unknown Game') }} ({{ "{:,}".format(game.votes) }} votes, Rating: {{ game.rating | default(0.0) }})</li>
+                                            {% else %}
+                                                <li class="no-data-message">No voting data found.</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Charts Row 1 -->
+                            <div class="row">
+                                <!-- Games Per Year Chart -->
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <h5 class="card-title">Games Released Per Year</h5>
+                                        <div class="chart-container">
+                                            <canvas id="gamesPerYearChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Game Share by Publisher Chart -->
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <h5 class="card-title">Game Share by Publisher (Top 10)</h5>
+                                        <div class="chart-container">
+                                            <canvas id="publisherShareChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Charts Row 2 -->
+                            <div class="row">
+                                <!-- Game Counts by Platform Chart -->
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <h5 class="card-title">Game Distribution by Platform</h5>
+                                        <div class="chart-container">
+                                            <canvas id="platformChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Game Counts by Genre Chart -->
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <h5 class="card-title">Game Distribution by Genre</h5>
+                                        <div class="chart-container">
+                                            <canvas id="genreChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Charts Row 3 -->
+                            <div class="row">
+                                <!-- Average Rating by Platform Chart -->
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <h5 class="card-title">Average Rating by Platform (Top 10)</h5>
+                                        <div class="chart-container">
+                                            <canvas id="avgRatingPlatformChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Average Rating by Developer Chart -->
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <h5 class="card-title">Average Rating by Developer (Top 10)</h5>
+                                        <div class="chart-container">
+                                            <canvas id="avgRatingDeveloperChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Enhanced Analytics Row 1 -->
+                            <div class="row">
+                                <!-- Game Type Distribution Chart -->
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <h5 class="card-title">Game Type Distribution</h5>
+                                        <div class="chart-container">
+                                            <canvas id="gameTypeChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Rating Distribution Chart -->
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <h5 class="card-title">Rating Distribution</h5>
+                                        <div class="chart-container">
+                                            <canvas id="ratingDistributionChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Enhanced Analytics Row 2 -->
+                            <div class="row">
+                                <!-- Director Analytics Chart -->
+                                <div class="col-md-12">
+                                    <div class="card">
+                                        <h5 class="card-title">Top Directors by Average Rating (Min 2 Games)</h5>
+                                        <div class="chart-container">
+                                            <canvas id="directorAnalyticsChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Operational Dashboard Tab -->
+                        <div class="tab-pane fade" id="operational-dashboard" role="tabpanel">
+                            <!-- Operational Metrics Row -->
+                            <div class="row justify-content-center">
+                                <!-- Recent Releases Count -->
+                                <div class="col-md-3">
+                                    <div class="card" style="min-height: 200px;">
+                                        <h5 class="card-title">Releases</h5>
+                                        <div class="big-number">{{ recent_releases | length }}</div>
+                                        {% if active_tab == 'operational' %}
+                                            {% set op_years = request.args.getlist('op_years') %}
+                                            {% set op_months = request.args.getlist('op_months') %}
+                                            {% if op_years %}
+                                                {% if op_years | length == 1 %}
+                                                    <p class="text-center text-muted">From {{ op_years[0] }}</p>
+                                                {% else %}
+                                                    <p class="text-center text-muted">From {{ op_years | min }}-{{ op_years | max }}</p>
+                                                {% endif %}
+                                            {% elif year_range and year_range[0] == year_range[1] %}
+                                                <p class="text-center text-muted">From {{ year_range[0] }}</p>
+                                            {% elif year_range %}
+                                                <p class="text-center text-muted">From {{ year_range[0] }}-{{ year_range[1] }}</p>
+                                            {% else %}
+                                                <p class="text-center text-muted">Recent years</p>
+                                            {% endif %}
+                                        {% else %}
+                                            <p class="text-center text-muted">Last 2 years</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Average Recent Rating -->
+                                <div class="col-md-3">
+                                    <div class="card" style="min-height: 200px;">
+                                        <h5 class="card-title">Avg Recent Rating</h5>
+                                        {% if top_rated_recent %}
+                                            {% set avg_recent = (top_rated_recent | map(attribute='rating') | sum) / (top_rated_recent | length) %}
+                                            <div class="big-number">{{ avg_recent | round(1) }}</div>
+                                        {% else %}
+                                            <div class="big-number">N/A</div>
+                                        {% endif %}
+                                        <p class="text-center text-muted">Top rated games</p>
+                                    </div>
+                                </div>
+
+                                <!-- Active Platforms -->
+                                <div class="col-md-3">
+                                    <div class="card" style="min-height: 200px;">
+                                        <h5 class="card-title">Active Platforms</h5>
+                                        <div class="big-number">{{ platform_performance | length }}</div>
+                                        <p class="text-center text-muted">With 5+ games</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Recent Games and Platform Performance Row -->
+                            <div class="row">
+                                <!-- Recent Releases List -->
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        {% if active_tab == 'operational' %}
+                                            {% set op_years = request.args.getlist('op_years') %}
+                                            {% if op_years %}
+                                                {% if op_years | length == 1 %}
+                                                    <h5 class="card-title">Recent Releases from {{ op_years[0] }}</h5>
+                                                {% else %}
+                                                    <h5 class="card-title">Recent Releases ({{ op_years | min }}-{{ op_years | max }})</h5>
+                                                {% endif %}
+                                            {% elif year_range and year_range[0] == year_range[1] %}
+                                                <h5 class="card-title">Recent Releases from {{ year_range[0] }}</h5>
+                                            {% elif year_range %}
+                                                <h5 class="card-title">Recent Releases ({{ year_range[0] }}-{{ year_range[1] }})</h5>
+                                            {% else %}
+                                                <h5 class="card-title">Recent Releases</h5>
+                                            {% endif %}
+                                        {% else %}
+                                            <h5 class="card-title">Recent Releases</h5>
+                                        {% endif %}
+                                        <div style="max-height: 300px; overflow-y: auto;">
+                                            <ul class="list-unstyled">
+                                                {% for game in recent_releases[:15] %}
+                                                    <li style="color: #8be9fd; font-size: 0.85rem; margin-bottom: 5px;">
+                                                        <strong>{{ game.name | default('Unknown Game') }}</strong><br>
+                                                        <small class="text-muted">{{ game.rating }}/10 • {{ game.platform | default('Unknown Platform') }}</small>
+                                                    </li>
+                                                {% else %}
+                                                    <li class="no-data-message">No releases found for selected period.</li>
+                                                {% endfor %}
+                                                {% if recent_releases | length > 15 %}
+                                                    <li class="text-muted" style="font-size: 0.8rem; text-align: center; margin-top: 10px;">
+                                                        ... and {{ (recent_releases | length) - 15 }} more releases
+                                                    </li>
+                                                {% endif %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Recent Top Rated Games -->
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        {% if active_tab == 'operational' %}
+                                            {% set op_years = request.args.getlist('op_years') %}
+                                            {% if op_years %}
+                                                {% if op_years | length == 1 %}
+                                                    <h5 class="card-title">Top Rated Games from {{ op_years[0] }}</h5>
+                                                {% else %}
+                                                    <h5 class="card-title">Top Rated Games ({{ op_years | min }}-{{ op_years | max }})</h5>
+                                                {% endif %}
+                                            {% elif year_range and year_range[0] == year_range[1] %}
+                                                <h5 class="card-title">Top Rated Games from {{ year_range[0] }}</h5>
+                                            {% elif year_range %}
+                                                <h5 class="card-title">Top Rated Games ({{ year_range[0] }}-{{ year_range[1] }})</h5>
+                                            {% else %}
+                                                <h5 class="card-title">Top Rated Recent Games</h5>
+                                            {% endif %}
+                                        {% else %}
+                                            <h5 class="card-title">Top Rated Recent Games</h5>
+                                        {% endif %}
+                                        <ul class="list-unstyled">
+                                            {% for game in top_rated_recent[:10] %}
+                                                <li style="color: #8be9fd;"><strong>{{ loop.index }}.</strong> {{ game.name | default('Unknown Game') }} ({{ game.rating }}/10, {{ game.release_year }})</li>
+                                            {% else %}
+                                                <li class="no-data-message">No recent games found.</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Platform Performance Row -->
+                            <div class="row">
+                                <!-- Platform Performance Table -->
+                                <div class="col-md-12">
+                                    <div class="card">
+                                        <h5 class="card-title">Platform Performance Metrics</h5>
+                                        <div style="max-height: 300px; overflow-y: auto;">
+                                            <table class="table table-dark table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Platform</th>
+                                                        <th>Games</th>
+                                                        <th>Avg Rating</th>
+                                                        <th>Range</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for platform in platform_performance[:15] %}
+                                                        <tr>
+                                                            <td style="color: #8be9fd;">{{ platform.platform }}</td>
+                                                            <td>{{ platform.total_games }}</td>
+                                                            <td>{{ platform.avg_rating }}</td>
+                                                            <td>{{ platform.rating_range }}</td>
+                                                        </tr>
+                                                    {% else %}
+                                                        <tr><td colspan="4" class="no-data-message">No platform data available.</td></tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Operational Charts Row 1 -->
+                            <div class="row">
+                                <!-- Rating Trends Chart -->
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <h5 class="card-title">Rating Trends by Month</h5>
+                                        <div class="chart-container">
+                                            <canvas id="ratingTrendsChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Monthly Release Activity Chart -->
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <h5 class="card-title">Monthly Release Activity</h5>
+                                        <div class="chart-container">
+                                            <canvas id="monthlyActivityChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Operational Charts Row 2 -->
+                            <div class="row">
+                                <!-- Platform Performance Chart -->
+                                <div class="col-md-12">
+                                    <div class="card">
+                                        <h5 class="card-title">Platform Performance Overview</h5>
+                                        <div class="chart-container">
+                                            <canvas id="platformPerformanceChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-
-                    <hr style="border-top: 1px solid #444;">
-
-                    <!-- General Visualizations Row 1 -->
-                    <div class="row">
-                        <!-- Games Per Year Chart -->
-                        <div class="col-md-6">
-                            <div class="card">
-                                <h5 class="card-title">Games Released Per Year</h5>
-                                <canvas id="gamesPerYearChart"></canvas>
-                            </div>
-                        </div>
-
-                        <!-- Game Share by Publisher Chart -->
-                        <div class="col-md-6">
-                            <div class="card">
-                                <h5 class="card-title">Game Share by Publisher (Top 10)</h5>
-                                <canvas id="publisherShareChart"></canvas>
-                            </div>
-                </div>
-            </div>
-
-                    <!-- General Visualizations Row 2 -->
-                    <div class="row">
-                         <!-- Game Counts by Platform Chart -->
-                        <div class="col-md-6">
-                            <div class="card">
-                                <h5 class="card-title">Game Distribution by Platform</h5>
-                                <canvas id="platformChart"></canvas>
-                            </div>
-                        </div>
-
-                        <!-- Game Counts by Genre Chart -->
-                        <div class="col-md-6">
-                            <div class="card">
-                                <h5 class="card-title">Game Distribution by Genre</h5>
-                                <canvas id="genreChart"></canvas>
-                </div>
-                </div>
-            </div>
-
-                     <!-- Deep Dive Analysis Row -->
-                     <div class="row">
-                          <!-- Average Rating by Platform Chart -->
-                        <div class="col-md-6">
-                            <div class="card">
-                                <h5 class="card-title">Average Rating by Platform (Top 10)</h5>
-                                <canvas id="avgRatingPlatformChart"></canvas>
-                            </div>
-                        </div>
-
-                        <!-- Average Rating by Developer Chart -->
-                        <div class="col-md-6">
-                            <div class="card">
-                                <h5 class="card-title">Average Rating by Developer (Top 10)</h5>
-                                <canvas id="avgRatingDeveloperChart"></canvas>
-                            </div>
-                        </div>
-            </div>
-
-                    <!-- You can add sections here for mapping data if needed -->
-                    {#
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="card">
-                                <h5 class="card-title">Publisher Mapping (Example)</h5>
-                                <pre>{{ publisher_mapping | tojson(indent=2) }}</pre>
-                            </div>
-                        </div>
-                    </div>
-                    #}
-
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Data passed from Flask backend -->
     <script>
         // Data passed from Flask backend
-        const stats = {{ stats | tojson }};
-        const topGames = {{ top_games | tojson }};
-        const platformCounts = {{ platform_counts | tojson }};
-        const genreCounts = {{ genre_counts | tojson }};
-        const gamesPerYear = {{ games_per_year | tojson }};
-        const publisherCounts = {{ publisher_counts | tojson }};
-        const avgRatingPlatform = {{ avg_rating_platform | tojson }};
-        const avgRatingDeveloper = {{ avg_rating_developer | tojson }};
+        const stats = {{ stats | safe_tojson | safe }};
+        const topGames = {{ top_games | safe_tojson | safe }};
+        const platformCounts = {{ platform_counts | safe_tojson | safe }};
+        const genreCounts = {{ genre_counts | safe_tojson | safe }};
+        const gamesPerYear = {{ games_per_year | safe_tojson | safe }};
+        const publisherCounts = {{ publisher_counts | safe_tojson | safe }};
+        const avgRatingPlatform = {{ avg_rating_platform | safe_tojson | safe }};
+        const avgRatingDeveloper = {{ avg_rating_developer | safe_tojson | safe }};
 
-        // Function to generate random colors
-        function generateColors(num) {
-            const colors = [];
-            for (let i = 0; i < num; i++) {
-                const color = '#' + Math.floor(Math.random()*16777215).toString(16);
-                colors.push(color);
-            }
-            return colors;
+        // Enhanced analytics data
+        const directorAnalytics = {{ director_analytics | safe_tojson | safe }};
+        const gameTypeDistribution = {{ game_type_distribution | safe_tojson | safe }};
+        const ratingDistribution = {{ rating_distribution | safe_tojson | safe }};
+        const votesAnalytics = {{ votes_analytics | safe_tojson | safe }};
+        const mostVotedGames = {{ most_voted_games | safe_tojson | safe }};
+        const collectionSummary = {{ collection_summary | safe_tojson | safe }};
+
+        // Operational dashboard data
+        const recentReleases = {{ recent_releases | safe_tojson | safe }};
+        const ratingTrends = {{ rating_trends | safe_tojson | safe }};
+        const monthlyActivity = {{ monthly_activity | safe_tojson | safe }};
+        const platformPerformance = {{ platform_performance | safe_tojson | safe }};
+        const topRatedRecent = {{ top_rated_recent | safe_tojson | safe }};
+
+        // Debug logging
+        console.log('Stats:', stats);
+        console.log('Platform Counts:', platformCounts);
+        console.log('Genre Counts:', genreCounts);
+        console.log('Games Per Year:', gamesPerYear);
+        console.log('Publisher Counts:', publisherCounts);
+        console.log('Operational Data:', {
+            recentReleases: recentReleases.length,
+            ratingTrends: ratingTrends.length,
+            monthlyActivity: monthlyActivity.length,
+            platformPerformance: platformPerformance.length,
+            topRatedRecent: topRatedRecent.length
+        });
+
+        // Function to filter out unwanted values
+        function filterUnwantedValues(data, labelKey = '_id', valueKey = 'count') {
+            const unwantedValues = [
+                'other', 'null', '', 'undefined', 'none', 'n/a', 'unknown', 
+                'not specified', 'not available', 'various', 'misc', 'miscellaneous',
+                'tbd', 'tba', 'to be announced', 'to be determined', 'missing'
+            ];
+            
+            return data.filter(item => {
+                const label = item[labelKey];
+                if (!label) return false;
+                
+                const labelStr = String(label).toLowerCase().trim();
+                return !unwantedValues.includes(labelStr) && labelStr.length > 0;
+            });
         }
+
+        // Function to generate predefined colors for better consistency
+        function generateColors(num) {
+            const colorPalette = [
+                '#50fa7b', '#ff79c6', '#8be9fd', '#ffb86c', '#bd93f9',
+                '#f1fa8c', '#ff5555', '#6272a4', '#44475a', '#282a36',
+                '#00ff41', '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4',
+                '#feca57', '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3'
+            ];
+            return colorPalette.slice(0, num);
+        }
+
+        // Common chart options with improved visibility
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 1000
+            },
+            plugins: {
+                legend: {
+                    labels: { 
+                        color: '#eee',
+                        font: {
+                            family: 'Roboto',
+                            size: 11
+                        }
+                    }
+                },
+                title: { 
+                    color: '#e94560',
+                    font: {
+                        family: 'Orbitron',
+                        size: 12,
+                        weight: 'bold'
+                    }
+                }
+            },
+            scales: {
+                x: { 
+                    ticks: { 
+                        color: '#eee',
+                        font: {
+                            family: 'Roboto',
+                            size: 10
+                        }
+                    }, 
+                    grid: { color: '#0f3460' } 
+                },
+                y: { 
+                    beginAtZero: true, 
+                    ticks: { 
+                        color: '#eee',
+                        font: {
+                            family: 'Roboto',
+                            size: 10
+                        }
+                    }, 
+                    grid: { color: '#0f3460' } 
+                }
+            }
+        };
 
         // Chart for Game Counts by Platform
         if (platformCounts && platformCounts.length > 0) {
             const platformCtx = document.getElementById('platformChart').getContext('2d');
-            const top10Platforms = platformCounts.slice(0, 10);
+            const filteredPlatforms = filterUnwantedValues(platformCounts).slice(0, 10);
             new Chart(platformCtx, {
                 type: 'bar',
                 data: {
-                    labels: top10Platforms.map(item => item._id),
+                    labels: filteredPlatforms.map(item => item._id),
                     datasets: [{
                         label: 'Number of Games',
-                        data: top10Platforms.map(item => item.count),
-                        backgroundColor: generateColors(top10Platforms.length),
-                        borderColor: '#ffffff',
+                        data: filteredPlatforms.map(item => item.count),
+                        backgroundColor: generateColors(filteredPlatforms.length),
+                        borderColor: '#f8f8f2',
                         borderWidth: 1
                     }]
                 },
                 options: {
-                    responsive: false,
-                    maintainAspectRatio: false,
-                    animation: false,
+                    ...commonOptions,
                     plugins: {
+                        ...commonOptions.plugins,
                         legend: { display: false },
-                        title: { display: true, text: 'Game Distribution by Platform (Top 10)', color: '#ffffff' }
-                    },
-                    scales: {
-                        x: { ticks: { color: '#ffffff' }, grid: { color: '#444' } },
-                        y: { beginAtZero: true, ticks: { color: '#ffffff' }, grid: { color: '#444' } }
+                        title: { 
+                            display: true, 
+                            text: 'Game Distribution by Platform (Top 10)', 
+                            color: '#bd93f9',
+                            font: {
+                                family: 'Orbitron',
+                                size: 12,
+                                weight: 'bold'
+                            }
+                        }
                     }
                 }
             });
@@ -292,89 +878,85 @@
         // Chart for Game Counts by Genre
         if (genreCounts && genreCounts.length > 0) {
             const genreCtx = document.getElementById('genreChart').getContext('2d');
-            const top10Genres = genreCounts.slice(0, 10);
+            const filteredGenres = filterUnwantedValues(genreCounts).slice(0, 10);
             new Chart(genreCtx, {
                 type: 'pie',
                 data: {
-                    labels: top10Genres.map(item => item._id),
+                    labels: filteredGenres.map(item => item._id),
                     datasets: [{
                         label: 'Number of Games',
-                        data: top10Genres.map(item => item.count),
-                        backgroundColor: generateColors(top10Genres.length),
-                        borderColor: '#ffffff',
-                        borderWidth: 1
+                        data: filteredGenres.map(item => item.count),
+                        backgroundColor: generateColors(filteredGenres.length),
+                        borderColor: '#f8f8f2',
+                        borderWidth: 2
                     }]
                 },
                 options: {
-                    responsive: false,
+                    responsive: true,
                     maintainAspectRatio: false,
-                    animation: false,
-                     plugins: {
-                        legend: { labels: { color: '#ffffff' } },
-                        title: { display: true, text: 'Game Distribution by Genre (Top 10)', color: '#ffffff' }
-                    }
-                }
-            });
-        }
-
-        // Chart for Top Rated Games
-        if (topGames && topGames.length > 0) {
-            const topGamesCtx = document.getElementById('topGamesChart').getContext('2d');
-            new Chart(topGamesCtx, {
-                type: 'bar',
-                data: {
-                    labels: topGames.map(item => item.name),
-                    datasets: [{
-                        label: 'Rating',
-                        data: topGames.map(item => item.rating),
-                         backgroundColor: generateColors(topGames.length),
-                        borderColor: '#ffffff',
-                        borderWidth: 1
-                    }]
-                },
-                 options: {
-                    responsive: false,
-                    maintainAspectRatio: false,
-                    animation: false,
-                     plugins: {
-                        legend: { display: false },
-                        title: { display: true, text: 'Top 10 Rated Games', color: '#ffffff' }
+                    animation: {
+                        duration: 1000
                     },
-                    scales: {
-                        x: { ticks: { color: '#ffffff' }, grid: { color: '#444' } },
-                        y: { beginAtZero: true, ticks: { color: '#ffffff' }, grid: { color: '#444' }, max: 10 }
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { 
+                                color: '#f8f8f2',
+                                font: {
+                                    family: 'Roboto',
+                                    size: 10
+                                }
+                            }
+                        },
+                        title: { 
+                            display: true, 
+                            text: 'Game Distribution by Genre (Top 10)', 
+                            color: '#bd93f9',
+                            font: {
+                                family: 'Orbitron',
+                                size: 12,
+                                weight: 'bold'
+                            }
+                        }
                     }
                 }
             });
         }
 
-         // Chart for Games Per Year
+        // Chart for Games Per Year
         if (gamesPerYear && gamesPerYear.length > 0) {
             const gamesPerYearCtx = document.getElementById('gamesPerYearChart').getContext('2d');
             new Chart(gamesPerYearCtx, {
                 type: 'line',
                 data: {
-                    labels: gamesPerYear.map(item => item._id),
+                    labels: gamesPerYear.map(item => item.year || item._id),
                     datasets: [{
                         label: 'Number of Games',
                         data: gamesPerYear.map(item => item.count),
-                        borderColor: '#00aaff',
-                        backgroundColor: 'rgba(0, 170, 255, 0.2)',
-                        tension: 0.1,
-                        fill: true
+                        borderColor: '#50fa7b',
+                        backgroundColor: 'rgba(80, 250, 123, 0.2)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#50fa7b',
+                        pointBorderColor: '#f8f8f2',
+                        pointBorderWidth: 2
                     }]
                 },
                 options: {
-                    responsive: false,
-                    maintainAspectRatio: false,
-                    animation: false,
+                    ...commonOptions,
                     plugins: {
+                        ...commonOptions.plugins,
                         legend: { display: false },
-                        title: { display: true, text: 'Games Released Per Year', color: '#ffffff' }
-                    },
-                     scales: {
-                        x: { ticks: { color: '#ffffff' }, grid: { color: '#444' } },
-                        y: { beginAtZero: true, ticks: { color: '#ffffff' }, grid: { color: '#444' } }
+                        title: { 
+                            display: true, 
+                            text: 'Games Released Per Year', 
+                            color: '#bd93f9',
+                            font: {
+                                family: 'Orbitron',
+                                size: 12,
+                                weight: 'bold'
+                            }
+                        }
                     }
                 }
             });
@@ -383,35 +965,47 @@
         // Chart for Game Share by Publisher
         if (publisherCounts && publisherCounts.length > 0) {
             const publisherShareCtx = document.getElementById('publisherShareChart').getContext('2d');
-            const top10Publishers = publisherCounts.slice(0, 10);
-            const otherCount = publisherCounts.slice(10).reduce((sum, item) => sum + item.count, 0);
-            const labels = top10Publishers.map(item => item._id);
-            const data = top10Publishers.map(item => item.count);
-
-            if (otherCount > 0) {
-                labels.push('Other');
-                data.push(otherCount);
-            }
-
+            const filteredPublishers = filterUnwantedValues(publisherCounts).slice(0, 10);
+            
             new Chart(publisherShareCtx, {
-                type: 'pie',
+                type: 'doughnut',
                 data: {
-                    labels: labels,
+                    labels: filteredPublishers.map(item => item._id),
                     datasets: [{
                         label: 'Game Share',
-                        data: data,
-                        backgroundColor: generateColors(labels.length),
-                        borderColor: '#ffffff',
-                        borderWidth: 1
+                        data: filteredPublishers.map(item => item.count),
+                        backgroundColor: generateColors(filteredPublishers.length),
+                        borderColor: '#f8f8f2',
+                        borderWidth: 2
                     }]
                 },
                 options: {
-                    responsive: false,
+                    responsive: true,
                     maintainAspectRatio: false,
-                    animation: false,
-                     plugins: {
-                        legend: { labels: { color: '#ffffff' } },
-                        title: { display: true, text: 'Game Share by Publisher (Top 10)', color: '#ffffff' }
+                    animation: {
+                        duration: 1000
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { 
+                                color: '#f8f8f2',
+                                font: {
+                                    family: 'Roboto',
+                                    size: 10
+                                }
+                            }
+                        },
+                        title: { 
+                            display: true, 
+                            text: 'Game Share by Publisher (Top 10)', 
+                            color: '#bd93f9',
+                            font: {
+                                family: 'Orbitron',
+                                size: 12,
+                                weight: 'bold'
+                            }
+                        }
                     }
                 }
             });
@@ -420,30 +1014,41 @@
         // Chart for Average Rating by Platform
         if (avgRatingPlatform && avgRatingPlatform.length > 0) {
             const avgRatingPlatformCtx = document.getElementById('avgRatingPlatformChart').getContext('2d');
-             const top10Platforms = avgRatingPlatform.slice(0, 10);
+            const filteredPlatforms = filterUnwantedValues(avgRatingPlatform, 'platform').slice(0, 10);
             new Chart(avgRatingPlatformCtx, {
                 type: 'bar',
                 data: {
-                    labels: top10Platforms.map(item => item._id),
+                    labels: filteredPlatforms.map(item => item.platform || item._id),
                     datasets: [{
                         label: 'Average Rating',
-                        data: top10Platforms.map(item => item.avg_rating),
-                         backgroundColor: generateColors(top10Platforms.length),
-                        borderColor: '#ffffff',
+                        data: filteredPlatforms.map(item => item.avg_rating),
+                        backgroundColor: generateColors(filteredPlatforms.length),
+                        borderColor: '#f8f8f2',
                         borderWidth: 1
                     }]
                 },
-                 options: {
-                    responsive: false,
-                    maintainAspectRatio: false,
-                    animation: false,
-                     plugins: {
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        ...commonOptions.plugins,
                         legend: { display: false },
-                        title: { display: true, text: 'Average Rating by Platform (Top 10)', color: '#ffffff' }
+                        title: { 
+                            display: true, 
+                            text: 'Average Rating by Platform (Top 10)', 
+                            color: '#bd93f9',
+                            font: {
+                                family: 'Orbitron',
+                                size: 12,
+                                weight: 'bold'
+                            }
+                        }
                     },
                     scales: {
-                        x: { ticks: { color: '#ffffff' }, grid: { color: '#444' } },
-                        y: { beginAtZero: true, ticks: { color: '#ffffff' }, grid: { color: '#444' }, max: 10 }
+                        ...commonOptions.scales,
+                        y: {
+                            ...commonOptions.scales.y,
+                            max: 10
+                        }
                     }
                 }
             });
@@ -452,36 +1057,204 @@
         // Chart for Average Rating by Developer
         if (avgRatingDeveloper && avgRatingDeveloper.length > 0) {
             const avgRatingDeveloperCtx = document.getElementById('avgRatingDeveloperChart').getContext('2d');
-            const top10Developers = avgRatingDeveloper.slice(0, 10);
+            const filteredDevelopers = filterUnwantedValues(avgRatingDeveloper).slice(0, 10);
             new Chart(avgRatingDeveloperCtx, {
                 type: 'bar',
                 data: {
-                    labels: top10Developers.map(item => item._id),
+                    labels: filteredDevelopers.map(item => item._id),
                     datasets: [{
                         label: 'Average Rating',
-                        data: top10Developers.map(item => item.avg_rating),
-                         backgroundColor: generateColors(top10Developers.length),
-                        borderColor: '#ffffff',
+                        data: filteredDevelopers.map(item => item.avg_rating),
+                        backgroundColor: generateColors(filteredDevelopers.length),
+                        borderColor: '#f8f8f2',
                         borderWidth: 1
                     }]
                 },
-                 options: {
-                    responsive: false,
-                    maintainAspectRatio: false,
-                    animation: false,
-                     plugins: {
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        ...commonOptions.plugins,
                         legend: { display: false },
-                        title: { display: true, text: 'Average Rating by Developer (Top 10)', color: '#ffffff' }
+                        title: { 
+                            display: true, 
+                            text: 'Average Rating by Developer (Top 10)', 
+                            color: '#bd93f9',
+                            font: {
+                                family: 'Orbitron',
+                                size: 12,
+                                weight: 'bold'
+                            }
+                        }
                     },
                     scales: {
-                        x: { ticks: { color: '#ffffff' }, grid: { color: '#444' } },
-                        y: { beginAtZero: true, ticks: { color: '#ffffff' }, grid: { color: '444' }, max: 10 }
+                        ...commonOptions.scales,
+                        y: {
+                            ...commonOptions.scales.y,
+                            max: 10
+                        },
+                        x: {
+                            ...commonOptions.scales.x,
+                            ticks: {
+                                ...commonOptions.scales.x.ticks,
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
                     }
                 }
             });
         }
 
-         // Update year range display as sliders move
+        // Chart for Game Type Distribution
+        if (gameTypeDistribution && gameTypeDistribution.length > 0) {
+            const gameTypeCtx = document.getElementById('gameTypeChart').getContext('2d');
+            const filteredGameTypes = filterUnwantedValues(gameTypeDistribution, 'game_type');
+            new Chart(gameTypeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: filteredGameTypes.map(item => item.game_type),
+                    datasets: [{
+                        label: 'Number of Games',
+                        data: filteredGameTypes.map(item => item.count),
+                        backgroundColor: generateColors(filteredGameTypes.length),
+                        borderColor: '#f8f8f2',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 1000
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { 
+                                color: '#f8f8f2',
+                                font: {
+                                    family: 'Roboto',
+                                    size: 10
+                                }
+                            }
+                        },
+                        title: { 
+                            display: true, 
+                            text: 'Game Distribution', 
+                            color: '#bd93f9',
+                            font: {
+                                family: 'Orbitron',
+                                size: 12,
+                                weight: 'bold'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Chart for Rating Distribution
+        if (ratingDistribution && ratingDistribution.length > 0) {
+            const ratingDistCtx = document.getElementById('ratingDistributionChart').getContext('2d');
+            new Chart(ratingDistCtx, {
+                type: 'bar',
+                data: {
+                    labels: ratingDistribution.map(item => item.rating_range),
+                    datasets: [{
+                        label: 'Number of Games',
+                        data: ratingDistribution.map(item => item.count),
+                        backgroundColor: [
+                            '#ff5555', // Poor (red)
+                            '#ffb86c', // Below Average (orange)
+                            '#f1fa8c', // Average (yellow)
+                            '#50fa7b', // Good (green)
+                            '#8be9fd', // Great (cyan)
+                            '#bd93f9'  // Excellent (purple)
+                        ],
+                        borderColor: '#f8f8f2',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        ...commonOptions.plugins,
+                        legend: { display: false },
+                        title: { 
+                            display: true, 
+                            text: 'Rating Distribution', 
+                            color: '#bd93f9',
+                            font: {
+                                family: 'Orbitron',
+                                size: 12,
+                                weight: 'bold'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Chart for Director Analytics
+        if (directorAnalytics && directorAnalytics.length > 0) {
+            const directorCtx = document.getElementById('directorAnalyticsChart').getContext('2d');
+            const filteredDirectors = filterUnwantedValues(directorAnalytics, 'director').slice(0, 10);
+            new Chart(directorCtx, {
+                type: 'bar',
+                data: {
+                    labels: filteredDirectors.map(item => item.director),
+                    datasets: [{
+                        label: 'Average Rating',
+                        data: filteredDirectors.map(item => item.avg_rating),
+                        backgroundColor: generateColors(filteredDirectors.length),
+                        borderColor: '#f8f8f2',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        ...commonOptions.plugins,
+                        legend: { display: false },
+                        title: { 
+                            display: true, 
+                            text: 'Top Directors by Average Rating', 
+                            color: '#bd93f9',
+                            font: {
+                                family: 'Orbitron',
+                                size: 12,
+                                weight: 'bold'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const director = filteredDirectors[context.dataIndex];
+                                    return `Games: ${director.game_count}, Total Votes: ${director.total_votes}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        ...commonOptions.scales,
+                        y: {
+                            ...commonOptions.scales.y,
+                            max: 10
+                        },
+                        x: {
+                            ...commonOptions.scales.x,
+                            ticks: {
+                                ...commonOptions.scales.x.ticks,
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update year range display as sliders move
         const yearStartSlider = document.getElementById('year-start');
         const yearEndSlider = document.getElementById('year-end');
         const yearRangeDisplay = document.getElementById('year-range-display');
@@ -490,10 +1263,437 @@
             yearRangeDisplay.textContent = `${yearStartSlider.value} - ${yearEndSlider.value}`;
         }
 
-        yearStartSlider.addEventListener('input', updateYearRangeDisplay);
-        yearEndSlider.addEventListener('input', updateYearRangeDisplay);
+        if (yearStartSlider && yearEndSlider && yearRangeDisplay) {
+            yearStartSlider.addEventListener('input', updateYearRangeDisplay);
+            yearEndSlider.addEventListener('input', updateYearRangeDisplay);
+        }
 
+        // === TAB SWITCHING AND FILTER MANAGEMENT ===
+        
+        // Handle tab switching and filter visibility
+        const studioTab = document.getElementById('studio-tab');
+        const operationalTab = document.getElementById('operational-tab');
+        const studioFilters = document.getElementById('studio-filters');
+        const operationalFilters = document.getElementById('operational-filters');
+
+        function showStudioFilters() {
+            studioFilters.style.display = 'block';
+            operationalFilters.style.display = 'none';
+        }
+
+        function showOperationalFilters() {
+            studioFilters.style.display = 'none';
+            operationalFilters.style.display = 'block';
+        }
+
+        // Check URL parameters to determine which tab should be active
+        const urlParams = new URLSearchParams(window.location.search);
+        const activeTab = urlParams.get('tab');
+        
+        // Check server-side active tab state
+        const serverActiveTab = '{{ active_tab }}';
+        
+        // Check if any operational filters are present
+        const hasOperationalFilters = urlParams.has('op_years') || urlParams.has('op_months') || 
+                                    urlParams.has('op_min_rating') || urlParams.has('op_timeframe');
+        
+        // Initialize the correct tab based on server state or URL parameters
+        if (serverActiveTab === 'operational' || activeTab === 'operational' || hasOperationalFilters) {
+            showOperationalFilters();
+            // Activate the operational tab
+            const operationalTabPane = document.getElementById('operational-dashboard');
+            const studioTabPane = document.getElementById('studio-performance');
+            if (operationalTabPane && studioTabPane) {
+                studioTabPane.classList.remove('show', 'active');
+                operationalTabPane.classList.add('show', 'active');
+                studioTab.classList.remove('active');
+                operationalTab.classList.add('active');
+            }
+            // Add quick selection buttons for operational tab
+            if (document.getElementById('op-year-filter') && !document.querySelector('.quick-selection-buttons')) {
+                addQuickSelectionButtons();
+            }
+        } else {
+            // Default to studio tab
+            showStudioFilters();
+        }
+
+        // Ensure tab switching updates the form action
+        if (studioTab) {
+            studioTab.addEventListener('click', function() {
+                showStudioFilters();
+                // Update URL without reloading
+                const newUrl = new URL(window.location);
+                newUrl.searchParams.delete('tab');
+                window.history.replaceState({}, '', newUrl);
+            });
+        }
+        
+        if (operationalTab) {
+            operationalTab.addEventListener('click', function() {
+                showOperationalFilters();
+                // Update URL to include operational tab
+                const newUrl = new URL(window.location);
+                newUrl.searchParams.set('tab', 'operational');
+                window.history.replaceState({}, '', newUrl);
+                
+                // Add quick selection buttons if not already present
+                if (document.getElementById('op-year-filter') && !document.querySelector('.quick-selection-buttons')) {
+                    addQuickSelectionButtons();
+                }
+            });
+        }
+
+        // === OPERATIONAL FILTER FUNCTIONS ===
+        
+        // Reset operational filters
+        const resetOpFilters = document.getElementById('reset-op-filters');
+        if (resetOpFilters) {
+            resetOpFilters.addEventListener('click', function() {
+                // Clear all selections
+                const yearFilter = document.getElementById('op-year-filter');
+                const monthFilter = document.getElementById('op-month-filter');
+                const ratingFilter = document.getElementById('op-rating-filter');
+                const timeframeFilter = document.getElementById('op-timeframe');
+                
+                if (yearFilter) {
+                    for (let i = 0; i < yearFilter.options.length; i++) {
+                        yearFilter.options[i].selected = false;
+                    }
+                }
+                if (monthFilter) {
+                    for (let i = 0; i < monthFilter.options.length; i++) {
+                        monthFilter.options[i].selected = false;
+                    }
+                }
+                if (ratingFilter) ratingFilter.selectedIndex = 0;
+                if (timeframeFilter) timeframeFilter.selectedIndex = 1; // Recent
+                
+                // Redirect to operational tab with reset filters
+                window.location.href = '/?tab=operational';
+            });
+        }
+
+        // Handle timeframe changes to show/hide year selection guidance
+        const timeframeSelect = document.getElementById('op-timeframe');
+        if (timeframeSelect) {
+            timeframeSelect.addEventListener('change', function() {
+                const yearFilter = document.getElementById('op-year-filter');
+                if (this.value === 'custom') {
+                    yearFilter.style.border = '2px solid #e94560';
+                    yearFilter.parentElement.querySelector('small').innerHTML = 
+                        '<strong>Select years for custom range</strong> (Hold Ctrl/Cmd for multiple)';
+                } else {
+                    yearFilter.style.border = '1px solid #0f3460';
+                    yearFilter.parentElement.querySelector('small').innerHTML = 
+                        'Hold Ctrl/Cmd to select multiple years';
+                }
+            });
+        }
+
+        // Add quick selection buttons for common ranges
+        function addQuickSelectionButtons() {
+            const yearFilterContainer = document.getElementById('op-year-filter').parentElement;
+            
+            // Check if buttons already exist
+            if (yearFilterContainer.querySelector('.quick-selection-buttons')) {
+                return;
+            }
+            
+            const quickButtonsDiv = document.createElement('div');
+            quickButtonsDiv.className = 'mt-2 quick-selection-buttons';
+            quickButtonsDiv.innerHTML = `
+                <small class="text-muted d-block mb-1">Quick selections:</small>
+                <button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="selectRecentYears()">Last 3 Years</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="selectDecadeYears()">Last 10 Years</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearYearSelection()">Clear</button>
+            `;
+            yearFilterContainer.appendChild(quickButtonsDiv);
+        }
+
+        // Quick selection functions
+        window.selectRecentYears = function() {
+            const yearFilter = document.getElementById('op-year-filter');
+            const currentYear = new Date().getFullYear();
+            for (let i = 0; i < yearFilter.options.length; i++) {
+                const year = parseInt(yearFilter.options[i].value);
+                yearFilter.options[i].selected = year >= currentYear - 2;
+            }
+        };
+
+        window.selectDecadeYears = function() {
+            const yearFilter = document.getElementById('op-year-filter');
+            const currentYear = new Date().getFullYear();
+            for (let i = 0; i < yearFilter.options.length; i++) {
+                const year = parseInt(yearFilter.options[i].value);
+                yearFilter.options[i].selected = year >= currentYear - 9;
+            }
+        };
+
+        window.clearYearSelection = function() {
+            const yearFilter = document.getElementById('op-year-filter');
+            for (let i = 0; i < yearFilter.options.length; i++) {
+                yearFilter.options[i].selected = false;
+            }
+        };
+
+        // === OPERATIONAL DASHBOARD CHARTS ===
+        
+        // Chart for Rating Trends by Month
+        if (ratingTrends && ratingTrends.length > 0) {
+            const ratingTrendsCtx = document.getElementById('ratingTrendsChart').getContext('2d');
+            new Chart(ratingTrendsCtx, {
+                type: 'line',
+                data: {
+                    labels: ratingTrends.map(item => item.period),
+                    datasets: [{
+                        label: 'Average Rating',
+                        data: ratingTrends.map(item => item.avg_rating),
+                        borderColor: '#ff79c6',
+                        backgroundColor: 'rgba(255, 121, 198, 0.2)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#ff79c6',
+                        pointBorderColor: '#f8f8f2',
+                        pointBorderWidth: 2
+                    }, {
+                        label: 'Game Count',
+                        data: ratingTrends.map(item => item.game_count),
+                        borderColor: '#8be9fd',
+                        backgroundColor: 'rgba(139, 233, 253, 0.2)',
+                        tension: 0.4,
+                        fill: false,
+                        pointBackgroundColor: '#8be9fd',
+                        pointBorderColor: '#f8f8f2',
+                        pointBorderWidth: 2,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 1000
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { 
+                                color: '#f8f8f2',
+                                font: {
+                                    family: 'Roboto',
+                                    size: 11
+                                }
+                            }
+                        },
+                        title: { 
+                            display: true, 
+                            text: 'Rating Trends Over Time', 
+                            color: '#bd93f9',
+                            font: {
+                                family: 'Orbitron',
+                                size: 12,
+                                weight: 'bold'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            ticks: { 
+                                color: '#f8f8f2',
+                                font: {
+                                    family: 'Roboto',
+                                    size: 10
+                                },
+                                maxRotation: 45
+                            }, 
+                            grid: { color: '#0f3460' } 
+                        },
+                        y: { 
+                            beginAtZero: true, 
+                            max: 10,
+                            ticks: { 
+                                color: '#f8f8f2',
+                                font: {
+                                    family: 'Roboto',
+                                    size: 10
+                                }
+                            }, 
+                            grid: { color: '#0f3460' },
+                            title: {
+                                display: true,
+                                text: 'Average Rating',
+                                color: '#ff79c6'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            ticks: { 
+                                color: '#f8f8f2',
+                                font: {
+                                    family: 'Roboto',
+                                    size: 10
+                                }
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                            title: {
+                                display: true,
+                                text: 'Game Count',
+                                color: '#8be9fd'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Chart for Monthly Release Activity
+        if (monthlyActivity && monthlyActivity.length > 0) {
+            const monthlyActivityCtx = document.getElementById('monthlyActivityChart').getContext('2d');
+            new Chart(monthlyActivityCtx, {
+                type: 'bar',
+                data: {
+                    labels: monthlyActivity.map(item => item.month_name),
+                    datasets: [{
+                        label: 'Total Releases',
+                        data: monthlyActivity.map(item => item.total_releases),
+                        backgroundColor: generateColors(monthlyActivity.length),
+                        borderColor: '#f8f8f2',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        ...commonOptions.plugins,
+                        legend: { display: false },
+                        title: { 
+                            display: true, 
+                            text: 'Game Releases by Month', 
+                            color: '#bd93f9',
+                            font: {
+                                family: 'Orbitron',
+                                size: 12,
+                                weight: 'bold'
+                            }
+                        }
+                    },
+                    scales: {
+                        ...commonOptions.scales,
+                        x: {
+                            ...commonOptions.scales.x,
+                            ticks: {
+                                ...commonOptions.scales.x.ticks,
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Chart for Platform Performance
+        if (platformPerformance && platformPerformance.length > 0) {
+            const platformPerformanceCtx = document.getElementById('platformPerformanceChart').getContext('2d');
+            const filteredPlatformPerf = filterUnwantedValues(platformPerformance, 'platform').slice(0, 10);
+            
+            // Sort by average rating for better visualization
+            filteredPlatformPerf.sort((a, b) => b.avg_rating - a.avg_rating);
+            
+            new Chart(platformPerformanceCtx, {
+                type: 'bar',
+                data: {
+                    labels: filteredPlatformPerf.map(item => item.platform),
+                    datasets: [{
+                        label: 'Average Rating',
+                        data: filteredPlatformPerf.map(item => item.avg_rating),
+                        backgroundColor: filteredPlatformPerf.map((item, index) => {
+                            // Color gradient based on rating
+                            if (item.avg_rating >= 8) return '#50fa7b'; // Green for high ratings
+                            if (item.avg_rating >= 7) return '#f1fa8c'; // Yellow for good ratings
+                            if (item.avg_rating >= 6) return '#ffb86c'; // Orange for average ratings
+                            return '#ff5555'; // Red for low ratings
+                        }),
+                        borderColor: '#f8f8f2',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', // This makes it horizontal
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 1000
+                    },
+                    plugins: {
+                        legend: { 
+                            display: false // Hide legend for cleaner look
+                        },
+                        title: { 
+                            display: true, 
+                            text: 'Top Platforms by Average Rating', 
+                            color: '#bd93f9',
+                            font: {
+                                family: 'Orbitron',
+                                size: 12,
+                                weight: 'bold'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    return context[0].label;
+                                },
+                                label: function(context) {
+                                    const platform = filteredPlatformPerf[context.dataIndex];
+                                    return [
+                                        `Average Rating: ${platform.avg_rating}/10`,
+                                        `Total Games: ${platform.total_games}`,
+                                        `Rating Range: ${platform.min_rating} - ${platform.max_rating}`,
+                                        `Total Votes: ${platform.total_votes ? platform.total_votes.toLocaleString() : 'N/A'}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            beginAtZero: true, 
+                            max: 10,
+                            ticks: { 
+                                color: '#f8f8f2',
+                                font: {
+                                    family: 'Roboto',
+                                    size: 10
+                                }
+                            }, 
+                            grid: { color: '#0f3460' },
+                            title: {
+                                display: true,
+                                text: 'Average Rating',
+                                color: '#50fa7b'
+                            }
+                        },
+                        y: { 
+                            ticks: { 
+                                color: '#f8f8f2',
+                                font: {
+                                    family: 'Roboto',
+                                    size: 10
+                                }
+                            }, 
+                            grid: { color: '#0f3460' }
+                        }
+                    }
+                }
+            });
+        }
 
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html> 
