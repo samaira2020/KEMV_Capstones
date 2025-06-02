@@ -1751,10 +1751,10 @@ class MongoDBHandler:
 
     # === TACTICAL DASHBOARD METHODS ===
     
-    def get_tactical_sankey_data(self, year_range=None):
+    def get_tactical_sankey_data(self, year_range=None, platforms=None, genres=None):
         """Get data for Sankey diagram: Genre → Platform → Publisher flow."""
         try:
-            print(f"Fetching tactical Sankey data.")
+            print(f"Fetching tactical Sankey data with filters - platforms: {platforms}, genres: {genres}")
             collection = self.db.enriched_games
             pipeline = []
 
@@ -1778,6 +1778,17 @@ class MongoDBHandler:
                 'Platform': {'$exists': True, '$ne': None, '$ne': ''},
                 'Publisher': {'$exists': True, '$ne': None, '$ne': ''}
             }
+
+            # Apply platform filter
+            if platforms:
+                platform_regex = '|'.join([platform.replace('(', '\\(').replace(')', '\\)') for platform in platforms])
+                match_conditions['Platform'] = {'$regex': platform_regex, '$options': 'i'}
+
+            # Apply genre filter
+            if genres:
+                genre_regex = '|'.join([genre.replace('(', '\\(').replace(')', '\\)') for genre in genres])
+                match_conditions['Genre'] = {'$regex': genre_regex, '$options': 'i'}
+
             pipeline.append({'$match': match_conditions})
 
             # Apply year range filter
@@ -1806,16 +1817,19 @@ class MongoDBHandler:
                 }
             })
 
-            # Project for frontend
+            # Project for frontend with correct structure
             pipeline.append({
                 '$project': {
                     '_id': 0,
-                    'source': '$_id.genre',
-                    'target': '$_id.platform',
+                    'genre': '$_id.genre',
+                    'platform': '$_id.platform',
                     'publisher': '$_id.publisher',
-                    'value': '$count'
+                    'count': '$count'
                 }
             })
+
+            # Sort by count descending
+            pipeline.append({'$sort': {'count': -1}})
 
             result = list(collection.aggregate(pipeline, allowDiskUse=True))
             print(f"Tactical Sankey data result: {len(result)} flows")
@@ -1825,10 +1839,10 @@ class MongoDBHandler:
             print(f"Error in get_tactical_sankey_data: {e}")
             return []
 
-    def get_tactical_venn_data(self, year_range=None):
+    def get_tactical_venn_data(self, year_range=None, platforms=None):
         """Get data for Venn diagram: Games available across multiple platforms."""
         try:
-            print(f"Fetching tactical Venn data.")
+            print(f"Fetching tactical Venn data with platform filter: {platforms}")
             collection = self.db.enriched_games
             pipeline = []
 
@@ -1852,6 +1866,12 @@ class MongoDBHandler:
                 'Title': {'$exists': True, '$ne': None, '$ne': ''},
                 'Platform': {'$exists': True, '$ne': None, '$ne': ''}
             }
+
+            # Apply platform filter if specified
+            if platforms:
+                platform_regex = '|'.join([platform.replace('(', '\\(').replace(')', '\\)') for platform in platforms])
+                match_conditions['Platform'] = {'$regex': platform_regex, '$options': 'i'}
+
             pipeline.append({'$match': match_conditions})
 
             # Apply year range filter
@@ -1875,30 +1895,40 @@ class MongoDBHandler:
                 }
             })
 
-            # Group by platform combinations
+            # Group by platform count
             pipeline.append({
                 '$group': {
-                    '_id': '$PlatformsArray',
-                    'games': {'$push': '$Title'},
-                    'count': {'$sum': 1}
+                    '_id': '$platform_count',
+                    'game_count': {'$sum': 1},
+                    'games': {'$push': '$Title'}
                 }
             })
 
-            # Sort by count
-            pipeline.append({'$sort': {'count': -1}})
+            # Project for frontend
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'platform_count': '$_id',
+                    'game_count': '$game_count',
+                    'games': {'$slice': ['$games', 10]}  # Limit to 10 example games
+                }
+            })
+
+            # Sort by platform count
+            pipeline.append({'$sort': {'platform_count': 1}})
 
             result = list(collection.aggregate(pipeline, allowDiskUse=True))
-            print(f"Tactical Venn data result: {len(result)} platform combinations")
+            print(f"Tactical Venn data result: {len(result)} platform count groups")
             return result
 
         except Exception as e:
             print(f"Error in get_tactical_venn_data: {e}")
             return []
 
-    def get_tactical_chord_data(self, year_range=None):
+    def get_tactical_chord_data(self, year_range=None, genres=None):
         """Get data for Chord diagram: Developer ↔ Platform ↔ Genre connections."""
         try:
-            print(f"Fetching tactical Chord data.")
+            print(f"Fetching tactical Chord data with genre filter: {genres}")
             collection = self.db.enriched_games
             pipeline = []
 
@@ -1922,6 +1952,12 @@ class MongoDBHandler:
                 'Platform': {'$exists': True, '$ne': None, '$ne': ''},
                 'Genre': {'$exists': True, '$ne': None, '$ne': ''}
             }
+
+            # Apply genre filter
+            if genres:
+                genre_regex = '|'.join([genre.replace('(', '\\(').replace(')', '\\)') for genre in genres])
+                match_conditions['Genre'] = {'$regex': genre_regex, '$options': 'i'}
+
             pipeline.append({'$match': match_conditions})
 
             # Apply year range filter
@@ -1957,9 +1993,12 @@ class MongoDBHandler:
                     'developer': '$_id.developer',
                     'platform': '$_id.platform',
                     'genre': '$_id.genre',
-                    'value': '$count'
+                    'count': '$count'
                 }
             })
+
+            # Sort by count descending
+            pipeline.append({'$sort': {'count': -1}})
 
             result = list(collection.aggregate(pipeline, allowDiskUse=True))
             print(f"Tactical Chord data result: {len(result)} connections")
@@ -1969,10 +2008,10 @@ class MongoDBHandler:
             print(f"Error in get_tactical_chord_data: {e}")
             return []
 
-    def get_tactical_dumbbell_data(self, year_range=None):
+    def get_tactical_dumbbell_data(self, year_range=None, platforms=None, genres=None):
         """Get data for Dumbbell chart: Min vs Max ratings across platforms for top genres."""
         try:
-            print(f"Fetching tactical Dumbbell data.")
+            print(f"Fetching tactical Dumbbell data with filters - platforms: {platforms}, genres: {genres}")
             collection = self.db.enriched_games
             pipeline = []
 
@@ -1997,6 +2036,17 @@ class MongoDBHandler:
                 'Platform': {'$exists': True, '$ne': None, '$ne': ''},
                 'Rating': {'$exists': True, '$ne': None, '$type': 'number'}
             }
+
+            # Apply platform filter
+            if platforms:
+                platform_regex = '|'.join([platform.replace('(', '\\(').replace(')', '\\)') for platform in platforms])
+                match_conditions['Platform'] = {'$regex': platform_regex, '$options': 'i'}
+
+            # Apply genre filter
+            if genres:
+                genre_regex = '|'.join([genre.replace('(', '\\(').replace(')', '\\)') for genre in genres])
+                match_conditions['Genre'] = {'$regex': genre_regex, '$options': 'i'}
+
             pipeline.append({'$match': match_conditions})
 
             # Apply year range filter
@@ -2030,8 +2080,8 @@ class MongoDBHandler:
                 }
             })
 
-            # Filter for platforms with at least 5 games
-            pipeline.append({'$match': {'count': {'$gte': 5}}})
+            # Filter for platforms with at least 3 games
+            pipeline.append({'$match': {'count': {'$gte': 3}}})
 
             # Project for dumbbell chart
             pipeline.append({
@@ -2057,10 +2107,10 @@ class MongoDBHandler:
             print(f"Error in get_tactical_dumbbell_data: {e}")
             return []
 
-    def get_tactical_marimekko_data(self, year_range=None):
-        """Get data for Marimekko chart: Relative genre share and platform share."""
+    def get_tactical_marimekko_data(self, year_range=None, genres=None):
+        """Get data for Marimekko chart: Relative genre share and platform share with market share calculation."""
         try:
-            print(f"Fetching tactical Marimekko data.")
+            print(f"Fetching tactical Marimekko data with genre filter: {genres}")
             collection = self.db.enriched_games
             pipeline = []
 
@@ -2085,6 +2135,12 @@ class MongoDBHandler:
                 'Genre': {'$exists': True, '$ne': None, '$ne': ''},
                 'Platform': {'$exists': True, '$ne': None, '$ne': ''}
             }
+
+            # Apply genre filter
+            if genres:
+                genre_regex = '|'.join([genre.replace('(', '\\(').replace(')', '\\)') for genre in genres])
+                match_conditions['Genre'] = {'$regex': genre_regex, '$options': 'i'}
+
             pipeline.append({'$match': match_conditions})
 
             # Apply year range filter
@@ -2116,18 +2172,43 @@ class MongoDBHandler:
                 }
             })
 
-            # Project for marimekko chart
+            # Calculate total for market share
             pipeline.append({
-                '$project': {
-                    '_id': 0,
-                    'genre': '$_id.genre',
-                    'platform': '$_id.platform',
-                    'count': 1
+                '$group': {
+                    '_id': None,
+                    'total_count': {'$sum': '$count'},
+                    'combinations': {
+                        '$push': {
+                            'genre': '$_id.genre',
+                            'platform': '$_id.platform',
+                            'count': '$count'
+                        }
+                    }
                 }
             })
 
-            # Sort by count
-            pipeline.append({'$sort': {'count': -1}})
+            # Unwind and calculate market share
+            pipeline.append({'$unwind': '$combinations'})
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'genre': '$combinations.genre',
+                    'platform': '$combinations.platform',
+                    'count': '$combinations.count',
+                    'market_share': {
+                        '$round': [
+                            {'$multiply': [
+                                {'$divide': ['$combinations.count', '$total_count']},
+                                100
+                            ]},
+                            2
+                        ]
+                    }
+                }
+            })
+
+            # Sort by market share descending
+            pipeline.append({'$sort': {'market_share': -1}})
 
             result = list(collection.aggregate(pipeline, allowDiskUse=True))
             print(f"Tactical Marimekko data result: {len(result)} genre-platform combinations")

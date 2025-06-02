@@ -87,287 +87,337 @@ const commonOptions = {
     }
 };
 
-// Tab Management
-class TabManager {
+// Enhanced Dashboard Management Class
+class DashboardManager {
     constructor() {
-        this.filterSections = {
-            'studio-tab': 'studio-filters',
-            'operational-tab': 'operational-filters',
-            'tactical-tab': 'tactical-filters',
-            'analytical-lifecycle-tab': 'lifecycle-filters',
-            'analytical-evolution-tab': 'evolution-filters'
-        };
-        
-        this.tabParamToId = {
-            'studio': 'studio-tab',
-            'operational': 'operational-tab',
-            'tactical': 'tactical-tab',
-            'analytical-lifecycle': 'analytical-lifecycle-tab',
-            'analytical-evolution': 'analytical-evolution-tab'
-        };
-        
-        this.init();
+        this.activeTab = 'studio';
+        this.initializeEventListeners();
+        this.initializeFilters();
     }
-    
-    init() {
-        this.setupTabSwitching();
-        this.activateCorrectTab();
-    }
-    
-    showFilterSection(tabId) {
-        // Hide all filter sections
-        Object.values(this.filterSections).forEach(sectionId => {
-            const section = document.getElementById(sectionId);
-            if (section) {
-                section.style.display = 'none';
-            }
-        });
-        
-        // Show relevant filter section
-        if (this.filterSections[tabId]) {
-            const section = document.getElementById(this.filterSections[tabId]);
-            if (section) {
-                section.style.display = 'block';
-            }
-        }
-    }
-    
-    activateCorrectTab() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const activeTabParam = urlParams.get('tab');
-        
-        if (activeTabParam && this.tabParamToId[activeTabParam]) {
-            const targetTabId = this.tabParamToId[activeTabParam];
-            const targetTab = document.getElementById(targetTabId);
-            const targetPane = document.querySelector(targetTab.getAttribute('data-bs-target'));
-            
-            // Deactivate all tabs and panes
-            document.querySelectorAll('[data-bs-toggle="tab"]').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-pane').forEach(pane => {
-                pane.classList.remove('show', 'active');
-            });
-            
-            // Activate the target tab and pane
-            targetTab.classList.add('active');
-            if (targetPane) {
-                targetPane.classList.add('show', 'active');
-            }
-            
-            this.showFilterSection(targetTabId);
-        } else {
-            const studioTab = document.getElementById('studio-tab');
-            if (studioTab) {
-                this.showFilterSection('studio-tab');
-            }
-        }
-    }
-    
-    setupTabSwitching() {
-        const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
-        
-        tabButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                const tabId = e.target.id;
-                this.showFilterSection(tabId);
-                
-                // Update URL without reloading the page
-                const tabParam = Object.keys(this.tabParamToId).find(key => this.tabParamToId[key] === tabId);
-                if (tabParam) {
-                    const newUrl = new URL(window.location);
-                    newUrl.searchParams.set('tab', tabParam);
-                    // Remove other tab-specific parameters to avoid conflicts
-                    this.clearTabSpecificParams(newUrl);
-                    window.history.replaceState({}, '', newUrl);
-                }
-                
-                console.log(`Switched to tab: ${tabId}`);
-            });
-        });
-    }
-    
-    clearTabSpecificParams(url) {
-        const paramsToRemove = [
-            'op_years', 'op_months', 'op_min_rating', 'op_timeframe',
-            'tactical_platforms', 'tactical_genres', 'tactical_year_start', 'tactical_year_end',
-            'lifecycle_genres', 'lifecycle_platforms', 'min_rating', 'min_votes',
-            'evolution_genres', 'evolution_platforms'
-        ];
-        
-        paramsToRemove.forEach(param => url.searchParams.delete(param));
-    }
-}
 
-// Filter Management
-class FilterManager {
-    constructor() {
-        this.init();
+    initializeEventListeners() {
+        // Listen for Bootstrap tab events instead of click events
+        document.querySelectorAll('.nav-link[data-tab]').forEach(tab => {
+            tab.addEventListener('shown.bs.tab', (e) => {
+                const tabName = e.target.getAttribute('data-tab');
+                this.handleTabSwitch(tabName);
+            });
+        });
+
+        // Filter form submissions
+        document.querySelectorAll('form[id$="-filter-form"]').forEach(form => {
+            form.addEventListener('submit', (e) => {
+                this.handleFilterSubmit(e);
+            });
+        });
+
+        // Reset button handlers
+        document.querySelectorAll('button[id^="reset-"]').forEach(button => {
+            button.addEventListener('click', (e) => {
+                this.resetFilters(e.target.id.replace('reset-', '').replace('-filters', ''));
+            });
+        });
+
+        // Range slider updates
+        this.initializeRangeSliders();
     }
-    
-    init() {
-        this.setupRangeSliders();
-        this.setupResetButtons();
-        this.setupQuickSelections();
+
+    initializeFilters() {
+        // Initialize tactical dashboard specific filters
+        this.initializeTacticalFilters();
+        
+        // Show appropriate filter section based on current tab
+        this.showFilterSection(this.activeTab);
     }
-    
-    setupRangeSliders() {
-        // Year range sliders
-        const yearStartSlider = document.getElementById('year-start');
-        const yearEndSlider = document.getElementById('year-end');
-        const yearRangeDisplay = document.getElementById('year-range-display');
-        
-        if (yearStartSlider && yearEndSlider && yearRangeDisplay) {
-            const updateYearRange = () => {
-                yearRangeDisplay.textContent = `${yearStartSlider.value} - ${yearEndSlider.value}`;
-            };
-            yearStartSlider.addEventListener('input', updateYearRange);
-            yearEndSlider.addEventListener('input', updateYearRange);
-        }
-        
-        // Tactical year range
+
+    initializeTacticalFilters() {
+        // Year range sliders for tactical dashboard
         const tacticalYearStart = document.getElementById('tactical-year-start');
         const tacticalYearEnd = document.getElementById('tactical-year-end');
-        const tacticalDisplay = document.getElementById('tactical-year-range-display');
-        
-        if (tacticalYearStart && tacticalYearEnd && tacticalDisplay) {
-            const updateTacticalRange = () => {
-                tacticalDisplay.textContent = `${tacticalYearStart.value} - ${tacticalYearEnd.value}`;
+        const tacticalYearDisplay = document.getElementById('tactical-year-range-display');
+
+        if (tacticalYearStart && tacticalYearEnd && tacticalYearDisplay) {
+            const updateTacticalYearDisplay = () => {
+                const startYear = parseInt(tacticalYearStart.value);
+                const endYear = parseInt(tacticalYearEnd.value);
+                
+                // Ensure start year is not greater than end year
+                if (startYear > endYear) {
+                    tacticalYearStart.value = endYear;
+                }
+                if (endYear < startYear) {
+                    tacticalYearEnd.value = startYear;
+                }
+                
+                tacticalYearDisplay.textContent = `${tacticalYearStart.value} - ${tacticalYearEnd.value}`;
             };
-            tacticalYearStart.addEventListener('input', updateTacticalRange);
-            tacticalYearEnd.addEventListener('input', updateTacticalRange);
-            updateTacticalRange(); // Initialize
+
+            tacticalYearStart.addEventListener('input', updateTacticalYearDisplay);
+            tacticalYearEnd.addEventListener('input', updateTacticalYearDisplay);
+            
+            // Initialize display
+            updateTacticalYearDisplay();
         }
-        
-        // Lifecycle sliders
-        const lifecycleRating = document.getElementById('lifecycle-min-rating');
-        const lifecycleRatingDisplay = document.getElementById('lifecycle-rating-display');
-        
-        if (lifecycleRating && lifecycleRatingDisplay) {
-            const updateRating = () => {
-                lifecycleRatingDisplay.textContent = lifecycleRating.value;
-            };
-            lifecycleRating.addEventListener('input', updateRating);
-            updateRating(); // Initialize
-        }
-        
-        const lifecycleVotes = document.getElementById('lifecycle-min-votes');
-        const lifecycleVotesDisplay = document.getElementById('lifecycle-votes-display');
-        
-        if (lifecycleVotes && lifecycleVotesDisplay) {
-            const updateVotes = () => {
-                lifecycleVotesDisplay.textContent = parseInt(lifecycleVotes.value).toLocaleString();
-            };
-            lifecycleVotes.addEventListener('input', updateVotes);
-            updateVotes(); // Initialize
-        }
+
+        // Platform and genre quick selection buttons
+        this.setupQuickSelectionButtons();
     }
-    
-    setupResetButtons() {
-        const resetButtons = [
-            { id: 'reset-op-filters', url: '/?tab=operational' },
-            { id: 'reset-tactical-filters', url: '/?tab=tactical' },
-            { id: 'reset-lifecycle-filters', url: '/?tab=analytical-lifecycle' },
-            { id: 'reset-evolution-filters', url: '/?tab=analytical-evolution' }
-        ];
-        
-        resetButtons.forEach(({ id, url }) => {
-            const button = document.getElementById(id);
-            if (button) {
-                button.addEventListener('click', () => {
-                    window.location.href = url;
+
+    setupQuickSelectionButtons() {
+        // Major platforms selection
+        window.selectMajorPlatforms = () => {
+            const platformSelect = document.getElementById('tactical-platform-filter');
+            if (platformSelect) {
+                const majorPlatforms = ['PC', 'PlayStation', 'PlayStation 2', 'PlayStation 3', 'PlayStation 4', 'Xbox', 'Xbox 360', 'Xbox One', 'Nintendo Switch', 'Nintendo DS'];
+                Array.from(platformSelect.options).forEach(option => {
+                    option.selected = majorPlatforms.some(platform => option.value.includes(platform));
                 });
             }
-        });
-    }
-    
-    setupQuickSelections() {
-        // Operational quick selections
-        window.selectRecentYears = () => {
-            const yearFilter = document.getElementById('op-year-filter');
-            const currentYear = new Date().getFullYear();
-            for (let i = 0; i < yearFilter.options.length; i++) {
-                const year = parseInt(yearFilter.options[i].value);
-                yearFilter.options[i].selected = year >= currentYear - 2;
-            }
         };
-        
-        window.selectDecadeYears = () => {
-            const yearFilter = document.getElementById('op-year-filter');
-            const currentYear = new Date().getFullYear();
-            for (let i = 0; i < yearFilter.options.length; i++) {
-                const year = parseInt(yearFilter.options[i].value);
-                yearFilter.options[i].selected = year >= currentYear - 9;
-            }
-        };
-        
-        window.clearYearSelection = () => {
-            const yearFilter = document.getElementById('op-year-filter');
-            for (let i = 0; i < yearFilter.options.length; i++) {
-                yearFilter.options[i].selected = false;
-            }
-        };
-        
-        // Tactical quick selections
-        window.selectMajorPlatforms = () => {
-            const platformFilter = document.getElementById('tactical-platform-filter');
-            const majorPlatforms = ['PlayStation', 'Xbox', 'Nintendo Switch', 'PC', 'PlayStation 4', 'Xbox One', 'PlayStation 5', 'Xbox Series X'];
-            for (let i = 0; i < platformFilter.options.length; i++) {
-                const option = platformFilter.options[i];
-                option.selected = majorPlatforms.some(major => option.value.includes(major));
-            }
-        };
-        
+
+        // Clear platform selection
         window.clearPlatformSelection = () => {
-            const platformFilter = document.getElementById('tactical-platform-filter');
-            for (let i = 0; i < platformFilter.options.length; i++) {
-                platformFilter.options[i].selected = false;
+            const platformSelect = document.getElementById('tactical-platform-filter');
+            if (platformSelect) {
+                Array.from(platformSelect.options).forEach(option => {
+                    option.selected = false;
+                });
             }
         };
-        
+
+        // Popular genres selection
         window.selectPopularGenres = () => {
-            const genreFilter = document.getElementById('tactical-genre-filter');
-            const popularGenres = ['Action', 'Adventure', 'RPG', 'Strategy', 'Sports', 'Racing'];
-            for (let i = 0; i < genreFilter.options.length; i++) {
-                const option = genreFilter.options[i];
-                option.selected = popularGenres.includes(option.value);
+            const genreSelect = document.getElementById('tactical-genre-filter');
+            if (genreSelect) {
+                const popularGenres = ['Action', 'Adventure', 'Role-Playing', 'Strategy', 'Simulation', 'Sports', 'Racing', 'Shooter'];
+                Array.from(genreSelect.options).forEach(option => {
+                    option.selected = popularGenres.includes(option.value);
+                });
             }
         };
-        
+
+        // Clear genre selection
         window.clearGenreSelection = () => {
-            const genreFilter = document.getElementById('tactical-genre-filter');
-            for (let i = 0; i < genreFilter.options.length; i++) {
-                genreFilter.options[i].selected = false;
+            const genreSelect = document.getElementById('tactical-genre-filter');
+            if (genreSelect) {
+                Array.from(genreSelect.options).forEach(option => {
+                    option.selected = false;
+                });
             }
         };
-        
-        // Evolution quick selections
+
+        // Evolution dashboard genre selection
         window.selectEvolutionGenres = () => {
-            const genreFilter = document.getElementById('evolution-genre-filter');
-            const coreGenres = ['Action', 'Adventure', 'RPG', 'Strategy', 'Simulation', 'Puzzle'];
-            for (let i = 0; i < genreFilter.options.length; i++) {
-                const option = genreFilter.options[i];
-                option.selected = coreGenres.includes(option.value);
+            const genreSelect = document.getElementById('evolution-genre-filter');
+            if (genreSelect) {
+                const coreGenres = ['Action', 'Adventure', 'Role-Playing', 'Strategy', 'Simulation', 'Puzzle'];
+                Array.from(genreSelect.options).forEach(option => {
+                    option.selected = coreGenres.includes(option.value);
+                });
             }
         };
-        
+
+        // Clear evolution genres
         window.clearEvolutionGenres = () => {
-            const genreFilter = document.getElementById('evolution-genre-filter');
-            for (let i = 0; i < genreFilter.options.length; i++) {
-                genreFilter.options[i].selected = false;
+            const genreSelect = document.getElementById('evolution-genre-filter');
+            if (genreSelect) {
+                Array.from(genreSelect.options).forEach(option => {
+                    option.selected = false;
+                });
             }
+        };
+    }
+
+    initializeRangeSliders() {
+        // Lifecycle dashboard range sliders
+        const lifecycleRating = document.getElementById('lifecycle-min-rating');
+        const lifecycleRatingDisplay = document.getElementById('lifecycle-rating-display');
+        const lifecycleVotes = document.getElementById('lifecycle-min-votes');
+        const lifecycleVotesDisplay = document.getElementById('lifecycle-votes-display');
+
+        if (lifecycleRating && lifecycleRatingDisplay) {
+            lifecycleRating.addEventListener('input', () => {
+                lifecycleRatingDisplay.textContent = parseFloat(lifecycleRating.value).toFixed(1);
+            });
+        }
+
+        if (lifecycleVotes && lifecycleVotesDisplay) {
+            lifecycleVotes.addEventListener('input', () => {
+                lifecycleVotesDisplay.textContent = parseInt(lifecycleVotes.value).toLocaleString();
+            });
+        }
+
+        // Studio dashboard year range sliders
+        const yearStart = document.getElementById('year-start');
+        const yearEnd = document.getElementById('year-end');
+        const yearDisplay = document.getElementById('year-range-display');
+
+        if (yearStart && yearEnd && yearDisplay) {
+            const updateYearDisplay = () => {
+                const startYear = parseInt(yearStart.value);
+                const endYear = parseInt(yearEnd.value);
+                
+                if (startYear > endYear) {
+                    yearStart.value = endYear;
+                }
+                if (endYear < startYear) {
+                    yearEnd.value = startYear;
+                }
+                
+                yearDisplay.textContent = `${yearStart.value} - ${yearEnd.value}`;
+            };
+
+            yearStart.addEventListener('input', updateYearDisplay);
+            yearEnd.addEventListener('input', updateYearDisplay);
+        }
+    }
+
+    handleTabSwitch(tabName) {
+        // Update active tab
+        this.activeTab = tabName;
+        
+        // Update URL with tab parameter
+        const url = new URL(window.location);
+        url.searchParams.set('tab', tabName);
+        window.history.pushState({}, '', url);
+        
+        // Show appropriate filter section (Bootstrap handles tab content)
+        this.showFilterSection(tabName);
+    }
+
+    activateTab(tabName) {
+        // Programmatically activate a tab using Bootstrap
+        const tabElement = document.querySelector(`[data-tab="${tabName}"]`);
+        if (tabElement) {
+            const tab = new bootstrap.Tab(tabElement);
+            tab.show();
+        }
+        
+        // Update our internal state
+        this.handleTabSwitch(tabName);
+    }
+
+    showFilterSection(tabName) {
+        // Hide all filter sections
+        document.querySelectorAll('[id$="-filters"]').forEach(section => {
+            section.style.display = 'none';
+        });
+        
+        // Show appropriate filter section
+        const filterSection = document.getElementById(`${tabName}-filters`);
+        if (filterSection) {
+            filterSection.style.display = 'block';
+        }
+    }
+
+    handleFilterSubmit(event) {
+        // Add loading state
+        const submitButton = event.target.querySelector('button[type="submit"]');
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Applying...';
+        }
+        
+        // Form will submit normally, no need to prevent default
+    }
+
+    resetFilters(dashboardType) {
+        const form = document.getElementById(`${dashboardType}-filter-form`);
+        if (form) {
+            // Reset form fields
+            form.reset();
+            
+            // Reset range sliders to default values
+            const rangeInputs = form.querySelectorAll('input[type="range"]');
+            rangeInputs.forEach(input => {
+                if (input.id.includes('year-start')) {
+                    input.value = input.min;
+                } else if (input.id.includes('year-end')) {
+                    input.value = input.max;
+                } else {
+                    input.value = input.min;
+                }
+                input.dispatchEvent(new Event('input'));
+            });
+            
+            // Reset multi-select fields
+            const multiSelects = form.querySelectorAll('select[multiple]');
+            multiSelects.forEach(select => {
+                Array.from(select.options).forEach(option => {
+                    option.selected = false;
+                });
+            });
+            
+            // Submit the reset form
+            form.submit();
+        }
+    }
+}
+
+// Enhanced Filter Management
+class FilterManager {
+    constructor() {
+        this.initializeQuickSelections();
+    }
+
+    initializeQuickSelections() {
+        // Operational dashboard quick selections
+        window.selectRecentYears = () => {
+            const currentYear = new Date().getFullYear();
+            const yearCheckboxes = document.querySelectorAll('input[name="op_years"]');
+            yearCheckboxes.forEach(checkbox => {
+                const year = parseInt(checkbox.value);
+                checkbox.checked = year >= (currentYear - 5);
+            });
+        };
+
+        window.selectAllMonths = () => {
+            const monthCheckboxes = document.querySelectorAll('input[name="op_months"]');
+            monthCheckboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        };
+
+        window.clearAllSelections = (type) => {
+            const checkboxes = document.querySelectorAll(`input[name="${type}"]`);
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
         };
     }
 }
 
-// Initialize when DOM is loaded
+// Initialize dashboard management when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initializing enhanced dashboard management...');
+    
     // Initialize managers
-    new TabManager();
-    new FilterManager();
+    window.dashboardManager = new DashboardManager();
+    window.filterManager = new FilterManager();
     
-    // Initialize charts after data is loaded
-    if (typeof initializeCharts === 'function') {
-        initializeCharts();
+    // Set initial active tab based on URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const activeTab = urlParams.get('tab') || 'studio';
+    
+    // Wait a bit for Bootstrap to be ready, then activate the tab
+    setTimeout(() => {
+        window.dashboardManager.activateTab(activeTab);
+    }, 100);
+    
+    console.log('Dashboard management initialized successfully');
+});
+
+// Utility functions for chart generation
+function generateColors(count) {
+    const colors = [
+        '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', 
+        '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43',
+        '#ee5a24', '#0abde3', '#10ac84', '#f368e0', '#3742fa'
+    ];
+    
+    const result = [];
+    for (let i = 0; i < count; i++) {
+        result.push(colors[i % colors.length]);
     }
-    
-    console.log('Dashboard initialized successfully');
-}); 
+    return result;
+} 

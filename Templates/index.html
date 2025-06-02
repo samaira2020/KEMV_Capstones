@@ -20,32 +20,32 @@
                         <h3>Studio Performance Filters</h3>
                         <form id="studio-filter-form" method="GET" action="/">
                             <input type="hidden" name="tab" value="studio">
-                            <div class="mb-3">
-                                <label for="genre-filter" class="form-label">Select Genre(s)</label>
-                                <select class="form-select" id="genre-filter" name="genre" multiple>
-                                    {% for genre in all_genres %}
-                                        <option value="{{ genre }}" {% if genre in selected_genres %}selected{% endif %}>{{ genre }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
+                        <div class="mb-3">
+                            <label for="genre-filter" class="form-label">Select Genre(s)</label>
+                            <select class="form-select" id="genre-filter" name="genre" multiple>
+                                {% for genre in all_genres %}
+                                    <option value="{{ genre }}" {% if genre in selected_genres %}selected{% endif %}>{{ genre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
 
-                            <div class="mb-3">
-                                <label for="platform-filter" class="form-label">Select Platform(s)</label>
-                                <select class="form-select" id="platform-filter" name="platform" multiple>
-                                    {% for platform in all_platforms %}
-                                        <option value="{{ platform }}" {% if platform in selected_platforms %}selected{% endif %}>{{ platform }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
+                        <div class="mb-3">
+                            <label for="platform-filter" class="form-label">Select Platform(s)</label>
+                            <select class="form-select" id="platform-filter" name="platform" multiple>
+                                {% for platform in all_platforms %}
+                                    <option value="{{ platform }}" {% if platform in selected_platforms %}selected{% endif %}>{{ platform }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
 
-                            <div class="slider-container">
+                        <div class="slider-container">
                                 <label for="year-range" class="form-label">Release Year Range: <span id="year-range-display">{{ year_range[0] | default(min_year) }} - {{ year_range[1] | default(max_year) }}</span></label>
-                                <input type="range" class="form-range" id="year-start" name="year_start" min="{{ min_year }}" max="{{ max_year }}" value="{{ year_range[0] | default(min_year) }}">
-                                <input type="range" class="form-range" id="year-end" name="year_end" min="{{ min_year }}" max="{{ max_year }}" value="{{ year_range[1] | default(max_year) }}">
-                            </div>
+                            <input type="range" class="form-range" id="year-start" name="year_start" min="{{ min_year }}" max="{{ max_year }}" value="{{ year_range[0] | default(min_year) }}">
+                            <input type="range" class="form-range" id="year-end" name="year_end" min="{{ min_year }}" max="{{ max_year }}" value="{{ year_range[1] | default(max_year) }}">
+                        </div>
 
-                            <button type="submit" class="btn btn-primary">Apply Filters</button>
-                        </form>
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    </form>
                     </div>
 
                     <!-- Operational Dashboard Filters -->
@@ -305,27 +305,27 @@
                     <!-- Tab Navigation -->
                     <ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link {% if active_tab == 'studio' %}active{% endif %}" id="studio-tab" data-bs-toggle="tab" data-bs-target="#studio-performance" type="button" role="tab">
+                            <button class="nav-link {% if active_tab == 'studio' %}active{% endif %}" id="studio-tab" data-bs-toggle="tab" data-bs-target="#studio-performance" data-tab="studio" type="button" role="tab">
                                 Studio Performance
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link {% if active_tab == 'operational' %}active{% endif %}" id="operational-tab" data-bs-toggle="tab" data-bs-target="#operational-dashboard" type="button" role="tab">
+                            <button class="nav-link {% if active_tab == 'operational' %}active{% endif %}" id="operational-tab" data-bs-toggle="tab" data-bs-target="#operational-dashboard" data-tab="operational" type="button" role="tab">
                                 Release Activity
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link {% if active_tab == 'tactical' %}active{% endif %}" id="tactical-tab" data-bs-toggle="tab" data-bs-target="#tactical-dashboard" type="button" role="tab">
+                            <button class="nav-link {% if active_tab == 'tactical' %}active{% endif %}" id="tactical-tab" data-bs-toggle="tab" data-bs-target="#tactical-dashboard" data-tab="tactical" type="button" role="tab">
                                 Cross-Platform Planning
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link {% if active_tab == 'analytical-lifecycle' %}active{% endif %}" id="analytical-lifecycle-tab" data-bs-toggle="tab" data-bs-target="#analytical-lifecycle-dashboard" type="button" role="tab">
+                            <button class="nav-link {% if active_tab == 'analytical-lifecycle' %}active{% endif %}" id="analytical-lifecycle-tab" data-bs-toggle="tab" data-bs-target="#analytical-lifecycle-dashboard" data-tab="analytical-lifecycle" type="button" role="tab">
                                 Game Lifecycle
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link {% if active_tab == 'analytical-evolution' %}active{% endif %}" id="analytical-evolution-tab" data-bs-toggle="tab" data-bs-target="#analytical-evolution-dashboard" type="button" role="tab">
+                            <button class="nav-link {% if active_tab == 'analytical-evolution' %}active{% endif %}" id="analytical-evolution-tab" data-bs-toggle="tab" data-bs-target="#analytical-evolution-dashboard" data-tab="analytical-evolution" type="button" role="tab">
                                 Genre Evolution
                             </button>
                         </li>
@@ -335,20 +335,20 @@
                     <div class="tab-content" id="dashboardTabContent">
                         <!-- Studio Performance Tab -->
                         <div class="tab-pane fade {% if active_tab == 'studio' %}show active{% endif %}" id="studio-performance" role="tabpanel">
-                            <!-- Key Insights Row -->
+                    <!-- Key Insights Row -->
                             <div class="row justify-content-center">
-                                <!-- Total Games Card -->
-                                <div class="col-md-3">
+                        <!-- Total Games Card -->
+                        <div class="col-md-3">
                                     <div class="card" style="min-height: 200px;">
-                                        <h5 class="card-title">Total Games Analyzed</h5>
-                                        <div class="big-number">{{ stats.total_games | default(0) }}</div>
-                                    </div>
-                                </div>
+                                <h5 class="card-title">Total Games Analyzed</h5>
+                                <div class="big-number">{{ stats.total_games | default(0) }}</div>
+                            </div>
+                        </div>
 
-                                <!-- Top Publisher Card -->
-                                <div class="col-md-3">
+                        <!-- Top Publisher Card -->
+                        <div class="col-md-3">
                                     <div class="card" style="min-height: 200px;">
-                                        <h5 class="card-title">Top Publisher</h5>
+                                <h5 class="card-title">Top Publisher</h5>
                                         {% set filtered_publishers = [] %}
                                         {% for publisher in publisher_counts %}
                                             {% set pub_name = publisher._id | string | lower | trim %}
@@ -359,162 +359,162 @@
                                         {% if filtered_publishers and filtered_publishers[0] %}
                                             <div class="big-number">{{ filtered_publishers[0]._id }}</div>
                                             <p class="text-center text-muted">{{ filtered_publishers[0].count }} games</p>
-                                        {% else %}
-                                            <p class="text-center text-muted">No publisher data available.</p>
-                                        {% endif %}
-                                    </div>
-                                </div>
+                                {% else %}
+                                    <p class="text-center text-muted">No publisher data available.</p>
+                                {% endif %}
+                            </div>
+                        </div>
 
-                                <!-- Total Votes Card -->
-                                <div class="col-md-3">
+                        <!-- Total Votes Card -->
+                        <div class="col-md-3">
                                     <div class="card" style="min-height: 200px;">
-                                        <h5 class="card-title">Total Community Votes</h5>
-                                        {% if votes_analytics and votes_analytics.total_votes %}
-                                            <div class="big-number">{{ "{:,}".format(votes_analytics.total_votes) }}</div>
-                                            <p class="text-center text-muted">Avg: {{ votes_analytics.avg_votes_per_game | default(0) }} per game</p>
-                                        {% else %}
-                                            <p class="text-center text-muted">No voting data available.</p>
-                                        {% endif %}
-                                    </div>
-                                </div>
+                                <h5 class="card-title">Total Community Votes</h5>
+                                {% if votes_analytics and votes_analytics.total_votes %}
+                                    <div class="big-number">{{ "{:,}".format(votes_analytics.total_votes) }}</div>
+                                    <p class="text-center text-muted">Avg: {{ votes_analytics.avg_votes_per_game | default(0) }} per game</p>
+                                {% else %}
+                                    <p class="text-center text-muted">No voting data available.</p>
+                                {% endif %}
                             </div>
+                        </div>
+                    </div>
 
-                            <!-- Most Highly Rated and Most Voted Games Row -->
-                            <div class="row">
-                                <!-- Most Highly Rated Games List -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">Most Highly Rated Games</h5>
-                                        <ul class="list-unstyled">
-                                            {% for game in top_games %}
+                    <!-- Most Highly Rated and Most Voted Games Row -->
+                    <div class="row">
+                        <!-- Most Highly Rated Games List -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <h5 class="card-title">Most Highly Rated Games</h5>
+                                <ul class="list-unstyled">
+                                    {% for game in top_games %}
                                                 <li style="color: #8be9fd;"><strong>{{ loop.index }}.</strong> {{ game.name | default('Unknown Game') }} (Rating: {{ game.rating | default(0.0) | round(1) }})</li>
-                                            {% else %}
-                                                <li class="no-data-message">No highly rated games found.</li>
-                                            {% endfor %}
-                                        </ul>
-                                    </div>
-                                </div>
+                                    {% else %}
+                                        <li class="no-data-message">No highly rated games found.</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
 
-                                <!-- Most Voted Games List -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">Most Voted Games</h5>
-                                        <ul class="list-unstyled">
-                                            {% for game in most_voted_games %}
+                        <!-- Most Voted Games List -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <h5 class="card-title">Most Voted Games</h5>
+                                <ul class="list-unstyled">
+                                    {% for game in most_voted_games %}
                                                 <li style="color: #8be9fd;"><strong>{{ loop.index }}.</strong> {{ game.name | default('Unknown Game') }} ({{ "{:,}".format(game.votes) }} votes, Rating: {{ game.rating | default(0.0) }})</li>
-                                            {% else %}
-                                                <li class="no-data-message">No voting data found.</li>
-                                            {% endfor %}
-                                        </ul>
-                                    </div>
-                                </div>
+                                    {% else %}
+                                        <li class="no-data-message">No voting data found.</li>
+                                    {% endfor %}
+                                </ul>
                             </div>
+                        </div>
+                    </div>
 
-                            <!-- Charts Row 1 -->
-                            <div class="row">
-                                <!-- Games Per Year Chart -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">Games Released Per Year</h5>
-                                        <div class="chart-container">
-                                            <canvas id="gamesPerYearChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Game Share by Publisher Chart -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">Game Share by Publisher (Top 10)</h5>
-                                        <div class="chart-container">
-                                            <canvas id="publisherShareChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Charts Row 2 -->
-                            <div class="row">
-                                <!-- Game Counts by Platform Chart -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">Game Distribution by Platform</h5>
-                                        <div class="chart-container">
-                                            <canvas id="platformChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Game Counts by Genre Chart -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">Game Distribution by Genre</h5>
-                                        <div class="chart-container">
-                                            <canvas id="genreChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Charts Row 3 -->
-                            <div class="row">
-                                <!-- Average Rating by Platform Chart -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">Average Rating by Platform (Top 10)</h5>
-                                        <div class="chart-container">
-                                            <canvas id="avgRatingPlatformChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Average Rating by Developer Chart -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">Average Rating by Developer (Top 10)</h5>
-                                        <div class="chart-container">
-                                            <canvas id="avgRatingDeveloperChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Enhanced Analytics Row 1 -->
-                            <div class="row">
-                                <!-- Game Type Distribution Chart -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">Game Type Distribution</h5>
-                                        <div class="chart-container">
-                                            <canvas id="gameTypeChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Rating Distribution Chart -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">Rating Distribution</h5>
-                                        <div class="chart-container">
-                                            <canvas id="ratingDistributionChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Enhanced Analytics Row 2 -->
-                            <div class="row">
-                                <!-- Director Analytics Chart -->
-                                <div class="col-md-12">
-                                    <div class="card">
-                                        <h5 class="card-title">Top Directors by Average Rating (Min 2 Games)</h5>
-                                        <div class="chart-container">
-                                            <canvas id="directorAnalyticsChart"></canvas>
-                                        </div>
-                                    </div>
+                    <!-- Charts Row 1 -->
+                    <div class="row">
+                        <!-- Games Per Year Chart -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <h5 class="card-title">Games Released Per Year</h5>
+                                <div class="chart-container">
+                                    <canvas id="gamesPerYearChart"></canvas>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Game Share by Publisher Chart -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <h5 class="card-title">Game Share by Publisher (Top 10)</h5>
+                                <div class="chart-container">
+                                    <canvas id="publisherShareChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Row 2 -->
+                    <div class="row">
+                        <!-- Game Counts by Platform Chart -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <h5 class="card-title">Game Distribution by Platform</h5>
+                                <div class="chart-container">
+                                    <canvas id="platformChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Game Counts by Genre Chart -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <h5 class="card-title">Game Distribution by Genre</h5>
+                                <div class="chart-container">
+                                    <canvas id="genreChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Row 3 -->
+                    <div class="row">
+                        <!-- Average Rating by Platform Chart -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <h5 class="card-title">Average Rating by Platform (Top 10)</h5>
+                                <div class="chart-container">
+                                    <canvas id="avgRatingPlatformChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Average Rating by Developer Chart -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <h5 class="card-title">Average Rating by Developer (Top 10)</h5>
+                                <div class="chart-container">
+                                    <canvas id="avgRatingDeveloperChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Enhanced Analytics Row 1 -->
+                    <div class="row">
+                        <!-- Game Type Distribution Chart -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <h5 class="card-title">Game Type Distribution</h5>
+                                <div class="chart-container">
+                                    <canvas id="gameTypeChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rating Distribution Chart -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <h5 class="card-title">Rating Distribution</h5>
+                                <div class="chart-container">
+                                    <canvas id="ratingDistributionChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Enhanced Analytics Row 2 -->
+                    <div class="row">
+                        <!-- Director Analytics Chart -->
+                        <div class="col-md-12">
+                            <div class="card">
+                                <h5 class="card-title">Top Directors by Average Rating (Min 2 Games)</h5>
+                                <div class="chart-container">
+                                    <canvas id="directorAnalyticsChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                         <!-- Operational Dashboard Tab -->
                         <div class="tab-pane fade {% if active_tab == 'operational' %}show active{% endif %}" id="operational-dashboard" role="tabpanel">
@@ -544,7 +544,7 @@
                                         {% else %}
                                             <p class="text-center text-muted">Last 2 years</p>
                                         {% endif %}
-                                    </div>
+            </div>
                                 </div>
 
                                 <!-- Average Recent Rating -->
@@ -558,8 +558,8 @@
                                             <div class="big-number">N/A</div>
                                         {% endif %}
                                         <p class="text-center text-muted">Top rated games</p>
-                                    </div>
-                                </div>
+        </div>
+    </div>
 
                                 <!-- Active Platforms -->
                                 <div class="col-md-3">
@@ -719,27 +719,77 @@
 
                         <!-- Tactical Dashboard Tab -->
                         <div class="tab-pane fade {% if active_tab == 'tactical' %}show active{% endif %}" id="tactical-dashboard" role="tabpanel">
-                            <div class="row">
-                                <div class="col-12">
+                            <!-- Tactical KPIs Row -->
+                            <div class="row justify-content-center mb-4">
+                                <!-- Most Compatible Platform KPI -->
+                                <div class="col-md-4">
+                                    <div class="card" style="min-height: 150px;">
+                                        <h5 class="card-title">🎮 Most Compatible Platform</h5>
+                                        {% if tactical_sankey_data and tactical_sankey_data|length > 0 %}
+                                            {% set first_platform = tactical_sankey_data[0].platform %}
+                                            <div class="big-number">{{ first_platform[:12] }}{% if first_platform|length > 12 %}...{% endif %}</div>
+                                            <p class="text-center text-muted">Platform with widest genre variety</p>
+                                        {% else %}
+                                            <div class="big-number">N/A</div>
+                                            <p class="text-center text-muted">No data available</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Top Cross-Platform Genre KPI -->
+                                <div class="col-md-4">
+                                    <div class="card" style="min-height: 150px;">
+                                        <h5 class="card-title">🌐 Top Cross-Platform Genre</h5>
+                                        {% if tactical_sankey_data and tactical_sankey_data|length > 0 %}
+                                            {% set first_genre = tactical_sankey_data[0].genre %}
+                                            <div class="big-number">{{ first_genre }}</div>
+                                            <p class="text-center text-muted">Highest platform distribution</p>
+                                        {% else %}
+                                            <div class="big-number">N/A</div>
+                                            <p class="text-center text-muted">No data available</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Cross-Platform Game Ratio KPI -->
+                                <div class="col-md-4">
+                                    <div class="card" style="min-height: 150px;">
+                                        <h5 class="card-title">📊 Cross-Platform Game Ratio</h5>
+                                        {% if tactical_venn_data and tactical_venn_data|length > 0 %}
+                                            {% set total_games = tactical_venn_data|sum(attribute='game_count') %}
+                                            {% set multi_platform_count = tactical_venn_data|length %}
+                                            {% if total_games > 0 %}
+                                                {% set ratio = ((multi_platform_count / total_games) * 100)|round(1) %}
+                                                <div class="big-number">{{ ratio }}%</div>
+                                                <p class="text-center text-muted">{{ multi_platform_count }} multi-platform games</p>
+                                            {% else %}
+                                                <div class="big-number">0%</div>
+                                                <p class="text-center text-muted">No multi-platform data</p>
+                                            {% endif %}
+                                        {% else %}
+                                            <div class="big-number">N/A</div>
+                                            <p class="text-center text-muted">No data available</p>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- Tactical Charts Row 1 -->
                             <div class="row">
-                                <!-- Sankey Diagram -->
+                                <!-- Platform Strategy Map -->
                                 <div class="col-md-6">
                                     <div class="card">
-                                        <h5 class="card-title">Genre → Platform → Publisher Flow</h5>
+                                        <h5 class="card-title">🎯 Platform Strategy Map (Theme → Platform)</h5>
                                         <div class="chart-container">
                                             <canvas id="tacticalSankeyChart"></canvas>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Venn Diagram -->
+                                <!-- Cross-Platform Footprint -->
                                 <div class="col-md-6">
                                     <div class="card">
-                                        <h5 class="card-title">Cross-Platform Game Availability</h5>
+                                        <h5 class="card-title">📊 Cross-Platform Footprint Analysis</h5>
                                         <div class="chart-container">
                                             <canvas id="tacticalVennChart"></canvas>
                                         </div>
@@ -749,20 +799,20 @@
 
                             <!-- Tactical Charts Row 2 -->
                             <div class="row">
-                                <!-- Chord Diagram -->
+                                <!-- Developer-Platform Flow -->
                                 <div class="col-md-6">
                                     <div class="card">
-                                        <h5 class="card-title">Developer ↔ Platform ↔ Genre Connections</h5>
+                                        <h5 class="card-title">🌊 Developer → Platform Flow Analysis</h5>
                                         <div class="chart-container">
                                             <canvas id="tacticalChordChart"></canvas>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Dumbbell Chart -->
+                                <!-- Performance Spread -->
                                 <div class="col-md-6">
                                     <div class="card">
-                                        <h5 class="card-title">Rating Range by Platform & Genre</h5>
+                                        <h5 class="card-title">📈 Performance Spread Analysis</h5>
                                         <div class="chart-container">
                                             <canvas id="tacticalDumbbellChart"></canvas>
                                         </div>
@@ -772,12 +822,22 @@
 
                             <!-- Tactical Charts Row 3 -->
                             <div class="row">
-                                <!-- Marimekko Chart -->
-                                <div class="col-md-12">
+                                <!-- Market Concentration Matrix -->
+                                <div class="col-md-6">
                                     <div class="card">
-                                        <h5 class="card-title">Genre & Platform Market Share Matrix</h5>
+                                        <h5 class="card-title">🔥 Market Concentration Matrix (Heatmap)</h5>
                                         <div class="chart-container">
                                             <canvas id="tacticalMarimekkoChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Focus Area Comparison -->
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <h5 class="card-title">🎯 Focus Area Comparison (Radar)</h5>
+                                        <div class="chart-container">
+                                            <canvas id="tacticalFocusChart"></canvas>
                                         </div>
                                     </div>
                                 </div>
