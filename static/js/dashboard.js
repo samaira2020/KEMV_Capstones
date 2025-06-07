@@ -8,6 +8,7 @@ let recentReleases, ratingTrends, monthlyActivity, platformPerformance, topRated
 let tacticalSankeyData, tacticalVennData, tacticalChordData, tacticalDumbbellData, tacticalMarimekkoData;
 let lifecycleSurvivalData, lifecycleRidgelineData, lifecycleTimelineData, lifecycleHexbinData, lifecycleParallelData;
 let evolutionStreamData, evolutionBubbleData, evolutionHexbinData, evolutionParallelData, evolutionTreeData;
+let tacticalDeveloperProfiles;
 
 // Utility Functions
 function filterUnwantedValues(data, labelKey = '_id', valueKey = 'count') {
@@ -159,8 +160,61 @@ class DashboardManager {
             updateTacticalYearDisplay();
         }
 
+        // Setup "All" option handlers for tactical filters
+        this.setupTacticalAllOptionHandlers();
+
         // Platform and genre quick selection buttons
         this.setupQuickSelectionButtons();
+    }
+
+    setupTacticalAllOptionHandlers() {
+        // Studio Type "All" handler
+        const studioTypeSelect = document.getElementById('tactical-studio-type');
+        if (studioTypeSelect) {
+            studioTypeSelect.addEventListener('change', (e) => {
+                this.handleAllOptionSelection(e.target, 'all_studios');
+            });
+        }
+
+        // Country "All" handler
+        const countrySelect = document.getElementById('tactical-country-filter');
+        if (countrySelect) {
+            countrySelect.addEventListener('change', (e) => {
+                this.handleAllOptionSelection(e.target, 'all_countries');
+            });
+        }
+
+        // Maturity "All" handler
+        const maturitySelect = document.getElementById('tactical-maturity-filter');
+        if (maturitySelect) {
+            maturitySelect.addEventListener('change', (e) => {
+                this.handleAllOptionSelection(e.target, 'all_maturity');
+            });
+        }
+    }
+
+    handleAllOptionSelection(selectElement, allOptionValue) {
+        const allOption = Array.from(selectElement.options).find(option => option.value === allOptionValue);
+        const otherOptions = Array.from(selectElement.options).filter(option => option.value !== allOptionValue);
+        
+        if (allOption && allOption.selected) {
+            // If "All" is selected, deselect all other options
+            otherOptions.forEach(option => {
+                option.selected = false;
+            });
+        } else {
+            // If any other option is selected, deselect "All"
+            const hasOtherSelected = otherOptions.some(option => option.selected);
+            if (hasOtherSelected && allOption) {
+                allOption.selected = false;
+            }
+            
+            // If no options are selected, select "All" by default
+            const hasAnySelected = Array.from(selectElement.options).some(option => option.selected);
+            if (!hasAnySelected && allOption) {
+                allOption.selected = true;
+            }
+        }
     }
 
     setupQuickSelectionButtons() {
@@ -223,6 +277,45 @@ class DashboardManager {
             if (genreSelect) {
                 Array.from(genreSelect.options).forEach(option => {
                     option.selected = false;
+                });
+            }
+        };
+
+        // Tactical Dashboard Quick Selection Functions
+        window.selectMajorStudios = () => {
+            const studioSelect = document.getElementById('tactical-studio-type');
+            if (studioSelect) {
+                const majorStudios = ['AAA', 'Mid-tier'];
+                Array.from(studioSelect.options).forEach(option => {
+                    option.selected = majorStudios.includes(option.value);
+                });
+            }
+        };
+
+        window.selectAllStudios = () => {
+            const studioSelect = document.getElementById('tactical-studio-type');
+            if (studioSelect) {
+                Array.from(studioSelect.options).forEach(option => {
+                    option.selected = option.value === 'all_studios';
+                });
+            }
+        };
+
+        window.selectTopCountries = () => {
+            const countrySelect = document.getElementById('tactical-country-filter');
+            if (countrySelect) {
+                const topCountries = ['United States', 'Japan', 'United Kingdom', 'Canada', 'Germany'];
+                Array.from(countrySelect.options).forEach(option => {
+                    option.selected = topCountries.includes(option.value);
+                });
+            }
+        };
+
+        window.selectAllCountries = () => {
+            const countrySelect = document.getElementById('tactical-country-filter');
+            if (countrySelect) {
+                Array.from(countrySelect.options).forEach(option => {
+                    option.selected = option.value === 'all_countries';
                 });
             }
         };
@@ -358,34 +451,118 @@ class DashboardManager {
     }
 
     resetFilters(dashboardType) {
+        console.log(`Resetting filters for ${dashboardType} dashboard`);
+        
+        switch(dashboardType) {
+            case 'studio':
+                // Reset studio performance filters
+                const genreFilter = document.getElementById('genre-filter');
+                const platformFilter = document.getElementById('platform-filter');
+                const yearStart = document.getElementById('year-start');
+                const yearEnd = document.getElementById('year-end');
+                
+                if (genreFilter) genreFilter.selectedIndex = -1;
+                if (platformFilter) platformFilter.selectedIndex = -1;
+                if (yearStart) yearStart.value = yearStart.min;
+                if (yearEnd) yearEnd.value = yearEnd.max;
+                break;
+                
+            case 'op':
+            case 'operational':
+                // Reset operational dashboard filters
+                const opYearFilter = document.getElementById('op-year-filter');
+                const opMonthFilter = document.getElementById('op-month-filter');
+                const opRatingFilter = document.getElementById('op-rating-filter');
+                const opTimeframe = document.getElementById('op-timeframe');
+                
+                if (opYearFilter) opYearFilter.selectedIndex = -1;
+                if (opMonthFilter) opMonthFilter.selectedIndex = -1;
+                if (opRatingFilter) opRatingFilter.selectedIndex = 0;
+                if (opTimeframe) opTimeframe.selectedIndex = 1; // Default to 'recent'
+                break;
+                
+            case 'tactical':
+                // Reset tactical dashboard filters
+                const tacticalStudioType = document.getElementById('tactical-studio-type');
+                const tacticalCountryFilter = document.getElementById('tactical-country-filter');
+                const tacticalMaturityFilter = document.getElementById('tactical-maturity-filter');
+                const tacticalAnalysisType = document.getElementById('tactical-analysis-type');
+                const tacticalYearStart = document.getElementById('tactical-year-start');
+                const tacticalYearEnd = document.getElementById('tactical-year-end');
+                
+                // Reset to "All" options
+                if (tacticalStudioType) {
+                    Array.from(tacticalStudioType.options).forEach(option => {
+                        option.selected = option.value === 'all_studios';
+                    });
+                }
+                
+                if (tacticalCountryFilter) {
+                    Array.from(tacticalCountryFilter.options).forEach(option => {
+                        option.selected = option.value === 'all_countries';
+                    });
+                }
+                
+                if (tacticalMaturityFilter) {
+                    Array.from(tacticalMaturityFilter.options).forEach(option => {
+                        option.selected = option.value === 'all_maturity';
+                    });
+                }
+                
+                if (tacticalAnalysisType) tacticalAnalysisType.selectedIndex = 0;
+                if (tacticalYearStart) tacticalYearStart.value = tacticalYearStart.min;
+                if (tacticalYearEnd) tacticalYearEnd.value = tacticalYearEnd.max;
+                
+                // Update year range display
+                const tacticalYearDisplay = document.getElementById('tactical-year-range-display');
+                if (tacticalYearDisplay && tacticalYearStart && tacticalYearEnd) {
+                    tacticalYearDisplay.textContent = `${tacticalYearStart.value} - ${tacticalYearEnd.value}`;
+                }
+                break;
+                
+            case 'lifecycle':
+                // Reset lifecycle dashboard filters
+                const lifecycleSearch = document.getElementById('lifecycle-search');
+                const lifecycleGenreFilter = document.getElementById('lifecycle-genre-filter');
+                const lifecyclePlatformFilter = document.getElementById('lifecycle-platform-filter');
+                const lifecycleMinRating = document.getElementById('lifecycle-min-rating');
+                const lifecycleMinVotes = document.getElementById('lifecycle-min-votes');
+                const lifecycleGameType = document.getElementById('lifecycle-game-type');
+                
+                if (lifecycleSearch) lifecycleSearch.value = '';
+                if (lifecycleGenreFilter) lifecycleGenreFilter.selectedIndex = -1;
+                if (lifecyclePlatformFilter) lifecyclePlatformFilter.selectedIndex = -1;
+                if (lifecycleMinRating) lifecycleMinRating.value = '0.0';
+                if (lifecycleMinVotes) lifecycleMinVotes.value = '0';
+                if (lifecycleGameType) lifecycleGameType.selectedIndex = 0;
+                
+                // Update range displays
+                const lifecycleRatingDisplay = document.getElementById('lifecycle-rating-display');
+                const lifecycleVotesDisplay = document.getElementById('lifecycle-votes-display');
+                if (lifecycleRatingDisplay) lifecycleRatingDisplay.textContent = '0.0';
+                if (lifecycleVotesDisplay) lifecycleVotesDisplay.textContent = '0';
+                break;
+                
+            case 'evolution':
+                // Reset evolution dashboard filters
+                const evolutionGenreFilter = document.getElementById('evolution-genre-filter');
+                const evolutionPlatformFilter = document.getElementById('evolution-platform-filter');
+                const evolutionTimePeriod = document.getElementById('evolution-time-period');
+                const evolutionMetric = document.getElementById('evolution-metric');
+                
+                if (evolutionGenreFilter) evolutionGenreFilter.selectedIndex = -1;
+                if (evolutionPlatformFilter) evolutionPlatformFilter.selectedIndex = -1;
+                if (evolutionTimePeriod) evolutionTimePeriod.selectedIndex = 0;
+                if (evolutionMetric) evolutionMetric.selectedIndex = 0;
+                break;
+        }
+        
+        // Auto-submit the form after reset
         const form = document.getElementById(`${dashboardType}-filter-form`);
         if (form) {
-            // Reset form fields
-            form.reset();
-            
-            // Reset range sliders to default values
-            const rangeInputs = form.querySelectorAll('input[type="range"]');
-            rangeInputs.forEach(input => {
-                if (input.id.includes('year-start')) {
-                    input.value = input.min;
-                } else if (input.id.includes('year-end')) {
-                    input.value = input.max;
-                } else {
-                    input.value = input.min;
-                }
-                input.dispatchEvent(new Event('input'));
-            });
-            
-            // Reset multi-select fields
-            const multiSelects = form.querySelectorAll('select[multiple]');
-            multiSelects.forEach(select => {
-                Array.from(select.options).forEach(option => {
-                    option.selected = false;
-                });
-            });
-            
-            // Submit the reset form
-            form.submit();
+            setTimeout(() => {
+                form.submit();
+            }, 100);
         }
     }
 }

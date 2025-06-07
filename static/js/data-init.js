@@ -35,6 +35,7 @@ function initializeData(dataFromServer) {
         tacticalChordData = dataFromServer.tacticalChordData;
         tacticalDumbbellData = dataFromServer.tacticalDumbbellData;
         tacticalMarimekkoData = dataFromServer.tacticalMarimekkoData;
+        tacticalDeveloperProfiles = dataFromServer.tacticalDeveloperProfiles;
         
         // Lifecycle dashboard data
         lifecycleSurvivalData = dataFromServer.lifecycleSurvivalData;
@@ -69,7 +70,8 @@ function initializeData(dataFromServer) {
                 venn: tacticalVennData?.length || 0,
                 chord: tacticalChordData?.length || 0,
                 dumbbell: tacticalDumbbellData?.length || 0,
-                marimekko: tacticalMarimekkoData?.length || 0
+                marimekko: tacticalMarimekkoData?.length || 0,
+                developerProfiles: tacticalDeveloperProfiles?.length || 0
             },
             lifecycleData: {
                 survival: lifecycleSurvivalData?.length || 0,

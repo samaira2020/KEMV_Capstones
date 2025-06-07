@@ -6,6 +6,7 @@
     <title>Video Game Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 </head>
@@ -125,7 +126,8 @@
 
                             <div class="mb-3">
                                 <label for="tactical-studio-type" class="form-label">Studio Type</label>
-                                <select class="form-select" id="tactical-studio-type" name="tactical_studio_types" multiple size="5">
+                                <select class="form-select" id="tactical-studio-type" name="tactical_studio_types" multiple size="6">
+                                    <option value="all_studios" {% if not request.args.getlist('tactical_studio_types') or 'all_studios' in request.args.getlist('tactical_studio_types') %}selected{% endif %}>🌟 All Studios</option>
                                     <option value="AAA" {% if request.args.getlist('tactical_studio_types') and 'AAA' in request.args.getlist('tactical_studio_types') %}selected{% endif %}>AAA Studios</option>
                                     <option value="Mid-tier" {% if request.args.getlist('tactical_studio_types') and 'Mid-tier' in request.args.getlist('tactical_studio_types') %}selected{% endif %}>Mid-tier Studios</option>
                                     <option value="Indie" {% if request.args.getlist('tactical_studio_types') and 'Indie' in request.args.getlist('tactical_studio_types') %}selected{% endif %}>Indie Studios</option>
@@ -133,11 +135,16 @@
                                     <option value="Legacy" {% if request.args.getlist('tactical_studio_types') and 'Legacy' in request.args.getlist('tactical_studio_types') %}selected{% endif %}>Legacy Studios</option>
                                 </select>
                                 <small class="text-muted">Hold Ctrl/Cmd to select multiple types</small>
+                                <div class="mt-1">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectMajorStudios()">Major Studios</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAllStudios()">All</button>
+                                </div>
                             </div>
 
                             <div class="mb-3">
                                 <label for="tactical-country-filter" class="form-label">Developer Country</label>
-                                <select class="form-select" id="tactical-country-filter" name="tactical_countries" multiple size="6">
+                                <select class="form-select" id="tactical-country-filter" name="tactical_countries" multiple size="7">
+                                    <option value="all_countries" {% if not request.args.getlist('tactical_countries') or 'all_countries' in request.args.getlist('tactical_countries') %}selected{% endif %}>🌍 All Countries</option>
                                     <option value="United States" {% if request.args.getlist('tactical_countries') and 'United States' in request.args.getlist('tactical_countries') %}selected{% endif %}>United States</option>
                                     <option value="Japan" {% if request.args.getlist('tactical_countries') and 'Japan' in request.args.getlist('tactical_countries') %}selected{% endif %}>Japan</option>
                                     <option value="United Kingdom" {% if request.args.getlist('tactical_countries') and 'United Kingdom' in request.args.getlist('tactical_countries') %}selected{% endif %}>United Kingdom</option>
@@ -148,11 +155,16 @@
                                     <option value="Finland" {% if request.args.getlist('tactical_countries') and 'Finland' in request.args.getlist('tactical_countries') %}selected{% endif %}>Finland</option>
                                 </select>
                                 <small class="text-muted">Hold Ctrl/Cmd to select multiple countries</small>
+                                <div class="mt-1">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectTopCountries()">Top 5</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAllCountries()">All</button>
+                                </div>
                             </div>
 
                             <div class="mb-3">
                                 <label for="tactical-maturity-filter" class="form-label">Developer Maturity</label>
-                                <select class="form-select" id="tactical-maturity-filter" name="tactical_maturity" multiple size="3">
+                                <select class="form-select" id="tactical-maturity-filter" name="tactical_maturity" multiple size="4">
+                                    <option value="all_maturity" {% if not request.args.getlist('tactical_maturity') or 'all_maturity' in request.args.getlist('tactical_maturity') %}selected{% endif %}>⭐ All Maturity Levels</option>
                                     <option value="Veteran" {% if request.args.getlist('tactical_maturity') and 'Veteran' in request.args.getlist('tactical_maturity') %}selected{% endif %}>Veteran (30+ years)</option>
                                     <option value="Established" {% if request.args.getlist('tactical_maturity') and 'Established' in request.args.getlist('tactical_maturity') %}selected{% endif %}>Established (15-29 years)</option>
                                     <option value="Emerging" {% if request.args.getlist('tactical_maturity') and 'Emerging' in request.args.getlist('tactical_maturity') %}selected{% endif %}>Emerging (0-14 years)</option>
@@ -718,120 +730,121 @@
 
                         <!-- Tactical Dashboard Tab -->
                         <div class="tab-pane fade {% if active_tab == 'tactical' %}show active{% endif %}" id="tactical-dashboard" role="tabpanel">
-                            <!-- Developer Performance KPIs Row -->
+                            <!-- Enhanced Developer Performance KPIs Row -->
                             <div class="row justify-content-center mb-4">
                                 <!-- Top Performing Studio Type KPI -->
                                 <div class="col-md-4">
                                     <div class="card" style="min-height: 150px;">
                                         <h5 class="card-title">🏆 Top Performing Studio Type</h5>
-                                        {% if tactical_sankey_data and tactical_sankey_data|length > 0 %}
-                                            {% set first_studio = tactical_sankey_data[0].studio_type %}
-                                            <div class="big-number">{{ first_studio }}</div>
-                                            <p class="text-center text-muted">Highest average replay rate</p>
-                                        {% else %}
-                                            <div class="big-number">AAA</div>
-                                            <p class="text-center text-muted">Based on industry standards</p>
-                                        {% endif %}
+                                        <div class="big-number">{{ tactical_kpis.top_studio_type.name }}</div>
+                                        <p class="text-center text-muted">{{ tactical_kpis.top_studio_type.performance_tier }} Tier</p>
+                                        <small class="text-center text-info d-block">{{ tactical_kpis.top_studio_type.avg_replay_rate }}% replay rate</small>
                                     </div>
                                 </div>
 
-                                <!-- Most Productive Country KPI -->
+                                <!-- Strongest Gaming Country KPI -->
                                 <div class="col-md-4">
                                     <div class="card" style="min-height: 150px;">
-                                        <h5 class="card-title">🌍 Most Productive Country</h5>
-                                        {% if tactical_venn_data and tactical_venn_data|length > 0 %}
-                                            {% set first_country = tactical_venn_data[0].country %}
-                                            <div class="big-number">{{ first_country[:12] }}{% if first_country|length > 12 %}...{% endif %}</div>
-                                            <p class="text-center text-muted">Highest developer count</p>
-                                        {% else %}
-                                            <div class="big-number">United States</div>
-                                            <p class="text-center text-muted">Based on industry data</p>
-                                        {% endif %}
+                                        <h5 class="card-title">🌍 Strongest Gaming Country</h5>
+                                        <div class="big-number">{{ tactical_kpis.strongest_country.name[:12] }}{% if tactical_kpis.strongest_country.name|length > 12 %}...{% endif %}</div>
+                                        <p class="text-center text-muted">{{ tactical_kpis.strongest_country.market_strength }} Market</p>
+                                        <small class="text-center text-info d-block">{{ tactical_kpis.strongest_country.total_developers }} developers</small>
                                     </div>
                                 </div>
 
-                                <!-- Average Developer Experience KPI -->
+                                <!-- Trending Insight KPI -->
                                 <div class="col-md-4">
                                     <div class="card" style="min-height: 150px;">
-                                        <h5 class="card-title">📈 Average Developer Experience</h5>
-                                        {% if tactical_chord_data and tactical_chord_data|length > 0 %}
-                                            {% set total_years = tactical_chord_data|sum(attribute='years_active') %}
-                                            {% set avg_years = (total_years / tactical_chord_data|length)|round(1) %}
-                                            <div class="big-number">{{ avg_years }} years</div>
-                                            <p class="text-center text-muted">Industry average experience</p>
-                                        {% else %}
-                                            <div class="big-number">18.5 years</div>
-                                            <p class="text-center text-muted">Estimated industry average</p>
-                                        {% endif %}
+                                        <h5 class="card-title">📈 {{ tactical_kpis.trending_insight.category }}</h5>
+                                        <div class="big-number">{{ tactical_kpis.trending_insight.value[:15] }}{% if tactical_kpis.trending_insight.value|length > 15 %}...{% endif %}</div>
+                                        <p class="text-center text-muted">Trend: {{ tactical_kpis.trending_insight.trend|title }}</p>
+                                        <small class="text-center text-success d-block">🔥 Industry leader</small>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Developer Performance Charts Row 1 -->
-                            <div class="row">
-                                <!-- Studio Type Performance -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">🏢 Studio Type Performance Analysis</h5>
-                                        <div class="chart-container">
-                                            <canvas id="tacticalSankeyChart"></canvas>
+                            <!-- Enhanced Developer Performance Charts Container -->
+                            <div class="tactical-charts-container">
+                                <!-- Developer Performance Charts Row 1 -->
+                                <div class="row">
+                                    <!-- 📊 Developer Performance Metrics - Horizontal Grouped Bar Chart -->
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <h5 class="card-title">📊 Developer Performance Metrics</h5>
+                                            <div class="chart-container">
+                                                <canvas id="tacticalChart1"></canvas>
+                                            </div>
+                                            <small class="text-muted">Retention, Experience, and Market Reach by Studio Type</small>
+                                        </div>
+                                    </div>
+
+                                    <!-- 🌍 Developer Geographic Distribution - Dual Y-Axis Chart -->
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <h5 class="card-title">🌍 Developer Geographic Distribution</h5>
+                                            <div class="chart-container">
+                                                <canvas id="tacticalChart2"></canvas>
+                                            </div>
+                                            <small class="text-muted">Developer Count (bars) vs Average Replay Rate (line)</small>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Geographic Distribution -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">🌍 Developer Geographic Distribution</h5>
-                                        <div class="chart-container">
-                                            <canvas id="tacticalVennChart"></canvas>
+                                <!-- Developer Performance Charts Row 2 -->
+                                <div class="row">
+                                    <!-- 🎮 Top-Rated Games by Country - Horizontal Bar Chart -->
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <h5 class="card-title">🎮 Top-Rated Games by Country</h5>
+                                            <div class="chart-container">
+                                                <canvas id="tacticalChart3"></canvas>
+                                            </div>
+                                            <small class="text-muted">Highest-rated games from each country with developer details</small>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
 
-                            <!-- Developer Performance Charts Row 2 -->
-                            <div class="row">
-                                <!-- Developer Maturity Analysis -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">⏳ Developer Maturity vs Performance</h5>
-                                        <div class="chart-container">
-                                            <canvas id="tacticalChordChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Replay Rate Distribution -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">🔁 Replay Rate Distribution by Studio Type</h5>
-                                        <div class="chart-container">
-                                            <canvas id="tacticalDumbbellChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Developer Performance Charts Row 3 -->
-                            <div class="row">
-                                <!-- Country vs Studio Type Heatmap -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">🔥 Country vs Studio Type Matrix</h5>
-                                        <div class="chart-container">
-                                            <canvas id="tacticalMarimekkoChart"></canvas>
+                                    <!-- 🎯 Developer Maturity vs Performance - Grouped Vertical Bar Chart -->
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <h5 class="card-title">🎯 Developer Maturity vs Performance</h5>
+                                            <div class="chart-container">
+                                                <canvas id="tacticalChart4"></canvas>
+                                            </div>
+                                            <small class="text-muted">Average Replay Rate by Maturity Level and Studio Type</small>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Developer Performance Radar -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">📊 Developer Performance Metrics</h5>
-                                        <div class="chart-container">
-                                            <canvas id="tacticalFocusChart"></canvas>
+                                <!-- Developer Performance Charts Row 3 -->
+                                <div class="row">
+                                    <!-- 🧪 Replay Rate Distribution by Studio Type - Grouped Bar Chart -->
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <h5 class="card-title">🧪 Replay Rate Distribution by Studio Type</h5>
+                                            <div class="chart-container">
+                                                <canvas id="tacticalChart5"></canvas>
+                                            </div>
+                                            <small class="text-muted">Min, Average, and Max replay rates per studio type</small>
                                         </div>
+                                    </div>
+
+                                    <!-- 🧱 Country × Studio Type Matrix - Heatmap Grid -->
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <h5 class="card-title">🧱 Country × Studio Type Matrix</h5>
+                                            <div class="chart-container">
+                                                <canvas id="tacticalChart6"></canvas>
+                                            </div>
+                                            <small class="text-muted">Developer count heatmap by country and studio type</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Developer Profile Table Row -->
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <!-- 📦 Developer Profile Table will be dynamically inserted here -->
+                                        <!-- The table container will be created by JavaScript -->
                                     </div>
                                 </div>
                             </div>
@@ -1017,6 +1030,7 @@
                 tacticalChordData: {{ tactical_chord_data | safe_tojson | safe }},
                 tacticalDumbbellData: {{ tactical_dumbbell_data | safe_tojson | safe }},
                 tacticalMarimekkoData: {{ tactical_marimekko_data | safe_tojson | safe }},
+                tacticalDeveloperProfiles: {{ tactical_developer_profiles | safe_tojson | safe }},
                 
                 // Lifecycle dashboard data
                 lifecycleSurvivalData: {{ lifecycle_survival_data | safe_tojson | safe }},

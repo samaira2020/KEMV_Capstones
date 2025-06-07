@@ -3226,24 +3226,34 @@ class MongoDBHandler:
             return []
 
     def get_developer_country_studio_matrix(self, year_range=None, countries=None):
-        """Get country vs studio type matrix for heatmap."""
+        """Get developer count matrix by country and studio type."""
         try:
-            print(f"Fetching developer country-studio matrix data")
-            
-            developer_collection = self.db.developer_mapping
+            print("Fetching developer country-studio matrix data")
+            collection = self.db.developer_mapping
             pipeline = []
-            
-            # Filter conditions
-            match_conditions = {
-                'Country': {'$exists': True, '$ne': None, '$ne': ''},
-                'Studio_Type': {'$exists': True, '$ne': None, '$ne': ''}
+
+            # Base match for valid data
+            match_query = {
+                'Country': {'$exists': True, '$ne': None, '$type': 'string'},
+                'Studio_Type': {'$exists': True, '$ne': None, '$type': 'string'}
             }
-            
+
+            # Apply country filter
             if countries:
-                match_conditions['Country'] = {'$in': countries}
-            
-            pipeline.append({'$match': match_conditions})
-            
+                match_query['Country'] = {'$in': countries}
+
+            # Apply year range filter if provided
+            if year_range and len(year_range) == 2:
+                match_query['Founded_Year'] = {
+                    '$gte': year_range[0],
+                    '$lte': year_range[1],
+                    '$exists': True,
+                    '$ne': None,
+                    '$type': 'number'
+                }
+
+            pipeline.append({'$match': match_query})
+
             # Group by country and studio type
             pipeline.append({
                 '$group': {
@@ -3255,27 +3265,773 @@ class MongoDBHandler:
                     'avg_replay_rate': {'$avg': '$Replay_Rate'}
                 }
             })
-            
-            # Project for heatmap
+
+            # Project final structure
             pipeline.append({
                 '$project': {
                     '_id': 0,
                     'country': '$_id.country',
                     'studio_type': '$_id.studio_type',
                     'developer_count': 1,
-                    'avg_replay_rate': {'$round': ['$avg_replay_rate', 3]}
+                    'avg_replay_rate': 1
+                }
+            })
+
+            # Sort by developer count
+            pipeline.append({'$sort': {'developer_count': -1}})
+
+            result = list(collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Developer country-studio matrix data result: {len(result)} combinations")
+            return result
+
+        except Exception as e:
+            print(f"Error in get_developer_country_studio_matrix: {e}")
+            return []
+
+    # === ENHANCED FILTERING AND INSIGHTS METHODS ===
+    
+    def get_best_rated_games_by_country(self, limit=5, min_rating=8.0, year_range=None):
+        """Get best-rated games by developer country."""
+        try:
+            print(f"Fetching best-rated games by country (min rating: {min_rating})")
+            
+            # First get games with their developers
+            games_collection = self.db.enriched_games
+            dev_collection = self.db.developer_mapping
+            
+            pipeline = []
+            
+            # Add extracted year
+            pipeline.append({
+                '$addFields': {
+                    'extractedYear': {
+                        '$toInt': {
+                            '$arrayElemAt': [{'$split': [{'$ifNull': ['$Release_Date_IGDB', '']}, '/']}, 2]
+                        }
+                    }
                 }
             })
             
-            # Sort by developer count
-            pipeline.append({'$sort': {'developer_count': -1}})
+            # Filter by rating and year
+            match_query = {
+                'Rating': {'$gte': min_rating, '$exists': True, '$ne': None, '$type': 'number'},
+                'Developer': {'$exists': True, '$ne': None, '$type': 'string'},
+                'Title': {'$exists': True, '$ne': None, '$type': 'string'}
+            }
             
-            result = list(developer_collection.aggregate(pipeline, allowDiskUse=True))
-            print(f"Developer country-studio matrix data result: {len(result)} combinations")
+            if year_range and len(year_range) == 2:
+                match_query['extractedYear'] = {
+                    '$gte': year_range[0],
+                    '$lte': year_range[1],
+                    '$exists': True,
+                    '$ne': None,
+                    '$type': 'number'
+                }
+            
+            pipeline.append({'$match': match_query})
+            
+            # Lookup developer info
+            pipeline.append({
+                '$lookup': {
+                    'from': 'developer_mapping',
+                    'localField': 'Developer',
+                    'foreignField': 'Name',
+                    'as': 'developer_info'
+                }
+            })
+            
+            # Unwind developer info
+            pipeline.append({'$unwind': {'path': '$developer_info', 'preserveNullAndEmptyArrays': False}})
+            
+            # Group by country and get top games
+            pipeline.append({
+                '$group': {
+                    '_id': '$developer_info.Country',
+                    'games': {
+                        '$push': {
+                            'title': '$Title',
+                            'rating': '$Rating',
+                            'developer': '$Developer',
+                            'genre': '$Genre',
+                            'platform': '$Platform',
+                            'year': '$extractedYear',
+                            'votes': '$Votes'
+                        }
+                    }
+                }
+            })
+            
+            # Sort games within each country by rating
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'country': '$_id',
+                    'top_games': {
+                        '$slice': [
+                            {'$sortArray': {'input': '$games', 'sortBy': {'rating': -1}}},
+                            limit
+                        ]
+                    },
+                    'total_games': {'$size': '$games'},
+                    'avg_rating': {'$avg': '$games.rating'}
+                }
+            })
+            
+            # Sort countries by average rating
+            pipeline.append({'$sort': {'avg_rating': -1}})
+            
+            result = list(games_collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Best-rated games by country result: {len(result)} countries")
             return result
             
         except Exception as e:
-            print(f"Error in get_developer_country_studio_matrix: {e}")
+            print(f"Error in get_best_rated_games_by_country: {e}")
+            return []
+    
+    def get_developer_performance_insights(self, studio_types=None, countries=None, year_range=None):
+        """Get comprehensive developer performance insights with filtering."""
+        try:
+            print("Fetching comprehensive developer performance insights")
+            collection = self.db.developer_mapping
+            
+            pipeline = []
+            
+            # Base match
+            match_query = {
+                'Name': {'$exists': True, '$ne': None, '$type': 'string'},
+                'Studio_Type': {'$exists': True, '$ne': None, '$type': 'string'},
+                'Country': {'$exists': True, '$ne': None, '$type': 'string'},
+                'Replay_Rate': {'$exists': True, '$ne': None, '$type': 'number'}
+            }
+            
+            # Apply filters
+            if studio_types:
+                match_query['Studio_Type'] = {'$in': studio_types}
+            if countries:
+                match_query['Country'] = {'$in': countries}
+            if year_range and len(year_range) == 2:
+                match_query['Founded_Year'] = {
+                    '$gte': year_range[0],
+                    '$lte': year_range[1],
+                    '$exists': True,
+                    '$ne': None,
+                    '$type': 'number'
+                }
+            
+            pipeline.append({'$match': match_query})
+            
+            # Add calculated fields
+            pipeline.append({
+                '$addFields': {
+                    'years_active': {
+                        '$subtract': [2024, {'$ifNull': ['$Founded_Year', 2024]}]
+                    },
+                    'performance_score': {
+                        '$multiply': ['$Replay_Rate', 100]
+                    }
+                }
+            })
+            
+            # Group by studio type for insights
+            pipeline.append({
+                '$group': {
+                    '_id': '$Studio_Type',
+                    'total_developers': {'$sum': 1},
+                    'avg_replay_rate': {'$avg': '$Replay_Rate'},
+                    'max_replay_rate': {'$max': '$Replay_Rate'},
+                    'min_replay_rate': {'$min': '$Replay_Rate'},
+                    'avg_years_active': {'$avg': '$years_active'},
+                    'countries': {'$addToSet': '$Country'},
+                    'top_performers': {
+                        '$push': {
+                            '$cond': [
+                                {'$gte': ['$Replay_Rate', 0.8]},
+                                {
+                                    'name': '$Name',
+                                    'country': '$Country',
+                                    'replay_rate': '$Replay_Rate',
+                                    'years_active': '$years_active'
+                                },
+                                '$$REMOVE'
+                            ]
+                        }
+                    }
+                }
+            })
+            
+            # Add market presence calculation
+            pipeline.append({
+                '$addFields': {
+                    'market_presence': {'$size': '$countries'},
+                    'top_performers': {
+                        '$slice': [
+                            {'$sortArray': {'input': '$top_performers', 'sortBy': {'replay_rate': -1}}},
+                            3
+                        ]
+                    }
+                }
+            })
+            
+            # Project final structure
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'studio_type': '$_id',
+                    'total_developers': 1,
+                    'avg_replay_rate': 1,
+                    'max_replay_rate': 1,
+                    'min_replay_rate': 1,
+                    'avg_years_active': 1,
+                    'market_presence': 1,
+                    'top_performers': 1,
+                    'performance_tier': {
+                        '$switch': {
+                            'branches': [
+                                {'case': {'$gte': ['$avg_replay_rate', 0.75]}, 'then': 'Elite'},
+                                {'case': {'$gte': ['$avg_replay_rate', 0.65]}, 'then': 'High'},
+                                {'case': {'$gte': ['$avg_replay_rate', 0.55]}, 'then': 'Medium'},
+                                {'case': {'$gte': ['$avg_replay_rate', 0.45]}, 'then': 'Developing'}
+                            ],
+                            'default': 'Emerging'
+                        }
+                    }
+                }
+            })
+            
+            # Sort by average replay rate
+            pipeline.append({'$sort': {'avg_replay_rate': -1}})
+            
+            result = list(collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Developer performance insights result: {len(result)} studio types")
+            return result
+            
+        except Exception as e:
+            print(f"Error in get_developer_performance_insights: {e}")
+            return []
+    
+    def get_country_gaming_profile(self, countries=None, year_range=None):
+        """Get comprehensive gaming profile by country."""
+        try:
+            print("Fetching country gaming profiles")
+            
+            # Get developer data
+            dev_collection = self.db.developer_mapping
+            games_collection = self.db.enriched_games
+            
+            pipeline = []
+            
+            # Base match for developers
+            match_query = {
+                'Country': {'$exists': True, '$ne': None, '$type': 'string'},
+                'Studio_Type': {'$exists': True, '$ne': None, '$type': 'string'}
+            }
+            
+            if countries:
+                match_query['Country'] = {'$in': countries}
+            if year_range and len(year_range) == 2:
+                match_query['Founded_Year'] = {
+                    '$gte': year_range[0],
+                    '$lte': year_range[1],
+                    '$exists': True,
+                    '$ne': None,
+                    '$type': 'number'
+                }
+            
+            pipeline.append({'$match': match_query})
+            
+            # Group by country
+            pipeline.append({
+                '$group': {
+                    '_id': '$Country',
+                    'total_developers': {'$sum': 1},
+                    'studio_types': {'$addToSet': '$Studio_Type'},
+                    'avg_replay_rate': {'$avg': '$Replay_Rate'},
+                    'avg_founded_year': {'$avg': '$Founded_Year'},
+                    'developers': {
+                        '$push': {
+                            'name': '$Name',
+                            'studio_type': '$Studio_Type',
+                            'replay_rate': '$Replay_Rate',
+                            'founded_year': '$Founded_Year'
+                        }
+                    }
+                }
+            })
+            
+            # Add calculated metrics
+            pipeline.append({
+                '$addFields': {
+                    'studio_diversity': {'$size': '$studio_types'},
+                    'industry_maturity': {
+                        '$subtract': [2024, '$avg_founded_year']
+                    },
+                    'top_developers': {
+                        '$slice': [
+                            {'$sortArray': {'input': '$developers', 'sortBy': {'replay_rate': -1}}},
+                            5
+                        ]
+                    }
+                }
+            })
+            
+            # Project final structure
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'country': '$_id',
+                    'total_developers': 1,
+                    'studio_diversity': 1,
+                    'avg_replay_rate': 1,
+                    'industry_maturity': 1,
+                    'top_developers': 1,
+                    'studio_types': 1,
+                    'market_strength': {
+                        '$switch': {
+                            'branches': [
+                                {'case': {'$gte': ['$total_developers', 500]}, 'then': 'Dominant'},
+                                {'case': {'$gte': ['$total_developers', 200]}, 'then': 'Strong'},
+                                {'case': {'$gte': ['$total_developers', 100]}, 'then': 'Moderate'},
+                                {'case': {'$gte': ['$total_developers', 50]}, 'then': 'Developing'}
+                            ],
+                            'default': 'Emerging'
+                        }
+                    }
+                }
+            })
+            
+            # Sort by total developers
+            pipeline.append({'$sort': {'total_developers': -1}})
+            
+            result = list(dev_collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Country gaming profiles result: {len(result)} countries")
+            return result
+            
+        except Exception as e:
+            print(f"Error in get_country_gaming_profile: {e}")
+            return []
+    
+    def get_dynamic_filter_options(self):
+        """Get all available filter options for dynamic filtering."""
+        try:
+            print("Fetching dynamic filter options")
+            
+            # Get unique values from developer mapping
+            dev_collection = self.db.developer_mapping
+            games_collection = self.db.enriched_games
+            
+            # Get studio types
+            studio_types = dev_collection.distinct('Studio_Type', {
+                'Studio_Type': {'$exists': True, '$ne': None, '$type': 'string'}
+            })
+            
+            # Get countries
+            countries = dev_collection.distinct('Country', {
+                'Country': {'$exists': True, '$ne': None, '$type': 'string'}
+            })
+            
+            # Get maturity levels
+            maturity_levels = dev_collection.distinct('Maturity_Level', {
+                'Maturity_Level': {'$exists': True, '$ne': None, '$type': 'string'}
+            })
+            
+            # Get performance tiers (calculated from replay rates)
+            performance_tiers = ['Elite', 'High', 'Medium', 'Developing', 'Emerging']
+            
+            # Get years active ranges
+            years_active_pipeline = [
+                {'$match': {'Founded_Year': {'$exists': True, '$ne': None, '$type': 'number'}}},
+                {'$addFields': {
+                    'years_active': {'$subtract': [2024, '$Founded_Year']},
+                    'years_active_range': {
+                        '$switch': {
+                            'branches': [
+                                {'case': {'$gte': [{'$subtract': [2024, '$Founded_Year']}, 30]}, 'then': '30+ years'},
+                                {'case': {'$gte': [{'$subtract': [2024, '$Founded_Year']}, 20]}, 'then': '20-29 years'},
+                                {'case': {'$gte': [{'$subtract': [2024, '$Founded_Year']}, 10]}, 'then': '10-19 years'},
+                                {'case': {'$gte': [{'$subtract': [2024, '$Founded_Year']}, 5]}, 'then': '5-9 years'}
+                            ],
+                            'default': '0-4 years'
+                        }
+                    }
+                }},
+                {'$group': {'_id': '$years_active_range', 'count': {'$sum': 1}}},
+                {'$sort': {'count': -1}}
+            ]
+            
+            years_active_ranges = [item['_id'] for item in dev_collection.aggregate(years_active_pipeline)]
+            
+            # Get replay rate ranges
+            replay_rate_ranges = [
+                '90-100%',
+                '80-89%', 
+                '70-79%',
+                '60-69%',
+                '50-59%',
+                'Below 50%'
+            ]
+            
+            # Get developer size categories (based on years active and studio type)
+            developer_sizes = ['Large (AAA)', 'Medium (Mid-tier)', 'Small (Indie)', 'Specialized (Mobile/Legacy)']
+            
+            # Get year ranges
+            founded_years = list(dev_collection.aggregate([
+                {'$match': {'Founded_Year': {'$exists': True, '$ne': None, '$type': 'number'}}},
+                {'$group': {
+                    '_id': None,
+                    'min_year': {'$min': '$Founded_Year'},
+                    'max_year': {'$max': '$Founded_Year'}
+                }}
+            ]))
+            
+            # Get game genres and platforms
+            genres = games_collection.distinct('Genre', {
+                'Genre': {'$exists': True, '$ne': None, '$type': 'string'}
+            })
+            
+            platforms = games_collection.distinct('Platform', {
+                'Platform': {'$exists': True, '$ne': None, '$type': 'string'}
+            })
+            
+            # Get market presence levels (based on country count)
+            market_presence_levels = ['Global', 'Regional', 'National', 'Local']
+            
+            result = {
+                'studio_types': sorted([st for st in studio_types if st]),
+                'countries': sorted([c for c in countries if c]),
+                'maturity_levels': sorted([ml for ml in maturity_levels if ml]),
+                'performance_tiers': performance_tiers,
+                'years_active_ranges': years_active_ranges,
+                'replay_rate_ranges': replay_rate_ranges,
+                'developer_sizes': developer_sizes,
+                'market_presence_levels': market_presence_levels,
+                'genres': sorted([g for g in genres if g])[:20],  # Limit for UI
+                'platforms': sorted([p for p in platforms if p])[:20],  # Limit for UI
+                'year_range': founded_years[0] if founded_years else {'min_year': 1980, 'max_year': 2024}
+            }
+            
+            print(f"Enhanced filter options: {len(result['studio_types'])} studio types, {len(result['countries'])} countries, {len(result['performance_tiers'])} performance tiers")
+            return result
+            
+        except Exception as e:
+            print(f"Error in get_dynamic_filter_options: {e}")
+            return {
+                'studio_types': [],
+                'countries': [],
+                'maturity_levels': [],
+                'performance_tiers': ['Elite', 'High', 'Medium', 'Developing', 'Emerging'],
+                'years_active_ranges': ['30+ years', '20-29 years', '10-19 years', '5-9 years', '0-4 years'],
+                'replay_rate_ranges': ['90-100%', '80-89%', '70-79%', '60-69%', '50-59%', 'Below 50%'],
+                'developer_sizes': ['Large (AAA)', 'Medium (Mid-tier)', 'Small (Indie)', 'Specialized (Mobile/Legacy)'],
+                'market_presence_levels': ['Global', 'Regional', 'National', 'Local'],
+                'genres': [],
+                'platforms': [],
+                'year_range': {'min_year': 1980, 'max_year': 2024}
+            }
+    
+    def get_trending_insights(self, year_range=None, limit=10):
+        """Get trending insights and patterns in the gaming industry."""
+        try:
+            print("Fetching trending insights")
+            collection = self.db.developer_mapping
+            
+            insights = {}
+            
+            # Top countries by average replay rate
+            pipeline = []
+            
+            match_query = {
+                'Country': {'$exists': True, '$ne': None, '$type': 'string'},
+                'Replay_Rate': {'$exists': True, '$ne': None, '$type': 'number'}
+            }
+            
+            if year_range and len(year_range) == 2:
+                match_query['Founded_Year'] = {
+                    '$gte': year_range[0],
+                    '$lte': year_range[1],
+                    '$exists': True,
+                    '$ne': None,
+                    '$type': 'number'
+                }
+            
+            pipeline.append({'$match': match_query})
+            
+            pipeline.append({
+                '$group': {
+                    '_id': '$Country',
+                    'avg_replay_rate': {'$avg': '$Replay_Rate'},
+                    'developer_count': {'$sum': 1}
+                }
+            })
+            
+            pipeline.append({'$match': {'developer_count': {'$gte': 3}}})
+            pipeline.append({'$sort': {'avg_replay_rate': -1}})
+            pipeline.append({'$limit': limit})
+            
+            top_countries = list(collection.aggregate(pipeline, allowDiskUse=True))
+            insights['top_countries'] = top_countries
+            
+            # Growth patterns by studio type
+            pipeline = []
+            pipeline.append({'$match': match_query})
+            
+            pipeline.append({
+                '$group': {
+                    '_id': '$Studio_Type',
+                    'avg_replay_rate': {'$avg': '$Replay_Rate'},
+                    'total_developers': {'$sum': 1},
+                    'avg_years_active': {'$avg': {'$subtract': [2024, '$Founded_Year']}}
+                }
+            })
+            
+            pipeline.append({'$sort': {'avg_replay_rate': -1}})
+            
+            studio_trends = list(collection.aggregate(pipeline, allowDiskUse=True))
+            insights['studio_trends'] = studio_trends
+            
+            # Emerging markets (newer developers with good performance)
+            pipeline = []
+            recent_match = dict(match_query)
+            recent_match['Founded_Year'] = {'$gte': 2010}
+            
+            pipeline.append({'$match': recent_match})
+            
+            pipeline.append({
+                '$group': {
+                    '_id': '$Country',
+                    'avg_replay_rate': {'$avg': '$Replay_Rate'},
+                    'new_developer_count': {'$sum': 1}
+                }
+            })
+            
+            pipeline.append({'$match': {'new_developer_count': {'$gte': 2}}})
+            pipeline.append({'$sort': {'avg_replay_rate': -1}})
+            pipeline.append({'$limit': 5})
+            
+            emerging_markets = list(collection.aggregate(pipeline, allowDiskUse=True))
+            insights['emerging_markets'] = emerging_markets
+            
+            print(f"Trending insights result: {len(insights)} categories")
+            return insights
+            
+        except Exception as e:
+            print(f"Error in get_trending_insights: {e}")
+            return {}
+
+    def get_developer_profile_data(self, studio_types=None, countries=None, year_range=None, limit=50):
+        """Get actual developer profile data with real names for the developer table."""
+        try:
+            print("Fetching developer profile data with real names")
+            collection = self.db.developer_mapping
+            
+            pipeline = []
+            
+            # Base match for valid data
+            match_query = {
+                'Name': {'$exists': True, '$ne': None, '$type': 'string'},
+                'Studio_Type': {'$exists': True, '$ne': None, '$type': 'string'},
+                'Country': {'$exists': True, '$ne': None, '$type': 'string'},
+                'Replay_Rate': {'$exists': True, '$ne': None, '$type': 'number'}
+            }
+            
+            # Apply filters
+            if studio_types:
+                match_query['Studio_Type'] = {'$in': studio_types}
+            if countries:
+                match_query['Country'] = {'$in': countries}
+            if year_range and len(year_range) == 2:
+                match_query['Founded_Year'] = {
+                    '$gte': year_range[0],
+                    '$lte': year_range[1],
+                    '$exists': True,
+                    '$ne': None,
+                    '$type': 'number'
+                }
+            
+            pipeline.append({'$match': match_query})
+            
+            # Add calculated fields
+            pipeline.append({
+                '$addFields': {
+                    'years_active': {
+                        '$subtract': [2024, {'$ifNull': ['$Founded_Year', 2024]}]
+                    },
+                    'performance_tier': {
+                        '$switch': {
+                            'branches': [
+                                {'case': {'$gte': ['$Replay_Rate', 0.75]}, 'then': 'Elite'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.65]}, 'then': 'High'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.55]}, 'then': 'Medium'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.45]}, 'then': 'Developing'}
+                            ],
+                            'default': 'Emerging'
+                        }
+                    }
+                }
+            })
+            
+            # Project final structure
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'name': '$Name',
+                    'studio_type': '$Studio_Type',
+                    'country': '$Country',
+                    'years_active': 1,
+                    'replay_rate': '$Replay_Rate',
+                    'performance_tier': 1,
+                    'founded_year': '$Founded_Year'
+                }
+            })
+            
+            # Sort by replay rate descending
+            pipeline.append({'$sort': {'replay_rate': -1}})
+            
+            # Limit results
+            pipeline.append({'$limit': limit})
+            
+            result = list(collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Developer profile data result: {len(result)} developers")
+            return result
+            
+        except Exception as e:
+            print(f"Error in get_developer_profile_data: {e}")
+            return []
+
+    def get_filtered_developer_data(self, studio_types=None, countries=None, year_range=None, 
+                                   performance_tiers=None, years_active_ranges=None, 
+                                   replay_rate_ranges=None, developer_sizes=None, limit=100):
+        """Get filtered developer data based on enhanced criteria."""
+        try:
+            print(f"Fetching filtered developer data with enhanced criteria")
+            collection = self.db.developer_mapping
+            
+            pipeline = []
+            
+            # Base match for valid data
+            match_query = {
+                'Name': {'$exists': True, '$ne': None, '$type': 'string'},
+                'Studio_Type': {'$exists': True, '$ne': None, '$type': 'string'},
+                'Country': {'$exists': True, '$ne': None, '$type': 'string'},
+                'Replay_Rate': {'$exists': True, '$ne': None, '$type': 'number'}
+            }
+            
+            # Apply basic filters
+            if studio_types:
+                match_query['Studio_Type'] = {'$in': studio_types}
+            if countries:
+                match_query['Country'] = {'$in': countries}
+            if year_range and len(year_range) == 2:
+                match_query['Founded_Year'] = {
+                    '$gte': year_range[0],
+                    '$lte': year_range[1],
+                    '$exists': True,
+                    '$ne': None,
+                    '$type': 'number'
+                }
+            
+            pipeline.append({'$match': match_query})
+            
+            # Add calculated fields
+            pipeline.append({
+                '$addFields': {
+                    'years_active': {
+                        '$subtract': [2024, {'$ifNull': ['$Founded_Year', 2024]}]
+                    },
+                    'performance_tier': {
+                        '$switch': {
+                            'branches': [
+                                {'case': {'$gte': ['$Replay_Rate', 0.75]}, 'then': 'Elite'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.65]}, 'then': 'High'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.55]}, 'then': 'Medium'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.45]}, 'then': 'Developing'}
+                            ],
+                            'default': 'Emerging'
+                        }
+                    },
+                    'years_active_range': {
+                        '$switch': {
+                            'branches': [
+                                {'case': {'$gte': [{'$subtract': [2024, {'$ifNull': ['$Founded_Year', 2024]}]}, 30]}, 'then': '30+ years'},
+                                {'case': {'$gte': [{'$subtract': [2024, {'$ifNull': ['$Founded_Year', 2024]}]}, 20]}, 'then': '20-29 years'},
+                                {'case': {'$gte': [{'$subtract': [2024, {'$ifNull': ['$Founded_Year', 2024]}]}, 10]}, 'then': '10-19 years'},
+                                {'case': {'$gte': [{'$subtract': [2024, {'$ifNull': ['$Founded_Year', 2024]}]}, 5]}, 'then': '5-9 years'}
+                            ],
+                            'default': '0-4 years'
+                        }
+                    },
+                    'replay_rate_range': {
+                        '$switch': {
+                            'branches': [
+                                {'case': {'$gte': ['$Replay_Rate', 0.9]}, 'then': '90-100%'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.8]}, 'then': '80-89%'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.7]}, 'then': '70-79%'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.6]}, 'then': '60-69%'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.5]}, 'then': '50-59%'}
+                            ],
+                            'default': 'Below 50%'
+                        }
+                    },
+                    'developer_size': {
+                        '$switch': {
+                            'branches': [
+                                {'case': {'$eq': ['$Studio_Type', 'AAA']}, 'then': 'Large (AAA)'},
+                                {'case': {'$eq': ['$Studio_Type', 'Mid-tier']}, 'then': 'Medium (Mid-tier)'},
+                                {'case': {'$eq': ['$Studio_Type', 'Indie']}, 'then': 'Small (Indie)'}
+                            ],
+                            'default': 'Specialized (Mobile/Legacy)'
+                        }
+                    }
+                }
+            })
+            
+            # Apply enhanced filters
+            enhanced_match = {}
+            
+            if performance_tiers:
+                enhanced_match['performance_tier'] = {'$in': performance_tiers}
+            
+            if years_active_ranges:
+                enhanced_match['years_active_range'] = {'$in': years_active_ranges}
+            
+            if replay_rate_ranges:
+                enhanced_match['replay_rate_range'] = {'$in': replay_rate_ranges}
+            
+            if developer_sizes:
+                enhanced_match['developer_size'] = {'$in': developer_sizes}
+            
+            if enhanced_match:
+                pipeline.append({'$match': enhanced_match})
+            
+            # Project final structure
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'name': '$Name',
+                    'studio_type': '$Studio_Type',
+                    'country': '$Country',
+                    'years_active': 1,
+                    'replay_rate': '$Replay_Rate',
+                    'performance_tier': 1,
+                    'years_active_range': 1,
+                    'replay_rate_range': 1,
+                    'developer_size': 1,
+                    'founded_year': '$Founded_Year',
+                    'maturity_level': '$Maturity_Level'
+                }
+            })
+            
+            # Sort by replay rate descending
+            pipeline.append({'$sort': {'replay_rate': -1}})
+            
+            # Limit results
+            pipeline.append({'$limit': limit})
+            
+            result = list(collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Filtered developer data result: {len(result)} developers")
+            return result
+            
+        except Exception as e:
+            print(f"Error in get_filtered_developer_data: {e}")
             return []
 
 
