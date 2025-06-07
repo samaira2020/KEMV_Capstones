@@ -74,6 +74,10 @@ def index():
     platform_performance = []
     top_rated_recent = []
 
+    # Initialize filter variables
+    selected_genres = []
+    selected_platforms = []
+
     # Tactical dashboard variables
     tactical_sankey_data = []
     tactical_venn_data = []
@@ -126,33 +130,64 @@ def index():
 
         if active_tab == 'studio':
             # === STUDIO PERFORMANCE TAB LOGIC ===
-            selected_genres = request.args.getlist('genre')
-            selected_platforms = request.args.getlist('platform')
+        selected_genres = request.args.getlist('genre')
+        selected_platforms = request.args.getlist('platform')
+        
+        # Validate selected genres and platforms
+        valid_genres = [genre for genre in selected_genres if genre in all_genres]
+        valid_platforms = [platform for platform in selected_platforms if platform in all_platforms]
             
-            # Validate selected genres and platforms
-            valid_genres = [genre for genre in selected_genres if genre in all_genres]
-            valid_platforms = [platform for platform in selected_platforms if platform in all_platforms]
-                
-            year_start = request.args.get('year_start', type=int, default=min_year_data)
-            year_end = request.args.get('year_end', type=int, default=max_year_data)
-            
-            if year_start > year_end:
-                year_start, year_end = year_end, year_start
-            
-            year_range = [year_start, year_end]
+        year_start = request.args.get('year_start', type=int, default=min_year_data)
+        year_end = request.args.get('year_end', type=int, default=max_year_data)
+        
+        if year_start > year_end:
+            year_start, year_end = year_end, year_start
+        
+        year_range = [year_start, year_end]
 
-            # Fetch studio performance data
+            print(f"Studio filters - Genres: {selected_genres}, Platforms: {selected_platforms}, Year range: {year_range}")
+
+            # Fetch studio performance data with filters
             stats_data = db_handler.get_game_statistics(year_range)
             if not stats_data:
                 stats_data = {'total_games': 0}
 
-            top_games = list(db_handler.get_top_rated_games(year_range=year_range))
-            platform_counts = list(db_handler.get_games_count_by_platform(year_range=year_range))
-            genre_counts = list(db_handler.get_games_count_by_genre(year_range=year_range))
-            games_per_year = list(db_handler.get_games_per_year(year_range=year_range))
-            publisher_counts = list(db_handler.get_games_count_by_publisher(year_range=year_range))
-            avg_rating_platform = list(db_handler.get_avg_rating_by_platform(year_range=year_range))
-            avg_rating_developer = list(db_handler.get_avg_rating_by_developer(year_range=year_range))
+            # Apply filters to data fetching
+            top_games = list(db_handler.get_top_rated_games(
+                year_range=year_range, 
+                genres=valid_genres if valid_genres else None,
+                platforms=valid_platforms if valid_platforms else None
+            ))
+            platform_counts = list(db_handler.get_games_count_by_platform(
+                year_range=year_range,
+                genres=valid_genres if valid_genres else None,
+                platforms=valid_platforms if valid_platforms else None
+            ))
+            genre_counts = list(db_handler.get_games_count_by_genre(
+                year_range=year_range,
+                genres=valid_genres if valid_genres else None,
+                platforms=valid_platforms if valid_platforms else None
+            ))
+            games_per_year = list(db_handler.get_games_per_year(
+                year_range=year_range,
+                genres=valid_genres if valid_genres else None,
+                platforms=valid_platforms if valid_platforms else None
+            ))
+            publisher_counts = list(db_handler.get_games_count_by_publisher(
+                year_range=year_range,
+                genres=valid_genres if valid_genres else None,
+                platforms=valid_platforms if valid_platforms else None
+            ))
+            avg_rating_platform = list(db_handler.get_avg_rating_by_platform(
+                year_range=year_range,
+                genres=valid_genres if valid_genres else None,
+                platforms=valid_platforms if valid_platforms else None
+            ))
+            avg_rating_developer = list(db_handler.get_avg_rating_by_developer(
+                year_range=year_range,
+                genres=valid_genres if valid_genres else None,
+                platforms=valid_platforms if valid_platforms else None
+            ))
 
         elif active_tab == 'operational':
             # === OPERATIONAL DASHBOARD TAB LOGIC ===
@@ -226,7 +261,7 @@ def index():
                     min_rating=op_min_rating if op_min_rating else None
                 ))
             else:
-                director_analytics = list(db_handler.get_director_analytics(year_range=year_range))
+            director_analytics = list(db_handler.get_director_analytics(year_range=year_range))
         except Exception as e:
             print(f"Error fetching director analytics: {e}")
             director_analytics = []
@@ -240,7 +275,7 @@ def index():
                     min_rating=op_min_rating if op_min_rating else None
                 ))
             else:
-                game_type_distribution = list(db_handler.get_game_type_distribution(year_range=year_range))
+            game_type_distribution = list(db_handler.get_game_type_distribution(year_range=year_range))
         except Exception as e:
             print(f"Error fetching game type distribution: {e}")
             game_type_distribution = []
@@ -254,7 +289,7 @@ def index():
                     min_rating=op_min_rating if op_min_rating else None
                 ))
             else:
-                rating_distribution = list(db_handler.get_rating_distribution(year_range=year_range))
+            rating_distribution = list(db_handler.get_rating_distribution(year_range=year_range))
         except Exception as e:
             print(f"Error fetching rating distribution: {e}")
             rating_distribution = []
@@ -268,7 +303,7 @@ def index():
                     min_rating=op_min_rating if op_min_rating else None
                 )
             else:
-                votes_analytics = db_handler.get_votes_analytics(year_range=year_range)
+            votes_analytics = db_handler.get_votes_analytics(year_range=year_range)
         except Exception as e:
             print(f"Error fetching votes analytics: {e}")
             votes_analytics = {}
@@ -282,7 +317,7 @@ def index():
                     min_rating=op_min_rating if op_min_rating else None
                 ))
             else:
-                most_voted_games = list(db_handler.get_most_voted_games(year_range=year_range))
+            most_voted_games = list(db_handler.get_most_voted_games(year_range=year_range))
         except Exception as e:
             print(f"Error fetching most voted games: {e}")
             most_voted_games = []
@@ -365,9 +400,10 @@ def index():
 
         # === TACTICAL DASHBOARD DATA ===
         if active_tab == 'tactical':
-            # Parse tactical filters
-            tactical_platforms = request.args.getlist('tactical_platforms')
-            tactical_genres = request.args.getlist('tactical_genres')
+            # Parse tactical filters for developer performance
+            tactical_studio_types = request.args.getlist('tactical_studio_types')
+            tactical_countries = request.args.getlist('tactical_countries')
+            tactical_maturity = request.args.getlist('tactical_maturity')
             tactical_year_start = request.args.get('tactical_year_start', type=int, default=min_year_data)
             tactical_year_end = request.args.get('tactical_year_end', type=int, default=max_year_data)
             
@@ -376,110 +412,154 @@ def index():
             
             tactical_year_range = [tactical_year_start, tactical_year_end]
             
-            print(f"Tactical filters - Platforms: {tactical_platforms}, Genres: {tactical_genres}, Year range: {tactical_year_range}")
+            print(f"Developer Performance filters - Studio Types: {tactical_studio_types}, Countries: {tactical_countries}, Maturity: {tactical_maturity}, Year range: {tactical_year_range}")
 
             try:
-                tactical_sankey_data = list(db_handler.get_tactical_sankey_data(
+                # Studio Type Performance Analysis
+                tactical_sankey_data = list(db_handler.get_developer_studio_performance_data(
                     year_range=tactical_year_range,
-                    platforms=tactical_platforms if tactical_platforms else None,
-                    genres=tactical_genres if tactical_genres else None
+                    studio_types=tactical_studio_types if tactical_studio_types else None,
+                    countries=tactical_countries if tactical_countries else None
                 ))
             except Exception as e:
-                print(f"Error fetching tactical sankey data: {e}")
+                print(f"Error fetching developer studio performance data: {e}")
                 tactical_sankey_data = []
 
             try:
-                tactical_venn_data = list(db_handler.get_tactical_venn_data(
+                # Geographic Distribution Analysis
+                tactical_venn_data = list(db_handler.get_developer_geographic_data(
                     year_range=tactical_year_range,
-                    platforms=tactical_platforms if tactical_platforms else None
+                    studio_types=tactical_studio_types if tactical_studio_types else None
                 ))
             except Exception as e:
-                print(f"Error fetching tactical venn data: {e}")
+                print(f"Error fetching developer geographic data: {e}")
                 tactical_venn_data = []
 
             try:
-                tactical_chord_data = list(db_handler.get_tactical_chord_data(
+                # Developer Maturity vs Performance
+                tactical_chord_data = list(db_handler.get_developer_maturity_data(
                     year_range=tactical_year_range,
-                    genres=tactical_genres if tactical_genres else None
+                    maturity_levels=tactical_maturity if tactical_maturity else None
                 ))
             except Exception as e:
-                print(f"Error fetching tactical chord data: {e}")
+                print(f"Error fetching developer maturity data: {e}")
                 tactical_chord_data = []
 
             try:
-                tactical_dumbbell_data = list(db_handler.get_tactical_dumbbell_data(
+                # Replay Rate Distribution by Studio Type
+                tactical_dumbbell_data = list(db_handler.get_developer_replay_rate_data(
                     year_range=tactical_year_range,
-                    platforms=tactical_platforms if tactical_platforms else None,
-                    genres=tactical_genres if tactical_genres else None
+                    studio_types=tactical_studio_types if tactical_studio_types else None,
+                    countries=tactical_countries if tactical_countries else None
                 ))
             except Exception as e:
-                print(f"Error fetching tactical dumbbell data: {e}")
+                print(f"Error fetching developer replay rate data: {e}")
                 tactical_dumbbell_data = []
 
             try:
-                tactical_marimekko_data = list(db_handler.get_tactical_marimekko_data(
+                # Country vs Studio Type Matrix
+                tactical_marimekko_data = list(db_handler.get_developer_country_studio_matrix(
                     year_range=tactical_year_range,
-                    genres=tactical_genres if tactical_genres else None
+                    countries=tactical_countries if tactical_countries else None
                 ))
             except Exception as e:
-                print(f"Error fetching tactical marimekko data: {e}")
+                print(f"Error fetching developer country-studio matrix data: {e}")
                 tactical_marimekko_data = []
 
-            # Initialize Tactical KPIs
+            # Initialize Developer Performance KPIs with dynamic data extraction
             tactical_kpis = {
-                'most_compatible_platform': {'name': 'N/A', 'genre_count': 0},
-                'top_cross_platform_genre': {'name': 'N/A', 'platform_count': 0},
-                'cross_platform_ratio': {'percentage': 0, 'count': 0}
+                'top_studio_type': {'name': 'Unknown', 'avg_replay_rate': 0.0},
+                'most_productive_country': {'name': 'Unknown', 'developer_count': 0},
+                'avg_developer_experience': {'years': 0.0, 'total_developers': 0}
             }
 
-            # KPI 1: Most Compatible Platform (platform with most genres)
-            if tactical_sankey_data:
-                platform_genres = {}
-                for item in tactical_sankey_data:
-                    platform = item.get('platform', 'Unknown')
-                    genre = item.get('genre', 'Unknown')
-                    if platform not in platform_genres:
-                        platform_genres[platform] = set()
-                    platform_genres[platform].add(genre)
+            # KPI 1: Top Performing Studio Type (highest average replay rate)
+            try:
+                # Get all studio performance data to calculate averages
+                all_studio_data = list(db_handler.get_developer_studio_performance_data(
+                    year_range=tactical_year_range,
+                    studio_types=tactical_studio_types if tactical_studio_types else None,
+                    countries=tactical_countries if tactical_countries else None
+                ))
                 
-                if platform_genres:
-                    most_compatible = max(platform_genres.items(), key=lambda x: len(x[1]))
-                    tactical_kpis['most_compatible_platform'] = {
-                        'name': most_compatible[0],
-                        'genre_count': len(most_compatible[1])
-                    }
+                if all_studio_data:
+                    studio_performance = {}
+                    for item in all_studio_data:
+                        studio_type = item.get('studio_type', 'Unknown')
+                        replay_rate = item.get('avg_replay_rate', 0)
+                        developer_count = item.get('developer_count', 0)
+                        
+                        if studio_type not in studio_performance:
+                            studio_performance[studio_type] = {'total_replay': 0, 'total_devs': 0}
+                        
+                        studio_performance[studio_type]['total_replay'] += replay_rate * developer_count
+                        studio_performance[studio_type]['total_devs'] += developer_count
+                    
+                    # Calculate weighted average replay rate for each studio type
+                    studio_averages = {}
+                    for studio, data in studio_performance.items():
+                        if data['total_devs'] > 0:
+                            studio_averages[studio] = data['total_replay'] / data['total_devs']
+                    
+                    if studio_averages:
+                        top_studio = max(studio_averages.items(), key=lambda x: x[1])
+                        tactical_kpis['top_studio_type'] = {
+                            'name': top_studio[0],
+                            'avg_replay_rate': round(top_studio[1], 3)
+                        }
+            except Exception as e:
+                print(f"Error calculating top studio type KPI: {e}")
 
-            # KPI 2: Top Cross-Platform Genre (genre on most platforms)
-            if tactical_sankey_data:
-                genre_platforms = {}
-                for item in tactical_sankey_data:
-                    platform = item.get('platform', 'Unknown')
-                    genre = item.get('genre', 'Unknown')
-                    if genre not in genre_platforms:
-                        genre_platforms[genre] = set()
-                    genre_platforms[genre].add(platform)
+            # KPI 2: Most Productive Country (highest developer count)
+            try:
+                # Get geographic data to find most productive country
+                all_geographic_data = list(db_handler.get_developer_geographic_data(
+                    year_range=tactical_year_range,
+                    studio_types=tactical_studio_types if tactical_studio_types else None
+                ))
                 
-                if genre_platforms:
-                    top_cross_platform = max(genre_platforms.items(), key=lambda x: len(x[1]))
-                    tactical_kpis['top_cross_platform_genre'] = {
-                        'name': top_cross_platform[0],
-                        'platform_count': len(top_cross_platform[1])
-                    }
+                if all_geographic_data:
+                    country_counts = {}
+                    for item in all_geographic_data:
+                        country = item.get('country', 'Unknown')
+                        count = item.get('developer_count', 0)
+                        country_counts[country] = country_counts.get(country, 0) + count
+                    
+                    if country_counts:
+                        most_productive = max(country_counts.items(), key=lambda x: x[1])
+                        tactical_kpis['most_productive_country'] = {
+                            'name': most_productive[0],
+                            'developer_count': most_productive[1]
+                        }
+            except Exception as e:
+                print(f"Error calculating most productive country KPI: {e}")
 
-            # KPI 3: Cross-Platform Game Ratio (games on 3+ platforms)
-            if tactical_venn_data:
-                total_games = sum(item.get('game_count', 0) for item in tactical_venn_data)
-                multi_platform_games = sum(
-                    item.get('game_count', 0) for item in tactical_venn_data 
-                    if item.get('platform_count', 0) >= 3
-                )
+            # KPI 3: Average Developer Experience (years active)
+            try:
+                # Get maturity data to calculate average experience
+                all_maturity_data = list(db_handler.get_developer_maturity_data(
+                    year_range=tactical_year_range,
+                    maturity_levels=tactical_maturity if tactical_maturity else None
+                ))
                 
-                if total_games > 0:
-                    ratio_percentage = round((multi_platform_games / total_games) * 100, 1)
-                    tactical_kpis['cross_platform_ratio'] = {
-                        'percentage': ratio_percentage,
-                        'count': multi_platform_games
-                    }
+                if all_maturity_data:
+                    total_years = 0
+                    total_developers = 0
+                    
+                    for item in all_maturity_data:
+                        years_active = item.get('years_active', 0)
+                        # Each record represents one developer
+                        total_years += years_active
+                        total_developers += 1
+                    
+                    if total_developers > 0:
+                        avg_years = total_years / total_developers
+                        tactical_kpis['avg_developer_experience'] = {
+                            'years': round(avg_years, 1),
+                            'total_developers': total_developers
+                        }
+            except Exception as e:
+                print(f"Error calculating average developer experience KPI: {e}")
 
         else:
             # Initialize empty data for non-tactical tabs
@@ -489,9 +569,9 @@ def index():
             tactical_dumbbell_data = []
             tactical_marimekko_data = []
             tactical_kpis = {
-                'most_compatible_platform': {'name': 'N/A', 'genre_count': 0},
-                'top_cross_platform_genre': {'name': 'N/A', 'platform_count': 0},
-                'cross_platform_ratio': {'percentage': 0, 'count': 0}
+                'top_studio_type': {'name': 'Unknown', 'avg_replay_rate': 0.0},
+                'most_productive_country': {'name': 'Unknown', 'developer_count': 0},
+                'avg_developer_experience': {'years': 0.0, 'total_developers': 0}
             }
 
         # === ANALYTICAL LIFECYCLE DASHBOARD DATA ===
@@ -630,6 +710,8 @@ def index():
         all_platforms = []
         min_year_data = 1980
         max_year_data = 2023
+        selected_genres = []
+        selected_platforms = []
 
     # Render the template with all data
     return render_template('index.html', 
@@ -675,6 +757,8 @@ def index():
                          min_year=min_year_data,
                          max_year=max_year_data,
                          year_range=year_range,
+                         selected_genres=selected_genres,
+                         selected_platforms=selected_platforms,
                          tactical_kpis=tactical_kpis)
 
 @app.route('/search')

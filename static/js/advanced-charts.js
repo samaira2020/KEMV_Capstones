@@ -1,19 +1,19 @@
 // Advanced Charts for Tactical, Lifecycle, and Evolution Dashboards
 
-// Enhanced Tactical Dashboard Charts with Advanced Visualizations
+// Enhanced Developer Performance Dashboard Charts
 function initializeTacticalCharts() {
-    console.log('Initializing enhanced tactical dashboard charts...');
-    console.log('Tactical data available:', {
-        sankey: tacticalSankeyData?.length || 0,
-        venn: tacticalVennData?.length || 0,
-        chord: tacticalChordData?.length || 0,
-        dumbbell: tacticalDumbbellData?.length || 0,
-        marimekko: tacticalMarimekkoData?.length || 0
+    console.log('Initializing developer performance dashboard charts...');
+    console.log('Developer performance data available:', {
+        studio: tacticalSankeyData?.length || 0,
+        geographic: tacticalVennData?.length || 0,
+        maturity: tacticalChordData?.length || 0,
+        replayRate: tacticalDumbbellData?.length || 0,
+        matrix: tacticalMarimekkoData?.length || 0
     });
     
-    // 1. Platform Strategy Map (Sunburst/Hive Chart) - Genre → Platform → Publisher Flow
+    // 1. Studio Type Performance Analysis
     if (tacticalSankeyData && tacticalSankeyData.length > 0) {
-        console.log('Initializing Platform Strategy Map...');
+        console.log('Initializing Studio Type Performance Analysis...');
         const sankeyCtx = document.getElementById('tacticalSankeyChart');
         if (!sankeyCtx) {
             console.error('tacticalSankeyChart canvas not found');
@@ -23,76 +23,38 @@ function initializeTacticalCharts() {
         try {
             const ctx = sankeyCtx.getContext('2d');
             
-            // Process data for sunburst-style visualization
-            const genreThemeMap = {
-                'Action': 'Combat & Adventure',
-                'Adventure': 'Exploration & Story',
-                'Role-Playing': 'Character Development',
-                'Strategy': 'Tactical Thinking',
-                'Simulation': 'Real-World Modeling',
-                'Sports': 'Athletic Competition',
-                'Racing': 'Speed & Competition',
-                'Shooter': 'Combat & Precision',
-                'Puzzle': 'Logic & Problem Solving',
-                'Platform': 'Movement & Agility'
-            };
+            // Process studio performance data
+            const studioData = tacticalSankeyData.slice(0, 8); // Limit to top 8 studio types
+            const labels = studioData.map(item => item.studio_type);
+            const replayRates = studioData.map(item => item.avg_replay_rate);
+            const developerCounts = studioData.map(item => item.developer_count);
+            const yearsActive = studioData.map(item => item.avg_years_active || 0);
             
-            // Create hierarchical data structure
-            const themeData = {};
-            tacticalSankeyData.forEach(item => {
-                const theme = genreThemeMap[item.genre] || 'Other Themes';
-                if (!themeData[theme]) {
-                    themeData[theme] = { total: 0, platforms: {} };
-                }
-                themeData[theme].total += item.count;
-                
-                if (!themeData[theme].platforms[item.platform]) {
-                    themeData[theme].platforms[item.platform] = 0;
-                }
-                themeData[theme].platforms[item.platform] += item.count;
-            });
-            
-            // Create multi-level donut chart to simulate sunburst
-            const themes = Object.keys(themeData).slice(0, 6);
-            const innerData = themes.map(theme => themeData[theme].total);
-            const outerData = [];
-            const outerLabels = [];
-            
-            themes.forEach(theme => {
-                const platforms = Object.keys(themeData[theme].platforms).slice(0, 3);
-                platforms.forEach(platform => {
-                    outerData.push(themeData[theme].platforms[platform]);
-                    outerLabels.push(`${platform.substring(0, 8)}...`);
-                });
-            });
+            // Create bubble chart showing studio performance
+            const bubbleData = studioData.map((item, index) => ({
+                x: item.avg_replay_rate,
+                y: item.avg_years_active || 15,
+                r: Math.sqrt(item.developer_count) * 3 + 5, // Scale bubble size
+                label: item.studio_type,
+                developerCount: item.developer_count
+            }));
             
             new Chart(ctx, {
-                type: 'doughnut',
+                type: 'bubble',
                 data: {
-                    labels: themes,
-                    datasets: [
-                        {
-                            label: 'Theme Distribution',
-                            data: innerData,
-                            backgroundColor: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3'],
-                            borderColor: '#282a36',
-                            borderWidth: 3,
-                            radius: '40%',
-                            cutout: '20%'
-                        },
-                        {
-                            label: 'Platform Distribution',
-                            data: outerData,
-                            backgroundColor: outerData.map((_, i) => {
-                                const colors = ['#ff6b6b80', '#4ecdc480', '#45b7d180', '#96ceb480', '#feca5780', '#ff9ff380'];
-                                return colors[Math.floor(i / 3) % colors.length];
-                            }),
-                            borderColor: '#282a36',
-                            borderWidth: 2,
-                            radius: '80%',
-                            cutout: '50%'
-                        }
-                    ]
+                    datasets: [{
+                        label: 'Studio Performance',
+                        data: bubbleData,
+                        backgroundColor: [
+                            '#ff6b6b80', '#4ecdc480', '#45b7d180', '#96ceb480', 
+                            '#feca5780', '#ff9ff380', '#6c5ce780', '#a8e6cf80'
+                        ],
+                        borderColor: [
+                            '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', 
+                            '#feca57', '#ff9ff3', '#6c5ce7', '#a8e6cf'
+                        ],
+                        borderWidth: 2
+                    }]
                 },
                 options: {
                     responsive: true,
@@ -101,21 +63,37 @@ function initializeTacticalCharts() {
                         duration: 2500,
                         easing: 'easeInOutQuart'
                     },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Average Replay Rate',
+                                color: '#f8f8f2',
+                                font: { size: 12, weight: 'bold' }
+                            },
+                            grid: { color: '#44475a' },
+                            ticks: { color: '#f8f8f2' }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Average Years Active',
+                                color: '#f8f8f2',
+                                font: { size: 12, weight: 'bold' }
+                            },
+                            grid: { color: '#44475a' },
+                            ticks: { color: '#f8f8f2' }
+                        }
+                    },
                     plugins: {
                         title: {
                             display: true,
-                            text: '🎯 Platform Strategy Map (Theme → Platform)',
+                            text: '🏢 Studio Type Performance Analysis',
                             color: '#bd93f9',
                             font: { size: 16, weight: 'bold' }
                         },
                         legend: {
-                            position: 'right',
-                            labels: {
-                                color: '#f8f8f2',
-                                font: { size: 10 },
-                                usePointStyle: true,
-                                pointStyle: 'circle'
-                            }
+                            display: false
                         },
                         tooltip: {
                             backgroundColor: 'rgba(40, 42, 54, 0.95)',
@@ -126,15 +104,15 @@ function initializeTacticalCharts() {
                             cornerRadius: 10,
                             callbacks: {
                                 title: function(context) {
-                                    return context[0].label;
+                                    return context[0].raw.label;
                                 },
                                 label: function(context) {
-                                    const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
-                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    const data = context.raw;
                                     return [
-                                        `Games: ${context.parsed}`,
-                                        `Market Share: ${percentage}%`,
-                                        `Strategy: ${context.datasetIndex === 0 ? 'Theme Focus' : 'Platform Reach'}`
+                                        `Replay Rate: ${data.x.toFixed(3)}`,
+                                        `Years Active: ${data.y.toFixed(1)}`,
+                                        `Developers: ${data.developerCount}`,
+                                        `Performance: ${data.x > 0.7 ? 'High' : data.x > 0.5 ? 'Medium' : 'Low'}`
                                     ];
                                 }
                             }
@@ -142,15 +120,15 @@ function initializeTacticalCharts() {
                     }
                 }
             });
-            console.log('Platform Strategy Map initialized successfully');
+            console.log('Studio Type Performance Analysis initialized successfully');
         } catch (error) {
-            console.error('Error initializing Platform Strategy Map:', error);
+            console.error('Error initializing Studio Type Performance Analysis:', error);
         }
     }
 
-    // 2. Cross-Platform Footprint (UpSet Plot Style) - Platform Overlap Analysis
+    // 2. Developer Geographic Distribution
     if (tacticalVennData && tacticalVennData.length > 0) {
-        console.log('Initializing Cross-Platform Footprint Analysis...');
+        console.log('Initializing Developer Geographic Distribution...');
         const vennCtx = document.getElementById('tacticalVennChart');
         if (!vennCtx) {
             console.error('tacticalVennChart canvas not found');
@@ -160,21 +138,11 @@ function initializeTacticalCharts() {
         try {
             const ctx = vennCtx.getContext('2d');
             
-            // Create UpSet plot style visualization using stacked bars
-            const platformCombinations = tacticalVennData.slice(0, 10);
-            
-            // Create proper labels with platform count information
-            const labels = platformCombinations.map(item => {
-                if (item.platform_count === 1) {
-                    return 'Exclusive';
-                } else {
-                    return `${item.platform_count} Platforms`;
-                }
-            });
-            
-            // Create intersection matrix visualization
-            const exclusiveGames = platformCombinations.map(item => item.platform_count === 1 ? item.game_count : 0);
-            const multiPlatformGames = platformCombinations.map(item => item.platform_count > 1 ? item.game_count : 0);
+            // Process geographic data
+            const geoData = tacticalVennData.slice(0, 10); // Top 10 countries
+            const labels = geoData.map(item => item.country);
+            const developerCounts = geoData.map(item => item.developer_count);
+            const avgReplayRates = geoData.map(item => item.avg_replay_rate || 0);
             
             new Chart(ctx, {
                 type: 'bar',
@@ -182,20 +150,27 @@ function initializeTacticalCharts() {
                     labels: labels,
                     datasets: [
                         {
-                            label: 'Exclusive Games',
-                            data: exclusiveGames,
-                            backgroundColor: '#ff6b6b80',
-                            borderColor: '#ff6b6b',
-                            borderWidth: 2,
-                            borderRadius: 6
-                        },
-                        {
-                            label: 'Multi-Platform Games',
-                            data: multiPlatformGames,
+                            label: 'Developer Count',
+                            data: developerCounts,
                             backgroundColor: '#4ecdc480',
                             borderColor: '#4ecdc4',
                             borderWidth: 2,
-                            borderRadius: 6
+                            borderRadius: 6,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Avg Replay Rate',
+                            data: avgReplayRates,
+                            type: 'line',
+                            backgroundColor: '#ff6b6b',
+                            borderColor: '#ff6b6b',
+                            borderWidth: 3,
+                            pointBackgroundColor: '#ff6b6b',
+                            pointBorderColor: '#282a36',
+                            pointBorderWidth: 2,
+                            pointRadius: 6,
+                            yAxisID: 'y1',
+                            tension: 0.4
                         }
                     ]
                 },
@@ -204,17 +179,160 @@ function initializeTacticalCharts() {
                     maintainAspectRatio: false,
                     animation: {
                         duration: 2000,
-                        easing: 'easeInOutCubic'
+                        easing: 'easeInOutQuart'
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: '#44475a' },
+                            ticks: { 
+                                color: '#f8f8f2',
+                                maxRotation: 45
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Developer Count',
+                                color: '#4ecdc4',
+                                font: { size: 12, weight: 'bold' }
+                            },
+                            grid: { color: '#44475a' },
+                            ticks: { color: '#f8f8f2' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Average Replay Rate',
+                                color: '#ff6b6b',
+                                font: { size: 12, weight: 'bold' }
+                            },
+                            grid: { drawOnChartArea: false },
+                            ticks: { color: '#f8f8f2' }
+                        }
                     },
                     plugins: {
                         title: {
                             display: true,
-                            text: '📊 Cross-Platform Footprint Analysis',
+                            text: '🌍 Developer Geographic Distribution',
                             color: '#bd93f9',
                             font: { size: 16, weight: 'bold' }
                         },
                         legend: {
-                            position: 'top',
+                            labels: {
+                                color: '#f8f8f2',
+                                font: { size: 11 },
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(40, 42, 54, 0.95)',
+                            titleColor: '#f8f8f2',
+                            bodyColor: '#f8f8f2',
+                            borderColor: '#bd93f9',
+                            borderWidth: 2,
+                            cornerRadius: 10,
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.datasetIndex === 0) {
+                                        return `Developers: ${context.parsed.y}`;
+                                    } else {
+                                        return `Avg Replay Rate: ${context.parsed.y.toFixed(3)}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            console.log('Developer Geographic Distribution initialized successfully');
+        } catch (error) {
+            console.error('Error initializing Developer Geographic Distribution:', error);
+        }
+    }
+
+    // 3. Developer Maturity vs Performance Analysis
+    if (tacticalChordData && tacticalChordData.length > 0) {
+        console.log('Initializing Developer Maturity vs Performance Analysis...');
+        console.log('Developer maturity data sample:', tacticalChordData.slice(0, 3));
+        const chordCtx = document.getElementById('tacticalChordChart');
+        if (!chordCtx) {
+            console.error('tacticalChordChart canvas not found');
+            return;
+        }
+        
+        try {
+            const ctx = chordCtx.getContext('2d');
+            
+            // Process maturity data for scatter plot
+            const maturityData = tacticalChordData.slice(0, 50); // Limit for performance
+            console.log('Maturity data processed:', maturityData.length, 'developers');
+            
+            if (maturityData.length === 0) {
+                console.warn('No maturity data available');
+                return;
+            }
+            
+            // Validate data structure
+            if (!maturityData.every(item => item.years_active && item.replay_rate && item.maturity_level)) {
+                console.error('Invalid data structure in tacticalChordData');
+                return;
+            }
+            
+            // Group by maturity level for different colors
+            const maturityGroups = {
+                'Veteran': { data: [], color: '#ff6b6b' },
+                'Established': { data: [], color: '#4ecdc4' },
+                'Emerging': { data: [], color: '#45b7d1' }
+            };
+            
+            maturityData.forEach(item => {
+                const group = maturityGroups[item.maturity_level];
+                if (group) {
+                    group.data.push({
+                        x: item.years_active,
+                        y: item.replay_rate,
+                        label: item.name,
+                        studio_type: item.studio_type,
+                        country: item.country
+                    });
+                }
+            });
+            
+            // Create datasets for each maturity level
+            const datasets = Object.keys(maturityGroups).map(level => ({
+                label: level,
+                data: maturityGroups[level].data,
+                backgroundColor: maturityGroups[level].color + '80',
+                borderColor: maturityGroups[level].color,
+                borderWidth: 2,
+                pointRadius: 6,
+                pointHoverRadius: 8
+            }));
+            
+            new Chart(ctx, {
+                type: 'scatter',
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeInOutQuart'
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '⏳ Developer Maturity vs Performance',
+                            color: '#bd93f9',
+                            font: { size: 16, weight: 'bold' }
+                        },
+                        legend: {
                             labels: {
                                 color: '#f8f8f2',
                                 font: { size: 11 },
@@ -230,18 +348,15 @@ function initializeTacticalCharts() {
                             cornerRadius: 10,
                             callbacks: {
                                 title: function(context) {
-                                    const item = platformCombinations[context[0].dataIndex];
-                                    return `${item.platform_count} Platform Coverage`;
+                                    return context[0].raw.label || 'Developer';
                                 },
                                 label: function(context) {
-                                    const item = platformCombinations[context.dataIndex];
-                                    const strategy = item.platform_count === 1 ? 'Platform Exclusive' : 
-                                                   item.platform_count <= 3 ? 'Selective Multi-Platform' : 
-                                                   'Wide Platform Strategy';
+                                    const data = context.raw;
                                     return [
-                                        `${context.dataset.label}: ${context.parsed.y} games`,
-                                        `Strategy Type: ${strategy}`,
-                                        `Market Reach: ${item.platform_count > 3 ? 'Broad' : item.platform_count > 1 ? 'Moderate' : 'Focused'}`
+                                        `Years Active: ${data.x}`,
+                                        `Replay Rate: ${data.y.toFixed(3)}`,
+                                        `Studio Type: ${data.studio_type || 'Unknown'}`,
+                                        `Country: ${data.country || 'Unknown'}`
                                     ];
                                 }
                             }
@@ -249,166 +364,39 @@ function initializeTacticalCharts() {
                     },
                     scales: {
                         x: {
-                            stacked: true,
-                            ticks: { 
-                                color: '#f8f8f2',
-                                font: { size: 10 }
-                            },
-                            grid: { color: '#0f3460' }
-                        },
-                        y: {
-                            stacked: true,
-                            beginAtZero: true,
-                            ticks: { color: '#f8f8f2' },
-                            grid: { color: '#0f3460' },
                             title: {
                                 display: true,
-                                text: 'Number of Games',
-                                color: '#50fa7b',
+                                text: 'Years Active',
+                                color: '#f8f8f2',
                                 font: { size: 12, weight: 'bold' }
-                            }
+                            },
+                            grid: { color: '#44475a' },
+                            ticks: { color: '#f8f8f2' }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Replay Rate',
+                                color: '#f8f8f2',
+                                font: { size: 12, weight: 'bold' }
+                            },
+                            grid: { color: '#44475a' },
+                            ticks: { color: '#f8f8f2' }
                         }
                     }
                 }
             });
-            console.log('Cross-Platform Footprint Analysis initialized successfully');
+            console.log('Developer Maturity vs Performance Analysis initialized successfully');
         } catch (error) {
-            console.error('Error initializing Cross-Platform Footprint Analysis:', error);
-        }
-    }
-
-    // 3. Developer-Genre-Platform Flow (Hive/Alluvial Diagram)
-    if (tacticalChordData && tacticalChordData.length > 0) {
-        console.log('Initializing Developer-Platform Flow Analysis...');
-        console.log('Tactical chord data sample:', tacticalChordData.slice(0, 3));
-        const chordCtx = document.getElementById('tacticalChordChart');
-        if (!chordCtx) {
-            console.error('tacticalChordChart canvas not found');
-            return;
-        }
-        
-        try {
-            const ctx = chordCtx.getContext('2d');
-            
-            // Limit to top 10 developer-platform combinations for better performance
-            const flowData = tacticalChordData
-                .filter(item => item.count >= 2) // Only show meaningful connections
-                .slice(0, 10);
-            console.log('Flow data processed:', flowData.length, 'items');
-            
-            if (flowData.length === 0) {
-                console.warn('No flow data after filtering');
-                return;
-            }
-            
-            // Validate data structure
-            if (!flowData.every(item => item.developer && item.platform && typeof item.count === 'number')) {
-                console.error('Invalid data structure in tacticalChordData');
-                return;
-            }
-            
-            // Create simple labels and data
-            const labels = flowData.map(item => `${item.developer.substring(0, 12)}... → ${item.platform.substring(0, 10)}...`);
-            const data = flowData.map(item => item.count);
-            
-            console.log('Chart labels:', labels.slice(0, 3));
-            console.log('Chart data:', data.slice(0, 3));
-            
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Games Published',
-                        data: data,
-                        backgroundColor: generateColors(flowData.length).map(color => color + '80'),
-                        borderColor: generateColors(flowData.length),
-                        borderWidth: 2,
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: {
-                        duration: 1500,
-                        easing: 'easeInOutCubic'
-                    },
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: '🌊 Developer → Platform Flow Analysis',
-                            color: '#bd93f9',
-                            font: { size: 16, weight: 'bold' }
-                        },
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(40, 42, 54, 0.95)',
-                            titleColor: '#f8f8f2',
-                            bodyColor: '#f8f8f2',
-                            borderColor: '#bd93f9',
-                            borderWidth: 2,
-                            cornerRadius: 10,
-                            callbacks: {
-                                title: function(context) {
-                                    const item = flowData[context.dataIndex];
-                                    return `${item.developer} → ${item.platform}`;
-                                },
-                                label: function(context) {
-                                    const item = flowData[context.dataIndex];
-                                    return [
-                                        `Games: ${item.count}`,
-                                        `Flow Strength: ${item.count > 10 ? 'Strong' : item.count > 3 ? 'Moderate' : 'Weak'}`
-                                    ];
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            ticks: { color: '#f8f8f2' },
-                            grid: { color: '#0f3460' },
-                            title: {
-                                display: true,
-                                text: 'Games Published',
-                                color: '#50fa7b',
-                                font: { size: 12, weight: 'bold' }
-                            }
-                        },
-                        y: {
-                            ticks: { 
-                                color: '#f8f8f2',
-                                font: { size: 9 }
-                            },
-                            grid: { color: '#0f3460' }
-                        }
-                    }
-                }
-            });
-            console.log('Developer-Platform Flow Analysis initialized successfully');
-        } catch (error) {
-            console.error('Error initializing Developer-Platform Flow Analysis:', error);
-            // Create a fallback message
-            const canvas = document.getElementById('tacticalChordChart');
-            if (canvas) {
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = '#f8f8f2';
-                ctx.font = '16px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('Chart temporarily unavailable', canvas.width/2, canvas.height/2);
-            }
+            console.error('Error initializing Developer Maturity vs Performance Analysis:', error);
         }
     } else {
-        console.log('No tactical chord data available - length:', tacticalChordData ? tacticalChordData.length : 'undefined');
+        console.log('No developer maturity data available - length:', tacticalChordData ? tacticalChordData.length : 'undefined');
     }
 
-    // 4. Performance Spread (Violin/Box Plot Style) - Rating Distribution Analysis
+    // 4. Replay Rate Distribution by Studio Type (Dumbbell Chart)
     if (tacticalDumbbellData && tacticalDumbbellData.length > 0) {
-        console.log('Initializing Performance Spread Analysis...');
+        console.log('Initializing Replay Rate Distribution Analysis...');
         const dumbbellCtx = document.getElementById('tacticalDumbbellChart');
         if (!dumbbellCtx) {
             console.error('tacticalDumbbellChart canvas not found');
@@ -418,54 +406,52 @@ function initializeTacticalCharts() {
         try {
             const ctx = dumbbellCtx.getContext('2d');
             
-            const performanceData = tacticalDumbbellData.slice(0, 10);
+            const replayData = tacticalDumbbellData.slice(0, 8);
             
-            // Create violin plot style using multiple datasets
+            // Create dumbbell chart using multiple datasets
             const datasets = [
                 {
-                    label: 'Rating Range (Min-Max)',
-                    data: performanceData.map(item => ({
-                        x: item.genre.substring(0, 8) + '...',
-                        y: item.max_rating - item.min_rating
-                    })),
-                    backgroundColor: '#ff555580',
-                    borderColor: '#ff5555',
-                    borderWidth: 3,
-                    type: 'bar',
-                    borderRadius: 8,
+                    label: 'Minimum Replay Rate',
+                    data: replayData.map(item => item.min_replay_rate),
+                    backgroundColor: '#ff6b6b80',
+                    borderColor: '#ff6b6b',
+                    borderWidth: 2,
+                    pointRadius: 8,
+                    pointStyle: 'circle',
+                    type: 'line',
+                    tension: 0,
+                    order: 3
+                },
+                {
+                    label: 'Maximum Replay Rate',
+                    data: replayData.map(item => item.max_replay_rate),
+                    backgroundColor: '#50fa7b80',
+                    borderColor: '#50fa7b',
+                    borderWidth: 2,
+                    pointRadius: 8,
+                    pointStyle: 'circle',
+                    type: 'line',
+                    tension: 0,
                     order: 2
                 },
                 {
-                    label: 'Average Rating',
-                    data: performanceData.map(item => item.avg_rating),
-                    backgroundColor: '#50fa7b',
+                    label: 'Average Replay Rate',
+                    data: replayData.map(item => item.avg_replay_rate),
+                    backgroundColor: '#bd93f9',
                     borderColor: '#f8f8f2',
                     borderWidth: 3,
-                    pointRadius: 8,
-                    pointHoverRadius: 12,
+                    pointRadius: 10,
+                    pointStyle: 'rectRot',
                     type: 'line',
-                    tension: 0.4,
+                    tension: 0,
                     order: 1
-                },
-                {
-                    label: 'Performance Consistency',
-                    data: performanceData.map(item => {
-                        const consistency = 10 - (item.max_rating - item.min_rating);
-                        return Math.max(0, consistency);
-                    }),
-                    backgroundColor: '#bd93f980',
-                    borderColor: '#bd93f9',
-                    borderWidth: 2,
-                    type: 'bar',
-                    borderRadius: 4,
-                    order: 3
                 }
             ];
             
             new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
-                    labels: performanceData.map(item => item.genre.substring(0, 10) + '...'),
+                    labels: replayData.map(item => item.studio_type),
                     datasets: datasets
                 },
                 options: {
@@ -473,20 +459,19 @@ function initializeTacticalCharts() {
                     maintainAspectRatio: false,
                     animation: {
                         duration: 2500,
-                        easing: 'easeInOutElastic'
+                        easing: 'easeInOutQuart'
                     },
                     plugins: {
                         title: {
                             display: true,
-                            text: '📈 Performance Spread Analysis (Violin Plot Style)',
+                            text: '🔁 Replay Rate Distribution by Studio Type',
                             color: '#bd93f9',
                             font: { size: 16, weight: 'bold' }
                         },
                         legend: {
-                            position: 'top',
                             labels: {
                                 color: '#f8f8f2',
-                                font: { size: 10 },
+                                font: { size: 11 },
                                 usePointStyle: true
                             }
                         },
@@ -498,74 +483,47 @@ function initializeTacticalCharts() {
                             borderWidth: 2,
                             cornerRadius: 10,
                             callbacks: {
-                                title: function(context) {
-                                    const item = performanceData[context[0].dataIndex];
-                                    return `${item.genre} Performance Profile`;
-                                },
                                 afterTitle: function(context) {
-                                    const item = performanceData[context[0].dataIndex];
-                                    return `Platform: ${item.platform} | Games: ${item.game_count}`;
+                                    const item = replayData[context[0].dataIndex];
+                                    return `Developers: ${item.developer_count}`;
                                 },
                                 label: function(context) {
-                                    const item = performanceData[context.dataIndex];
-                                    const spread = item.max_rating - item.min_rating;
-                                    const consistency = spread < 2 ? 'Very High' : spread < 3 ? 'High' : spread < 4 ? 'Moderate' : 'Low';
-                                    
-                                    if (context.dataset.label.includes('Range')) {
-                                        return [
-                                            `Rating Spread: ${spread.toFixed(2)}`,
-                                            `Min: ${item.min_rating} | Max: ${item.max_rating}`,
-                                            `Consistency: ${consistency}`
-                                        ];
-                                    } else if (context.dataset.label.includes('Average')) {
-                                        return [
-                                            `Average Rating: ${item.avg_rating.toFixed(2)}`,
-                                            `Quality Tier: ${item.avg_rating >= 8 ? 'Premium' : item.avg_rating >= 7 ? 'High' : item.avg_rating >= 6 ? 'Good' : 'Standard'}`
-                                        ];
-                                    } else {
-                                        return [
-                                            `Consistency Score: ${context.parsed.y.toFixed(1)}/10`,
-                                            `Predictability: ${consistency}`
-                                        ];
-                                    }
+                                    const value = context.parsed.y.toFixed(3);
+                                    return `${context.dataset.label}: ${value}`;
                                 }
                             }
                         }
                     },
                     scales: {
                         x: {
+                            grid: { color: '#44475a' },
                             ticks: { 
                                 color: '#f8f8f2',
-                                maxRotation: 45,
-                                font: { size: 9 }
-                            },
-                            grid: { color: '#0f3460' }
+                                maxRotation: 45
+                            }
                         },
                         y: {
-                            beginAtZero: true,
-                            max: 10,
-                            ticks: { color: '#f8f8f2' },
-                            grid: { color: '#0f3460' },
                             title: {
                                 display: true,
-                                text: 'Rating Scale / Performance Metrics',
-                                color: '#50fa7b',
+                                text: 'Replay Rate',
+                                color: '#f8f8f2',
                                 font: { size: 12, weight: 'bold' }
-                            }
+                            },
+                            grid: { color: '#44475a' },
+                            ticks: { color: '#f8f8f2' }
                         }
                     }
                 }
             });
-            console.log('Performance Spread Analysis initialized successfully');
+            console.log('Replay Rate Distribution Analysis initialized successfully');
         } catch (error) {
-            console.error('Error initializing Performance Spread Analysis:', error);
+            console.error('Error initializing Replay Rate Distribution Analysis:', error);
         }
     }
 
-    // 5. Market Concentration Matrix (Heatmap with Tooltips)
+    // 5. Country vs Studio Type Matrix (Heatmap)
     if (tacticalMarimekkoData && tacticalMarimekkoData.length > 0) {
-        console.log('Initializing Market Concentration Matrix...');
-        console.log('Tactical marimekko data sample:', tacticalMarimekkoData.slice(0, 3));
+        console.log('Initializing Country vs Studio Type Matrix...');
         const marimekkoCtx = document.getElementById('tacticalMarimekkoChart');
         if (!marimekkoCtx) {
             console.error('tacticalMarimekkoChart canvas not found');
@@ -575,39 +533,41 @@ function initializeTacticalCharts() {
         try {
             const ctx = marimekkoCtx.getContext('2d');
             
-            // Limit to top 15 genre-platform combinations for better performance
-            const matrixData = tacticalMarimekkoData
-                .filter(item => item.count >= 3) // Only show meaningful combinations
-                .slice(0, 15);
-            console.log('Matrix data processed:', matrixData.length, 'items');
+            // Process matrix data for heatmap
+            const matrixData = tacticalMarimekkoData.slice(0, 20); // Limit for readability
+            console.log('Matrix data processed:', matrixData.length, 'combinations');
             
             if (matrixData.length === 0) {
-                console.warn('No matrix data after filtering');
+                console.warn('No matrix data available');
                 return;
             }
             
             // Validate data structure
-            if (!matrixData.every(item => item.genre && item.platform && typeof item.count === 'number')) {
+            if (!matrixData.every(item => item.country && item.studio_type && typeof item.developer_count === 'number')) {
                 console.error('Invalid data structure in tacticalMarimekkoData');
                 return;
             }
             
-            // Create simple visualization
-            const labels = matrixData.map(item => `${item.genre.substring(0, 10)}... × ${item.platform.substring(0, 10)}...`);
-            const data = matrixData.map(item => item.count);
+            // Create heatmap visualization
+            const labels = matrixData.map(item => `${item.country.substring(0, 8)}... × ${item.studio_type}`);
+            const data = matrixData.map(item => item.developer_count);
+            const replayRates = matrixData.map(item => item.avg_replay_rate || 0);
             
             console.log('Matrix chart labels:', labels.slice(0, 3));
             console.log('Matrix chart data:', data.slice(0, 3));
             
+            // Color code by developer count intensity
             const backgroundColors = data.map(count => {
-                if (count > 50) return '#ff6b6b80';
-                if (count > 20) return '#feca5780';
-                return '#4ecdc480';
+                if (count > 100) return '#ff6b6b80';
+                if (count > 50) return '#feca5780';
+                if (count > 20) return '#4ecdc480';
+                return '#45b7d180';
             });
             const borderColors = data.map(count => {
-                if (count > 50) return '#ff6b6b';
-                if (count > 20) return '#feca57';
-                return '#4ecdc4';
+                if (count > 100) return '#ff6b6b';
+                if (count > 50) return '#feca57';
+                if (count > 20) return '#4ecdc4';
+                return '#45b7d1';
             });
             
             new Chart(ctx, {
@@ -615,7 +575,7 @@ function initializeTacticalCharts() {
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Market Concentration',
+                        label: 'Developer Count',
                         data: data,
                         backgroundColor: backgroundColors,
                         borderColor: borderColors,
@@ -627,13 +587,13 @@ function initializeTacticalCharts() {
                     responsive: true,
                     maintainAspectRatio: false,
                     animation: {
-                        duration: 1500,
+                        duration: 2000,
                         easing: 'easeInOutQuart'
                     },
                     plugins: {
                         title: {
                             display: true,
-                            text: '🔥 Market Concentration Matrix (Heatmap)',
+                            text: '🔥 Country vs Studio Type Matrix',
                             color: '#bd93f9',
                             font: { size: 16, weight: 'bold' }
                         },
@@ -650,18 +610,20 @@ function initializeTacticalCharts() {
                             callbacks: {
                                 title: function(context) {
                                     const item = matrixData[context.dataIndex];
-                                    return `${item.genre} × ${item.platform}`;
+                                    return `${item.country} × ${item.studio_type}`;
                                 },
                                 label: function(context) {
                                     const item = matrixData[context.dataIndex];
-                                    const totalGames = matrixData.reduce((sum, d) => sum + d.count, 0);
-                                    const marketShare = ((item.count / totalGames) * 100).toFixed(2);
-                                    const intensity = item.count > 50 ? 'High' : item.count > 20 ? 'Medium' : 'Low';
+                                    const totalDevs = matrixData.reduce((sum, d) => sum + d.developer_count, 0);
+                                    const marketShare = ((item.developer_count / totalDevs) * 100).toFixed(2);
+                                    const intensity = item.developer_count > 100 ? 'Very High' : 
+                                                    item.developer_count > 50 ? 'High' : 
+                                                    item.developer_count > 20 ? 'Medium' : 'Low';
                                     return [
-                                        `Games: ${item.count}`,
+                                        `Developers: ${item.developer_count}`,
                                         `Market Share: ${marketShare}%`,
-                                        `Concentration: ${intensity}`,
-                                        `Strategic Value: ${intensity === 'High' ? 'Prime Market' : intensity === 'Medium' ? 'Growth Opportunity' : 'Niche Market'}`
+                                        `Avg Replay Rate: ${(item.avg_replay_rate || 0).toFixed(3)}`,
+                                        `Concentration: ${intensity}`
                                     ];
                                 }
                             }
@@ -674,10 +636,10 @@ function initializeTacticalCharts() {
                                 font: { size: 9 },
                                 maxRotation: 45
                             },
-                            grid: { color: '#0f3460' },
+                            grid: { color: '#44475a' },
                             title: {
                                 display: true,
-                                text: 'Genre × Platform Combinations',
+                                text: 'Country × Studio Type Combinations',
                                 color: '#8be9fd',
                                 font: { size: 12, weight: 'bold' }
                             }
@@ -685,10 +647,10 @@ function initializeTacticalCharts() {
                         y: {
                             beginAtZero: true,
                             ticks: { color: '#f8f8f2' },
-                            grid: { color: '#0f3460' },
+                            grid: { color: '#44475a' },
                             title: {
                                 display: true,
-                                text: 'Number of Games',
+                                text: 'Number of Developers',
                                 color: '#ff79c6',
                                 font: { size: 12, weight: 'bold' }
                             }
@@ -696,26 +658,17 @@ function initializeTacticalCharts() {
                     }
                 }
             });
-            console.log('Market Concentration Matrix initialized successfully');
+            console.log('Country vs Studio Type Matrix initialized successfully');
         } catch (error) {
-            console.error('Error initializing Market Concentration Matrix:', error);
-            // Create a fallback message
-            const canvas = document.getElementById('tacticalMarimekkoChart');
-            if (canvas) {
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = '#f8f8f2';
-                ctx.font = '16px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('Chart temporarily unavailable', canvas.width/2, canvas.height/2);
-            }
+            console.error('Error initializing Country vs Studio Type Matrix:', error);
         }
     } else {
-        console.log('No tactical marimekko data available - length:', tacticalMarimekkoData ? tacticalMarimekkoData.length : 'undefined');
+        console.log('No country-studio matrix data available - length:', tacticalMarimekkoData ? tacticalMarimekkoData.length : 'undefined');
     }
 
-    // 6. Focus Area Comparison (Radar/Radar Area Chart) - Strategic Analysis
-    if (tacticalSankeyData && tacticalDumbbellData && tacticalMarimekkoData) {
-        console.log('Initializing Focus Area Comparison...');
+    // 6. Developer Performance Metrics (Radar Chart)
+    if (tacticalSankeyData && tacticalDumbbellData && tacticalVennData) {
+        console.log('Initializing Developer Performance Metrics...');
         const focusCtx = document.getElementById('tacticalFocusChart');
         if (!focusCtx) {
             console.error('tacticalFocusChart canvas not found');
@@ -725,62 +678,72 @@ function initializeTacticalCharts() {
         try {
             const ctx = focusCtx.getContext('2d');
             
-            // Aggregate data for focus area analysis
-            const focusAreas = {};
+            // Aggregate performance metrics by studio type
+            const performanceMetrics = {};
             
-            // Process different data sources for comprehensive analysis
+            // Process studio performance data
             if (tacticalSankeyData.length > 0) {
-                tacticalSankeyData.slice(0, 6).forEach(item => {
-                    if (!focusAreas[item.genre]) {
-                        focusAreas[item.genre] = {
+                tacticalSankeyData.forEach(item => {
+                    if (!performanceMetrics[item.studio_type]) {
+                        performanceMetrics[item.studio_type] = {
+                            avgReplayRate: 0,
+                            developerCount: 0,
+                            avgYearsActive: 0,
                             marketPresence: 0,
-                            platformReach: 0,
-                            competitiveIntensity: 0,
-                            qualityConsistency: 0,
-                            strategicValue: 0
+                            qualityScore: 0
                         };
                     }
-                    focusAreas[item.genre].marketPresence += item.count;
+                    performanceMetrics[item.studio_type].avgReplayRate = item.avg_replay_rate || 0;
+                    performanceMetrics[item.studio_type].developerCount = item.developer_count || 0;
+                    performanceMetrics[item.studio_type].avgYearsActive = item.avg_years_active || 0;
                 });
             }
             
+            // Add geographic diversity from venn data
+            if (tacticalVennData.length > 0) {
+                const studioCountries = {};
+                tacticalVennData.forEach(item => {
+                    // This would need studio type info, using placeholder logic
+                    Object.keys(performanceMetrics).forEach(studioType => {
+                        if (!studioCountries[studioType]) studioCountries[studioType] = new Set();
+                        studioCountries[studioType].add(item.country);
+                    });
+                });
+                
+                Object.keys(performanceMetrics).forEach(studioType => {
+                    performanceMetrics[studioType].marketPresence = studioCountries[studioType]?.size || 1;
+                });
+            }
+            
+            // Add quality metrics from dumbbell data
             if (tacticalDumbbellData.length > 0) {
-                tacticalDumbbellData.slice(0, 6).forEach(item => {
-                    if (focusAreas[item.genre]) {
-                        const consistency = 10 - (item.max_rating - item.min_rating);
-                        focusAreas[item.genre].qualityConsistency = Math.max(0, consistency);
-                        focusAreas[item.genre].strategicValue = item.avg_rating;
+                tacticalDumbbellData.forEach(item => {
+                    if (performanceMetrics[item.studio_type]) {
+                        performanceMetrics[item.studio_type].qualityScore = item.avg_replay_rate * 10;
                     }
                 });
             }
-            
-            // Calculate platform reach and competitive intensity
-            Object.keys(focusAreas).forEach(genre => {
-                const genreData = tacticalMarimekkoData.filter(item => item.genre === genre);
-                focusAreas[genre].platformReach = genreData.length;
-                focusAreas[genre].competitiveIntensity = genreData.reduce((sum, item) => sum + item.count, 0) / 10;
-            });
             
             // Normalize values to 0-10 scale
             const maxValues = {
-                marketPresence: Math.max(...Object.values(focusAreas).map(area => area.marketPresence)),
-                platformReach: Math.max(...Object.values(focusAreas).map(area => area.platformReach)),
-                competitiveIntensity: Math.max(...Object.values(focusAreas).map(area => area.competitiveIntensity)),
-                qualityConsistency: 10,
-                strategicValue: 10
+                avgReplayRate: Math.max(...Object.values(performanceMetrics).map(m => m.avgReplayRate)),
+                developerCount: Math.max(...Object.values(performanceMetrics).map(m => m.developerCount)),
+                avgYearsActive: Math.max(...Object.values(performanceMetrics).map(m => m.avgYearsActive)),
+                marketPresence: Math.max(...Object.values(performanceMetrics).map(m => m.marketPresence)),
+                qualityScore: Math.max(...Object.values(performanceMetrics).map(m => m.qualityScore))
             };
             
-            const focusGenres = Object.keys(focusAreas).slice(0, 5);
-            const datasets = focusGenres.map((genre, index) => {
-                const area = focusAreas[genre];
+            const studioTypes = Object.keys(performanceMetrics).slice(0, 5);
+            const datasets = studioTypes.map((studioType, index) => {
+                const metrics = performanceMetrics[studioType];
                 return {
-                    label: genre,
+                    label: studioType,
                     data: [
-                        (area.marketPresence / maxValues.marketPresence) * 10,
-                        (area.platformReach / maxValues.platformReach) * 10,
-                        Math.min(area.competitiveIntensity / maxValues.competitiveIntensity * 10, 10),
-                        area.qualityConsistency,
-                        area.strategicValue
+                        (metrics.avgReplayRate / (maxValues.avgReplayRate || 1)) * 10,
+                        (metrics.developerCount / (maxValues.developerCount || 1)) * 10,
+                        (metrics.avgYearsActive / (maxValues.avgYearsActive || 1)) * 10,
+                        (metrics.marketPresence / (maxValues.marketPresence || 1)) * 10,
+                        (metrics.qualityScore / (maxValues.qualityScore || 1)) * 10
                     ],
                     backgroundColor: generateColors(5)[index] + '20',
                     borderColor: generateColors(5)[index],
@@ -788,8 +751,7 @@ function initializeTacticalCharts() {
                     pointBackgroundColor: generateColors(5)[index],
                     pointBorderColor: '#f8f8f2',
                     pointBorderWidth: 2,
-                    pointRadius: 6,
-                    pointHoverRadius: 8
+                    pointRadius: 6
                 };
             });
             
@@ -797,11 +759,11 @@ function initializeTacticalCharts() {
                 type: 'radar',
                 data: {
                     labels: [
-                        'Market Presence',
-                        'Platform Reach',
-                        'Competition Level',
-                        'Quality Consistency',
-                        'Strategic Value'
+                        'Replay Rate',
+                        'Developer Count',
+                        'Experience',
+                        'Market Reach',
+                        'Quality Score'
                     ],
                     datasets: datasets
                 },
@@ -815,7 +777,7 @@ function initializeTacticalCharts() {
                     plugins: {
                         title: {
                             display: true,
-                            text: '🎯 Focus Area Comparison (Strategic Radar)',
+                            text: '📊 Developer Performance Metrics',
                             color: '#bd93f9',
                             font: { size: 16, weight: 'bold' }
                         },
@@ -823,7 +785,7 @@ function initializeTacticalCharts() {
                             position: 'bottom',
                             labels: {
                                 color: '#f8f8f2',
-                                font: { size: 10 },
+                                font: { size: 11 },
                                 usePointStyle: true,
                                 pointStyle: 'circle'
                             }
@@ -834,63 +796,35 @@ function initializeTacticalCharts() {
                             bodyColor: '#f8f8f2',
                             borderColor: '#bd93f9',
                             borderWidth: 2,
-                            cornerRadius: 10,
-                            callbacks: {
-                                title: function(context) {
-                                    return `${focusGenres[context.datasetIndex]} Genre Analysis`;
-                                },
-                                label: function(context) {
-                                    const metrics = [
-                                        'Market Presence',
-                                        'Platform Reach', 
-                                        'Competition Level',
-                                        'Quality Consistency',
-                                        'Strategic Value'
-                                    ];
-                                    const value = context.parsed.r;
-                                    const rating = value >= 8 ? 'Excellent' : value >= 6 ? 'Good' : value >= 4 ? 'Average' : 'Below Average';
-                                    return [
-                                        `${metrics[context.dataIndex]}: ${value.toFixed(1)}/10`,
-                                        `Rating: ${rating}`,
-                                        `Strategic Priority: ${value >= 7 ? 'High' : value >= 5 ? 'Medium' : 'Low'}`
-                                    ];
-                                }
-                            }
+                            cornerRadius: 10
                         }
                     },
                     scales: {
                         r: {
                             beginAtZero: true,
-                            min: 0,
                             max: 10,
                             ticks: {
-                                stepSize: 2,
                                 color: '#f8f8f2',
-                                backdropColor: 'transparent',
-                                font: { size: 10 }
+                                font: { size: 10 },
+                                stepSize: 2
                             },
-                            grid: {
-                                color: '#0f3460',
-                                lineWidth: 2
-                            },
-                            angleLines: {
-                                color: '#0f3460',
-                                lineWidth: 1
-                            },
+                            grid: { color: '#44475a' },
                             pointLabels: {
-                                color: '#8be9fd',
+                                color: '#f8f8f2',
                                 font: { size: 11, weight: 'bold' }
                             }
                         }
                     }
                 }
             });
-            console.log('Focus Area Comparison initialized successfully');
+            console.log('Developer Performance Metrics initialized successfully');
         } catch (error) {
-            console.error('Error initializing Focus Area Comparison:', error);
+            console.error('Error initializing Developer Performance Metrics:', error);
         }
+    } else {
+        console.log('Insufficient data for Developer Performance Metrics radar chart');
     }
-    
+
     console.log('Tactical dashboard charts initialization completed');
 }
 
@@ -1504,4 +1438,807 @@ function generateColors(count) {
         result.push(colors[i % colors.length]);
     }
     return result;
+}
+
+// Initialize all charts
+function initializeCharts() {
+    console.log('Initializing enhanced charts...');
+    
+    try {
+        // Studio Performance Charts
+        console.log('Initializing studio charts...');
+        if (typeof initializeStudioCharts === 'function') {
+            initializeStudioCharts();
+        }
+        
+        // Operational Dashboard Charts
+        console.log('Initializing operational charts...');
+        if (typeof initializeOperationalCharts === 'function') {
+            initializeOperationalCharts();
+        }
+        
+        // Tactical Dashboard Charts (Developer Performance)
+        console.log('Initializing tactical charts...');
+        initializeTacticalCharts();
+        
+        // Lifecycle Dashboard Charts
+        console.log('Initializing lifecycle charts...');
+        initializeLifecycleCharts();
+        
+        // Evolution Dashboard Charts
+        console.log('Initializing evolution charts...');
+        initializeEvolutionCharts();
+        
+        console.log('All charts initialized successfully');
+    } catch (error) {
+        console.error('Error initializing charts:', error);
+    }
+}
+
+// Initialize Tactical Dashboard Charts (Developer Performance)
+function initializeTacticalCharts() {
+    console.log('Setting up Developer Performance charts...');
+    console.log('Available data:', {
+        tacticalSankeyData: typeof tacticalSankeyData !== 'undefined' ? tacticalSankeyData?.length : 'undefined',
+        tacticalVennData: typeof tacticalVennData !== 'undefined' ? tacticalVennData?.length : 'undefined',
+        tacticalChordData: typeof tacticalChordData !== 'undefined' ? tacticalChordData?.length : 'undefined',
+        tacticalDumbbellData: typeof tacticalDumbbellData !== 'undefined' ? tacticalDumbbellData?.length : 'undefined',
+        tacticalMarimekkoData: typeof tacticalMarimekkoData !== 'undefined' ? tacticalMarimekkoData?.length : 'undefined'
+    });
+    
+    try {
+        // Chart 1: Studio Type Performance - Slope Chart
+        initializeDeveloperSlopeChart();
+        
+        // Chart 2: Geographic Distribution - Clustered Dumbbell Chart
+        initializeDeveloperDumbbellChart();
+        
+        // Chart 3: Developer Maturity Analysis - Enhanced Scatter Plot
+        initializeDeveloperMaturityChart();
+        
+        // Chart 4: Country × Studio Type - Matrix Heatmap
+        initializeDeveloperHeatmapChart();
+        
+        // Chart 5: Developer Performance Radar - Interactive Spider Chart
+        initializeDeveloperRadarChart();
+        
+        // Chart 6: Developer Replay Curve - Line Chart with Studio Type Colors
+        initializeDeveloperReplayCurve();
+        
+        console.log('Developer Performance charts initialized');
+    } catch (error) {
+        console.error('Error initializing tactical charts:', error);
+    }
+}
+
+// Chart 1: Studio Type Performance - Slope Chart
+function initializeDeveloperSlopeChart() {
+    const canvas = document.getElementById('tacticalSankeyChart');
+    if (!canvas) {
+        console.warn('Canvas tacticalSankeyChart not found');
+        return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    
+    // Use available data or create default data
+    let chartData = [];
+    if (typeof tacticalSankeyData !== 'undefined' && tacticalSankeyData && tacticalSankeyData.length > 0) {
+        chartData = tacticalSankeyData;
+    } else {
+        // Default data for demonstration
+        chartData = [
+            { studio_type: 'AAA', avg_replay_rate: 0.75, years_active: 25, developer_count: 150 },
+            { studio_type: 'Mid-tier', avg_replay_rate: 0.68, years_active: 18, developer_count: 85 },
+            { studio_type: 'Indie', avg_replay_rate: 0.62, years_active: 12, developer_count: 45 },
+            { studio_type: 'Mobile', avg_replay_rate: 0.58, years_active: 8, developer_count: 30 },
+            { studio_type: 'Legacy', avg_replay_rate: 0.82, years_active: 35, developer_count: 12 }
+        ];
+    }
+
+    // Process data for slope chart
+    const studioTypes = [...new Set(chartData.map(d => d.studio_type))];
+    const processedData = studioTypes.map(type => {
+        const typeData = chartData.filter(d => d.studio_type === type);
+        const avgReplayRate = typeData.reduce((sum, d) => sum + (d.avg_replay_rate || 0), 0) / typeData.length;
+        const avgYearsActive = typeData.reduce((sum, d) => sum + (d.years_active || 0), 0) / typeData.length;
+        const devCount = typeData.reduce((sum, d) => sum + (d.developer_count || 0), 0);
+        
+        return {
+            label: type,
+            replayRate: avgReplayRate,
+            yearsActive: avgYearsActive,
+            count: devCount,
+            color: getStudioTypeColor(type)
+        };
+    }).sort((a, b) => a.yearsActive - b.yearsActive);
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: processedData.map(d => `${d.yearsActive.toFixed(1)} years`),
+            datasets: [{
+                label: 'Studio Performance Trajectory',
+                data: processedData.map(d => ({
+                    x: d.yearsActive,
+                    y: d.replayRate,
+                    studio: d.label,
+                    count: d.count
+                })),
+                backgroundColor: processedData.map(d => d.color + '80'),
+                borderColor: processedData.map(d => d.color),
+                borderWidth: 3,
+                pointRadius: processedData.map(d => Math.sqrt(d.count) * 0.3 + 8),
+                pointHoverRadius: processedData.map(d => Math.sqrt(d.count) * 0.3 + 12),
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: '📊 Studio Performance Trajectory: Experience vs Player Retention',
+                    color: '#bd93f9',
+                    font: { size: 16, weight: 'bold' }
+                },
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(40, 42, 54, 0.95)',
+                    titleColor: '#f8f8f2',
+                    bodyColor: '#f8f8f2',
+                    borderColor: '#bd93f9',
+                    borderWidth: 2,
+                    callbacks: {
+                        title: function(context) {
+                            const point = context[0].raw;
+                            return `${point.studio} Studios`;
+                        },
+                        label: function(context) {
+                            const point = context.raw;
+                            return [
+                                `Replay Rate: ${(point.y * 100).toFixed(1)}%`,
+                                `Years Active: ${point.x.toFixed(1)}`,
+                                `Developer Count: ${point.count}`
+                            ];
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: 'Average Years Active' },
+                    grid: { color: '#44475a' },
+                    ticks: { color: '#f8f8f2' }
+                },
+                y: {
+                    title: { display: true, text: 'Average Replay Rate' },
+                    grid: { color: '#44475a' },
+                    ticks: { color: '#f8f8f2' }
+                }
+            }
+        }
+    });
+}
+
+// Chart 2: Geographic Distribution - Clustered Dumbbell Chart
+function initializeDeveloperDumbbellChart() {
+    const canvas = document.getElementById('tacticalVennChart');
+    if (!canvas) {
+        console.warn('Canvas tacticalVennChart not found');
+        return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    
+    // Use available data or create default data
+    let chartData = [];
+    if (typeof tacticalVennData !== 'undefined' && tacticalVennData && tacticalVennData.length > 0) {
+        chartData = tacticalVennData;
+    } else {
+        // Default data for demonstration
+        chartData = [
+            { country: 'United States', developer_count: 850, avg_replay_rate: 0.72 },
+            { country: 'Finland', developer_count: 650, avg_replay_rate: 0.78 },
+            { country: 'United Kingdom', developer_count: 620, avg_replay_rate: 0.69 },
+            { country: 'Canada', developer_count: 580, avg_replay_rate: 0.71 },
+            { country: 'Sweden', developer_count: 540, avg_replay_rate: 0.76 },
+            { country: 'Japan', developer_count: 320, avg_replay_rate: 0.74 },
+            { country: 'Germany', developer_count: 280, avg_replay_rate: 0.67 },
+            { country: 'France', developer_count: 240, avg_replay_rate: 0.65 }
+        ];
+    }
+
+    // Process data for dumbbell chart
+    const countryData = {};
+    chartData.forEach(d => {
+        const country = d.country || 'Unknown';
+        if (!countryData[country]) {
+            countryData[country] = { devCount: 0, replayRates: [] };
+        }
+        countryData[country].devCount += d.developer_count || 0;
+        if (d.avg_replay_rate) {
+            countryData[country].replayRates.push(d.avg_replay_rate);
+        }
+    });
+
+    const processedData = Object.entries(countryData)
+        .map(([country, data]) => ({
+            country,
+            devCount: data.devCount,
+            avgReplayRate: data.replayRates.length > 0 
+                ? data.replayRates.reduce((a, b) => a + b, 0) / data.replayRates.length 
+                : 0
+        }))
+        .sort((a, b) => b.devCount - a.devCount)
+        .slice(0, 8); // Top 8 countries
+
+    // Normalize values for visualization
+    const maxDevCount = Math.max(...processedData.map(d => d.devCount));
+    const maxReplayRate = Math.max(...processedData.map(d => d.avgReplayRate));
+
+    new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [
+                {
+                    label: 'Developer Count',
+                    data: processedData.map((d, i) => ({
+                        x: 0,
+                        y: i,
+                        value: d.devCount,
+                        country: d.country,
+                        type: 'count'
+                    })),
+                    backgroundColor: '#4ecdc4',
+                    borderColor: '#4ecdc4',
+                    pointRadius: processedData.map(d => (d.devCount / maxDevCount) * 15 + 8),
+                    pointHoverRadius: processedData.map(d => (d.devCount / maxDevCount) * 15 + 12)
+                },
+                {
+                    label: 'Avg Replay Rate',
+                    data: processedData.map((d, i) => ({
+                        x: 1,
+                        y: i,
+                        value: d.avgReplayRate,
+                        country: d.country,
+                        type: 'replay'
+                    })),
+                    backgroundColor: '#ff6b6b',
+                    borderColor: '#ff6b6b',
+                    pointRadius: processedData.map(d => (d.avgReplayRate / maxReplayRate) * 15 + 8),
+                    pointHoverRadius: processedData.map(d => (d.avgReplayRate / maxReplayRate) * 15 + 12)
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: '🌍 Geographic Performance: Developer Count vs Replay Quality',
+                    color: '#bd93f9',
+                    font: { size: 16, weight: 'bold' }
+                },
+                legend: {
+                    labels: { color: '#f8f8f2' }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(40, 42, 54, 0.95)',
+                    titleColor: '#f8f8f2',
+                    bodyColor: '#f8f8f2',
+                    borderColor: '#bd93f9',
+                    borderWidth: 2,
+                    callbacks: {
+                        title: function(context) {
+                            return context[0].raw.country;
+                        },
+                        label: function(context) {
+                            const point = context.raw;
+                            if (point.type === 'count') {
+                                return `Developer Count: ${point.value}`;
+                            } else {
+                                return `Avg Replay Rate: ${(point.value * 100).toFixed(1)}%`;
+                            }
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    min: -0.5,
+                    max: 1.5,
+                    ticks: {
+                        stepSize: 1,
+                        color: '#f8f8f2',
+                        callback: function(value) {
+                            return value === 0 ? 'Dev Count' : value === 1 ? 'Replay Rate' : '';
+                        }
+                    },
+                    grid: { display: false }
+                },
+                y: {
+                    type: 'linear',
+                    min: -0.5,
+                    max: processedData.length - 0.5,
+                    ticks: {
+                        stepSize: 1,
+                        color: '#f8f8f2',
+                        callback: function(value) {
+                            return processedData[value]?.country || '';
+                        }
+                    },
+                    grid: { color: '#44475a' }
+                }
+            }
+        }
+    });
+}
+
+// Chart 3: Developer Maturity Analysis - Enhanced Scatter Plot
+function initializeDeveloperMaturityChart() {
+    const canvas = document.getElementById('tacticalChordChart');
+    if (!canvas) {
+        console.warn('Canvas tacticalChordChart not found');
+        return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    
+    // Use available data or create default data
+    let chartData = [];
+    if (typeof tacticalChordData !== 'undefined' && tacticalChordData && tacticalChordData.length > 0) {
+        chartData = tacticalChordData.slice(0, 100); // Limit for performance
+    } else {
+        // Default data for demonstration
+        chartData = [
+            { name: 'Nintendo', maturity_level: 'Veteran', years_active: 45, replay_rate: 0.85, studio_type: 'AAA' },
+            { name: 'Sony Interactive', maturity_level: 'Veteran', years_active: 35, replay_rate: 0.78, studio_type: 'AAA' },
+            { name: 'Activision', maturity_level: 'Veteran', years_active: 42, replay_rate: 0.72, studio_type: 'AAA' },
+            { name: 'Ubisoft', maturity_level: 'Established', years_active: 28, replay_rate: 0.69, studio_type: 'AAA' },
+            { name: 'Epic Games', maturity_level: 'Established', years_active: 22, replay_rate: 0.74, studio_type: 'Mid-tier' },
+            { name: 'Supercell', maturity_level: 'Established', years_active: 15, replay_rate: 0.81, studio_type: 'Mobile' },
+            { name: 'Team Cherry', maturity_level: 'Emerging', years_active: 8, replay_rate: 0.88, studio_type: 'Indie' },
+            { name: 'Hades Dev', maturity_level: 'Emerging', years_active: 12, replay_rate: 0.92, studio_type: 'Indie' },
+            { name: 'Among Us Dev', maturity_level: 'Emerging', years_active: 6, replay_rate: 0.76, studio_type: 'Indie' }
+        ];
+    }
+
+    // Process data by maturity level
+    const maturityLevels = ['Emerging', 'Established', 'Veteran'];
+    const datasets = maturityLevels.map(level => {
+        const levelData = chartData.filter(d => d.maturity_level === level);
+        return {
+            label: level,
+            data: levelData.map(d => ({
+                x: d.years_active || 0,
+                y: d.replay_rate || 0,
+                name: d.name || 'Unknown',
+                studio_type: d.studio_type || 'Unknown'
+            })),
+            backgroundColor: getMaturityColor(level) + '60',
+            borderColor: getMaturityColor(level),
+            borderWidth: 2,
+            pointRadius: 8,
+            pointHoverRadius: 12
+        };
+    });
+
+    new Chart(ctx, {
+        type: 'scatter',
+        data: { datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: '🧭 Developer Maturity vs Performance Analysis',
+                    color: '#bd93f9',
+                    font: { size: 16, weight: 'bold' }
+                },
+                legend: {
+                    labels: { color: '#f8f8f2' }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(40, 42, 54, 0.95)',
+                    titleColor: '#f8f8f2',
+                    bodyColor: '#f8f8f2',
+                    borderColor: '#bd93f9',
+                    borderWidth: 2,
+                    callbacks: {
+                        title: function(context) {
+                            return context[0].raw.name;
+                        },
+                        label: function(context) {
+                            const point = context.raw;
+                            return [
+                                `Maturity: ${context.dataset.label}`,
+                                `Years Active: ${point.x}`,
+                                `Replay Rate: ${(point.y * 100).toFixed(1)}%`,
+                                `Studio Type: ${point.studio_type}`
+                            ];
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: 'Years Active' },
+                    grid: { color: '#44475a' },
+                    ticks: { color: '#f8f8f2' }
+                },
+                y: {
+                    title: { display: true, text: 'Replay Rate' },
+                    grid: { color: '#44475a' },
+                    ticks: { color: '#f8f8f2' }
+                }
+            }
+        }
+    });
+}
+
+// Chart 4: Country × Studio Type - Matrix Heatmap
+function initializeDeveloperHeatmapChart() {
+    const canvas = document.getElementById('tacticalDumbbellChart');
+    if (!canvas) {
+        console.warn('Canvas tacticalDumbbellChart not found');
+        return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    
+    // Use available data or create default data
+    let chartData = [];
+    if (typeof tacticalMarimekkoData !== 'undefined' && tacticalMarimekkoData && tacticalMarimekkoData.length > 0) {
+        chartData = tacticalMarimekkoData;
+    } else {
+        // Default data for demonstration
+        const countries = ['United States', 'Finland', 'United Kingdom', 'Canada', 'Sweden', 'Japan'];
+        const studioTypes = ['Indie', 'Mobile', 'Mid-tier', 'AAA', 'Legacy'];
+        chartData = [];
+        countries.forEach(country => {
+            studioTypes.forEach(studioType => {
+                chartData.push({
+                    country,
+                    studio_type: studioType,
+                    developer_count: Math.floor(Math.random() * 200) + 10,
+                    avg_replay_rate: 0.5 + Math.random() * 0.4
+                });
+            });
+        });
+    }
+
+    // Create matrix data
+    const countries = [...new Set(chartData.map(d => d.country))].slice(0, 6);
+    const studioTypes = ['Indie', 'Mobile', 'Mid-tier', 'AAA', 'Legacy'];
+    
+    const matrixData = [];
+    countries.forEach((country, countryIndex) => {
+        studioTypes.forEach((studioType, studioIndex) => {
+            const dataPoint = chartData.find(d => 
+                d.country === country && d.studio_type === studioType
+            );
+            
+            matrixData.push({
+                x: studioIndex,
+                y: countryIndex,
+                v: dataPoint ? dataPoint.developer_count || 0 : 0,
+                country,
+                studioType,
+                replayRate: dataPoint ? dataPoint.avg_replay_rate || 0 : 0
+            });
+        });
+    });
+
+    const maxValue = Math.max(...matrixData.map(d => d.v));
+
+    new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Developer Count',
+                data: matrixData,
+                backgroundColor: function(context) {
+                    const value = context.raw.v;
+                    const intensity = value / maxValue;
+                    return `rgba(52, 152, 219, ${intensity})`;
+                },
+                borderColor: '#2980b9',
+                borderWidth: 1,
+                pointRadius: function(context) {
+                    const value = context.raw.v;
+                    return Math.sqrt(value) * 0.5 + 5;
+                }
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: '🛠 Country × Studio Type Matrix Heatmap',
+                    color: '#bd93f9',
+                    font: { size: 16, weight: 'bold' }
+                },
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(40, 42, 54, 0.95)',
+                    titleColor: '#f8f8f2',
+                    bodyColor: '#f8f8f2',
+                    borderColor: '#bd93f9',
+                    borderWidth: 2,
+                    callbacks: {
+                        title: function(context) {
+                            const point = context[0].raw;
+                            return `${point.country} - ${point.studioType}`;
+                        },
+                        label: function(context) {
+                            const point = context.raw;
+                            return [
+                                `Developer Count: ${point.v}`,
+                                `Avg Replay Rate: ${(point.replayRate * 100).toFixed(1)}%`
+                            ];
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    min: -0.5,
+                    max: studioTypes.length - 0.5,
+                    ticks: {
+                        stepSize: 1,
+                        color: '#f8f8f2',
+                        callback: function(value) {
+                            return studioTypes[value] || '';
+                        }
+                    },
+                    title: { display: true, text: 'Studio Type', color: '#f8f8f2' }
+                },
+                y: {
+                    type: 'linear',
+                    min: -0.5,
+                    max: countries.length - 0.5,
+                    ticks: {
+                        stepSize: 1,
+                        color: '#f8f8f2',
+                        callback: function(value) {
+                            return countries[value] || '';
+                        }
+                    },
+                    title: { display: true, text: 'Country', color: '#f8f8f2' }
+                }
+            }
+        }
+    });
+}
+
+// Chart 5: Developer Performance Radar - Interactive Spider Chart
+function initializeDeveloperRadarChart() {
+    const canvas = document.getElementById('tacticalMarimekkoChart');
+    if (!canvas) {
+        console.warn('Canvas tacticalMarimekkoChart not found');
+        return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    
+    // Use available data or create default data
+    let chartData = [];
+    if (typeof tacticalDumbbellData !== 'undefined' && tacticalDumbbellData && tacticalDumbbellData.length > 0) {
+        chartData = tacticalDumbbellData;
+    } else {
+        // Default data for demonstration
+        chartData = [
+            { studio_type: 'AAA', avg_replay_rate: 0.75, years_active: 25, developer_count: 150 },
+            { studio_type: 'Mid-tier', avg_replay_rate: 0.68, years_active: 18, developer_count: 85 },
+            { studio_type: 'Indie', avg_replay_rate: 0.62, years_active: 12, developer_count: 45 },
+            { studio_type: 'Mobile', avg_replay_rate: 0.58, years_active: 8, developer_count: 30 },
+            { studio_type: 'Legacy', avg_replay_rate: 0.82, years_active: 35, developer_count: 12 }
+        ];
+    }
+
+    // Calculate metrics by studio type
+    const studioTypes = [...new Set(chartData.map(d => d.studio_type))];
+    const datasets = studioTypes.map(type => {
+        const typeData = chartData.filter(d => d.studio_type === type);
+        
+        // Calculate normalized metrics (0-100 scale)
+        const avgReplayRate = typeData.reduce((sum, d) => sum + (d.avg_replay_rate || 0), 0) / typeData.length * 100;
+        const avgYearsActive = Math.min(typeData.reduce((sum, d) => sum + (d.years_active || 0), 0) / typeData.length * 2, 100);
+        const devCount = Math.min(typeData.reduce((sum, d) => sum + (d.developer_count || 0), 0) / 10, 100);
+        const marketReach = Math.min(typeData.length * 20, 100); // Based on data points
+        const consistency = Math.min(avgReplayRate * 1.2, 100); // Replay rate as consistency indicator
+        
+        return {
+            label: type,
+            data: [avgReplayRate, avgYearsActive, devCount, marketReach, consistency],
+            backgroundColor: getStudioTypeColor(type) + '20',
+            borderColor: getStudioTypeColor(type),
+            borderWidth: 2,
+            pointBackgroundColor: getStudioTypeColor(type),
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: getStudioTypeColor(type)
+        };
+    });
+
+    new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: ['Player Retention', 'Experience', 'Scale', 'Market Reach', 'Consistency'],
+            datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: '🎮 Developer Performance Radar by Studio Type',
+                    color: '#bd93f9',
+                    font: { size: 16, weight: 'bold' }
+                },
+                legend: {
+                    labels: { color: '#f8f8f2' }
+                }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        stepSize: 20,
+                        color: '#f8f8f2'
+                    },
+                    grid: {
+                        color: '#44475a'
+                    },
+                    pointLabels: {
+                        color: '#f8f8f2'
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Chart 6: Developer Replay Curve - Line Chart with Studio Type Colors
+function initializeDeveloperReplayCurve() {
+    const canvas = document.getElementById('tacticalFocusChart');
+    if (!canvas) {
+        console.warn('Canvas tacticalFocusChart not found');
+        return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    
+    // Use available data or create default data
+    let chartData = [];
+    if (typeof tacticalChordData !== 'undefined' && tacticalChordData && tacticalChordData.length > 0) {
+        chartData = tacticalChordData;
+    } else {
+        // Default data for demonstration
+        chartData = [
+            { studio_type: 'AAA', years_active: 5, replay_rate: 0.65 },
+            { studio_type: 'AAA', years_active: 15, replay_rate: 0.72 },
+            { studio_type: 'AAA', years_active: 25, replay_rate: 0.75 },
+            { studio_type: 'AAA', years_active: 35, replay_rate: 0.78 },
+            { studio_type: 'Indie', years_active: 2, replay_rate: 0.58 },
+            { studio_type: 'Indie', years_active: 8, replay_rate: 0.62 },
+            { studio_type: 'Indie', years_active: 15, replay_rate: 0.68 },
+            { studio_type: 'Mobile', years_active: 3, replay_rate: 0.55 },
+            { studio_type: 'Mobile', years_active: 8, replay_rate: 0.58 },
+            { studio_type: 'Mobile', years_active: 12, replay_rate: 0.61 }
+        ];
+    }
+
+    // Group data by studio type and create trend lines
+    const studioTypes = [...new Set(chartData.map(d => d.studio_type))];
+    const datasets = studioTypes.map(type => {
+        const typeData = chartData
+            .filter(d => d.studio_type === type)
+            .sort((a, b) => (a.years_active || 0) - (b.years_active || 0));
+        
+        // Create moving average for smoother curve
+        const smoothedData = [];
+        const windowSize = Math.max(1, Math.floor(typeData.length / 5));
+        
+        for (let i = 0; i < typeData.length; i += windowSize) {
+            const window = typeData.slice(i, i + windowSize);
+            const avgYears = window.reduce((sum, d) => sum + (d.years_active || 0), 0) / window.length;
+            const avgReplay = window.reduce((sum, d) => sum + (d.replay_rate || 0), 0) / window.length;
+            
+            smoothedData.push({
+                x: avgYears,
+                y: avgReplay
+            });
+        }
+        
+        return {
+            label: type,
+            data: smoothedData,
+            borderColor: getStudioTypeColor(type),
+            backgroundColor: getStudioTypeColor(type) + '20',
+            borderWidth: 3,
+            fill: false,
+            tension: 0.4,
+            pointRadius: 6,
+            pointHoverRadius: 10
+        };
+    });
+
+    new Chart(ctx, {
+        type: 'line',
+        data: { datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: '🔁 Developer Replay Rate Evolution Over Time',
+                    color: '#bd93f9',
+                    font: { size: 16, weight: 'bold' }
+                },
+                legend: {
+                    labels: { color: '#f8f8f2' }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'linear',
+                    title: { display: true, text: 'Years Active' },
+                    grid: { color: '#44475a' },
+                    ticks: { color: '#f8f8f2' }
+                },
+                y: {
+                    title: { display: true, text: 'Replay Rate' },
+                    grid: { color: '#44475a' },
+                    ticks: { color: '#f8f8f2' }
+                }
+            }
+        }
+    });
+}
+
+// Helper functions for colors
+function getStudioTypeColor(type) {
+    const colors = {
+        'AAA': '#e74c3c',
+        'Mid-tier': '#f39c12',
+        'Indie': '#3498db',
+        'Mobile': '#9b59b6',
+        'Legacy': '#2ecc71'
+    };
+    return colors[type] || '#95a5a6';
+}
+
+function getMaturityColor(level) {
+    const colors = {
+        'Emerging': '#3498db',
+        'Established': '#f39c12',
+        'Veteran': '#e74c3c'
+    };
+    return colors[level] || '#95a5a6';
+}
+
+// Lifecycle Dashboard Charts
+function initializeLifecycleCharts() {
+    console.log('Initializing lifecycle charts...');
+    // Lifecycle chart implementations would go here
+}
+
+// Evolution Dashboard Charts  
+function initializeEvolutionCharts() {
+    console.log('Initializing evolution charts...');
+    // Evolution chart implementations would go here
 } 

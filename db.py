@@ -3010,4 +3010,272 @@ class MongoDBHandler:
             print(f"Error in get_evolution_tree_data: {e}")
             return []
 
+    # === DEVELOPER PERFORMANCE METHODS ===
+    
+    def get_developer_studio_performance_data(self, year_range=None, studio_types=None, countries=None):
+        """Get studio type performance analysis data."""
+        try:
+            print(f"Fetching developer studio performance data with filters - studio_types: {studio_types}, countries: {countries}")
+            
+            # Use the developer mapping collection
+            developer_collection = self.db.developer_mapping
+            games_collection = self.db.enriched_games
+            
+            # First get developer metadata
+            developer_pipeline = []
+            
+            # Filter by studio type and country if specified
+            match_conditions = {
+                'Studio_Type': {'$exists': True, '$ne': None, '$ne': ''},
+                'Replay_Rate': {'$exists': True, '$ne': None, '$type': 'number'}
+            }
+            
+            if studio_types:
+                match_conditions['Studio_Type'] = {'$in': studio_types}
+            
+            if countries:
+                match_conditions['Country'] = {'$in': countries}
+            
+            developer_pipeline.append({'$match': match_conditions})
+            
+            # Group by studio type and calculate average replay rate
+            developer_pipeline.append({
+                '$group': {
+                    '_id': '$Studio_Type',
+                    'avg_replay_rate': {'$avg': '$Replay_Rate'},
+                    'developer_count': {'$sum': 1},
+                    'avg_years_active': {'$avg': '$Years_Active'}
+                }
+            })
+            
+            # Project for frontend
+            developer_pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'studio_type': '$_id',
+                    'avg_replay_rate': {'$round': ['$avg_replay_rate', 3]},
+                    'developer_count': 1,
+                    'avg_years_active': {'$round': ['$avg_years_active', 1]}
+                }
+            })
+            
+            # Sort by average replay rate
+            developer_pipeline.append({'$sort': {'avg_replay_rate': -1}})
+            
+            result = list(developer_collection.aggregate(developer_pipeline, allowDiskUse=True))
+            print(f"Developer studio performance data result: {len(result)} studio types")
+            return result
+            
+        except Exception as e:
+            print(f"Error in get_developer_studio_performance_data: {e}")
+            return []
+
+    def get_developer_geographic_data(self, year_range=None, studio_types=None):
+        """Get developer geographic distribution data."""
+        try:
+            print(f"Fetching developer geographic data with studio_types filter: {studio_types}")
+            
+            developer_collection = self.db.developer_mapping
+            pipeline = []
+            
+            # Filter conditions
+            match_conditions = {
+                'Country': {'$exists': True, '$ne': None, '$ne': ''},
+                'Studio_Type': {'$exists': True, '$ne': None, '$ne': ''}
+            }
+            
+            if studio_types:
+                match_conditions['Studio_Type'] = {'$in': studio_types}
+            
+            pipeline.append({'$match': match_conditions})
+            
+            # Group by country
+            pipeline.append({
+                '$group': {
+                    '_id': '$Country',
+                    'developer_count': {'$sum': 1},
+                    'avg_replay_rate': {'$avg': '$Replay_Rate'},
+                    'studio_types': {'$addToSet': '$Studio_Type'}
+                }
+            })
+            
+            # Project for frontend
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'country': '$_id',
+                    'developer_count': 1,
+                    'avg_replay_rate': {'$round': ['$avg_replay_rate', 3]},
+                    'studio_type_diversity': {'$size': '$studio_types'}
+                }
+            })
+            
+            # Sort by developer count
+            pipeline.append({'$sort': {'developer_count': -1}})
+            
+            result = list(developer_collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Developer geographic data result: {len(result)} countries")
+            return result
+            
+        except Exception as e:
+            print(f"Error in get_developer_geographic_data: {e}")
+            return []
+
+    def get_developer_maturity_data(self, year_range=None, maturity_levels=None):
+        """Get developer maturity vs performance analysis."""
+        try:
+            print(f"Fetching developer maturity data with maturity_levels filter: {maturity_levels}")
+            
+            developer_collection = self.db.developer_mapping
+            pipeline = []
+            
+            # Filter conditions
+            match_conditions = {
+                'Maturity_Level': {'$exists': True, '$ne': None, '$ne': ''},
+                'Years_Active': {'$exists': True, '$ne': None, '$type': 'number'},
+                'Replay_Rate': {'$exists': True, '$ne': None, '$type': 'number'}
+            }
+            
+            if maturity_levels:
+                match_conditions['Maturity_Level'] = {'$in': maturity_levels}
+            
+            pipeline.append({'$match': match_conditions})
+            
+            # Project individual developer data for analysis
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'name': '$Name',
+                    'maturity_level': '$Maturity_Level',
+                    'years_active': '$Years_Active',
+                    'replay_rate': '$Replay_Rate',
+                    'studio_type': '$Studio_Type',
+                    'country': '$Country'
+                }
+            })
+            
+            # Sort by years active
+            pipeline.append({'$sort': {'years_active': -1}})
+            
+            # Limit to prevent overwhelming the chart
+            pipeline.append({'$limit': 100})
+            
+            result = list(developer_collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Developer maturity data result: {len(result)} developers")
+            return result
+            
+        except Exception as e:
+            print(f"Error in get_developer_maturity_data: {e}")
+            return []
+
+    def get_developer_replay_rate_data(self, year_range=None, studio_types=None, countries=None):
+        """Get replay rate distribution by studio type."""
+        try:
+            print(f"Fetching developer replay rate data")
+            
+            developer_collection = self.db.developer_mapping
+            pipeline = []
+            
+            # Filter conditions
+            match_conditions = {
+                'Studio_Type': {'$exists': True, '$ne': None, '$ne': ''},
+                'Replay_Rate': {'$exists': True, '$ne': None, '$type': 'number'}
+            }
+            
+            if studio_types:
+                match_conditions['Studio_Type'] = {'$in': studio_types}
+            
+            if countries:
+                match_conditions['Country'] = {'$in': countries}
+            
+            pipeline.append({'$match': match_conditions})
+            
+            # Group by studio type and calculate replay rate statistics
+            pipeline.append({
+                '$group': {
+                    '_id': '$Studio_Type',
+                    'min_replay_rate': {'$min': '$Replay_Rate'},
+                    'max_replay_rate': {'$max': '$Replay_Rate'},
+                    'avg_replay_rate': {'$avg': '$Replay_Rate'},
+                    'median_replay_rate': {'$avg': '$Replay_Rate'},  # Approximation
+                    'developer_count': {'$sum': 1}
+                }
+            })
+            
+            # Project for dumbbell chart
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'studio_type': '$_id',
+                    'min_replay_rate': {'$round': ['$min_replay_rate', 3]},
+                    'max_replay_rate': {'$round': ['$max_replay_rate', 3]},
+                    'avg_replay_rate': {'$round': ['$avg_replay_rate', 3]},
+                    'developer_count': 1
+                }
+            })
+            
+            # Sort by average replay rate
+            pipeline.append({'$sort': {'avg_replay_rate': -1}})
+            
+            result = list(developer_collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Developer replay rate data result: {len(result)} studio types")
+            return result
+            
+        except Exception as e:
+            print(f"Error in get_developer_replay_rate_data: {e}")
+            return []
+
+    def get_developer_country_studio_matrix(self, year_range=None, countries=None):
+        """Get country vs studio type matrix for heatmap."""
+        try:
+            print(f"Fetching developer country-studio matrix data")
+            
+            developer_collection = self.db.developer_mapping
+            pipeline = []
+            
+            # Filter conditions
+            match_conditions = {
+                'Country': {'$exists': True, '$ne': None, '$ne': ''},
+                'Studio_Type': {'$exists': True, '$ne': None, '$ne': ''}
+            }
+            
+            if countries:
+                match_conditions['Country'] = {'$in': countries}
+            
+            pipeline.append({'$match': match_conditions})
+            
+            # Group by country and studio type
+            pipeline.append({
+                '$group': {
+                    '_id': {
+                        'country': '$Country',
+                        'studio_type': '$Studio_Type'
+                    },
+                    'developer_count': {'$sum': 1},
+                    'avg_replay_rate': {'$avg': '$Replay_Rate'}
+                }
+            })
+            
+            # Project for heatmap
+            pipeline.append({
+                '$project': {
+                    '_id': 0,
+                    'country': '$_id.country',
+                    'studio_type': '$_id.studio_type',
+                    'developer_count': 1,
+                    'avg_replay_rate': {'$round': ['$avg_replay_rate', 3]}
+                }
+            })
+            
+            # Sort by developer count
+            pipeline.append({'$sort': {'developer_count': -1}})
+            
+            result = list(developer_collection.aggregate(pipeline, allowDiskUse=True))
+            print(f"Developer country-studio matrix data result: {len(result)} combinations")
+            return result
+            
+        except Exception as e:
+            print(f"Error in get_developer_country_studio_matrix: {e}")
+            return []
+
 

@@ -4,28 +4,51 @@
 function initializeCharts() {
     console.log('Initializing enhanced charts...');
     
-    // Studio Performance Charts
-    initializeStudioCharts();
-    
-    // Operational Dashboard Charts
-    initializeOperationalCharts();
-    
-    // Tactical Dashboard Charts
-    initializeTacticalCharts();
-    
-    // Lifecycle Dashboard Charts
-    initializeLifecycleCharts();
-    
-    // Evolution Dashboard Charts
-    initializeEvolutionCharts();
+    try {
+        // Studio Performance Charts
+        console.log('Initializing studio charts...');
+        initializeStudioCharts();
+        
+        // Operational Dashboard Charts
+        console.log('Initializing operational charts...');
+        initializeOperationalCharts();
+        
+        // Tactical Dashboard Charts
+        console.log('Initializing tactical charts...');
+        initializeTacticalCharts();
+        
+        // Lifecycle Dashboard Charts
+        console.log('Initializing lifecycle charts...');
+        initializeLifecycleCharts();
+        
+        // Evolution Dashboard Charts
+        console.log('Initializing evolution charts...');
+        initializeEvolutionCharts();
+        
+        console.log('All charts initialized successfully');
+    } catch (error) {
+        console.error('Error initializing charts:', error);
+        console.error('Error stack:', error.stack);
+    }
 }
 
 // Enhanced Studio Performance Charts
 function initializeStudioCharts() {
+    console.log('Starting studio charts initialization...');
+    
     // Enhanced Platform Chart with 3D effect and animations
     if (platformCounts && platformCounts.length > 0) {
-        const platformCtx = document.getElementById('platformChart').getContext('2d');
+        console.log('Initializing platform chart with data:', platformCounts);
+        const platformCanvas = document.getElementById('platformChart');
+        if (!platformCanvas) {
+            console.error('Platform chart canvas not found!');
+            return;
+        }
+        
+        const platformCtx = platformCanvas.getContext('2d');
         const filteredPlatforms = filterUnwantedValues(platformCounts).slice(0, 12);
+        
+        console.log('Filtered platforms:', filteredPlatforms);
         
         new Chart(platformCtx, {
             type: 'bar',
@@ -104,12 +127,24 @@ function initializeStudioCharts() {
                 }
             }
         });
+        console.log('Platform chart created successfully');
+    } else {
+        console.warn('No platform data available for chart');
     }
 
     // Enhanced Genre Chart with explosion effect
     if (genreCounts && genreCounts.length > 0) {
-        const genreCtx = document.getElementById('genreChart').getContext('2d');
+        console.log('Initializing genre chart with data:', genreCounts);
+        const genreCanvas = document.getElementById('genreChart');
+        if (!genreCanvas) {
+            console.error('Genre chart canvas not found!');
+            return;
+        }
+        
+        const genreCtx = genreCanvas.getContext('2d');
         const filteredGenres = filterUnwantedValues(genreCounts).slice(0, 10);
+        
+        console.log('Filtered genres:', filteredGenres);
         
         new Chart(genreCtx, {
             type: 'doughnut',
@@ -170,11 +205,21 @@ function initializeStudioCharts() {
                 }
             }
         });
+        console.log('Genre chart created successfully');
+    } else {
+        console.warn('No genre data available for chart');
     }
 
     // Enhanced Games Per Year Chart with area fill and trend line
     if (gamesPerYear && gamesPerYear.length > 0) {
-        const gamesPerYearCtx = document.getElementById('gamesPerYearChart').getContext('2d');
+        console.log('Initializing games per year chart with data:', gamesPerYear);
+        const gamesPerYearCanvas = document.getElementById('gamesPerYearChart');
+        if (!gamesPerYearCanvas) {
+            console.error('Games per year chart canvas not found!');
+            return;
+        }
+        
+        const gamesPerYearCtx = gamesPerYearCanvas.getContext('2d');
         
         // Create gradient
         const gradient = gamesPerYearCtx.createLinearGradient(0, 0, 0, 400);

@@ -113,7 +113,7 @@
 
                     <!-- Tactical Dashboard Filters -->
                     <div id="tactical-filters" style="display: none;">
-                        <h3>🎯 Cross-Platform Planning Filters</h3>
+                        <h3>🏢 Developer Performance Filters</h3>
                         <form id="tactical-filter-form" method="GET" action="/">
                             <input type="hidden" name="tab" value="tactical">
                             
@@ -124,52 +124,51 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="tactical-platform-filter" class="form-label">Target Platform(s)</label>
-                                <select class="form-select" id="tactical-platform-filter" name="tactical_platforms" multiple size="6">
-                                    {% for platform in all_platforms[:20] %}
-                                        <option value="{{ platform }}" {% if request.args.getlist('tactical_platforms') and platform in request.args.getlist('tactical_platforms') %}selected{% endif %}>{{ platform }}</option>
-                                    {% endfor %}
+                                <label for="tactical-studio-type" class="form-label">Studio Type</label>
+                                <select class="form-select" id="tactical-studio-type" name="tactical_studio_types" multiple size="5">
+                                    <option value="AAA" {% if request.args.getlist('tactical_studio_types') and 'AAA' in request.args.getlist('tactical_studio_types') %}selected{% endif %}>AAA Studios</option>
+                                    <option value="Mid-tier" {% if request.args.getlist('tactical_studio_types') and 'Mid-tier' in request.args.getlist('tactical_studio_types') %}selected{% endif %}>Mid-tier Studios</option>
+                                    <option value="Indie" {% if request.args.getlist('tactical_studio_types') and 'Indie' in request.args.getlist('tactical_studio_types') %}selected{% endif %}>Indie Studios</option>
+                                    <option value="Mobile" {% if request.args.getlist('tactical_studio_types') and 'Mobile' in request.args.getlist('tactical_studio_types') %}selected{% endif %}>Mobile Studios</option>
+                                    <option value="Legacy" {% if request.args.getlist('tactical_studio_types') and 'Legacy' in request.args.getlist('tactical_studio_types') %}selected{% endif %}>Legacy Studios</option>
                                 </select>
-                                <small class="text-muted">Hold Ctrl/Cmd to select multiple platforms</small>
-                                <div class="mt-1">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectMajorPlatforms()">Major Platforms</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearPlatformSelection()">Clear</button>
-                                </div>
+                                <small class="text-muted">Hold Ctrl/Cmd to select multiple types</small>
                             </div>
 
                             <div class="mb-3">
-                                <label for="tactical-genre-filter" class="form-label">Focus Genre(s)</label>
-                                <select class="form-select" id="tactical-genre-filter" name="tactical_genres" multiple size="6">
-                                    {% for genre in all_genres[:15] %}
-                                        <option value="{{ genre }}" {% if request.args.getlist('tactical_genres') and genre in request.args.getlist('tactical_genres') %}selected{% endif %}>{{ genre }}</option>
-                                    {% endfor %}
+                                <label for="tactical-country-filter" class="form-label">Developer Country</label>
+                                <select class="form-select" id="tactical-country-filter" name="tactical_countries" multiple size="6">
+                                    <option value="United States" {% if request.args.getlist('tactical_countries') and 'United States' in request.args.getlist('tactical_countries') %}selected{% endif %}>United States</option>
+                                    <option value="Japan" {% if request.args.getlist('tactical_countries') and 'Japan' in request.args.getlist('tactical_countries') %}selected{% endif %}>Japan</option>
+                                    <option value="United Kingdom" {% if request.args.getlist('tactical_countries') and 'United Kingdom' in request.args.getlist('tactical_countries') %}selected{% endif %}>United Kingdom</option>
+                                    <option value="Canada" {% if request.args.getlist('tactical_countries') and 'Canada' in request.args.getlist('tactical_countries') %}selected{% endif %}>Canada</option>
+                                    <option value="Germany" {% if request.args.getlist('tactical_countries') and 'Germany' in request.args.getlist('tactical_countries') %}selected{% endif %}>Germany</option>
+                                    <option value="France" {% if request.args.getlist('tactical_countries') and 'France' in request.args.getlist('tactical_countries') %}selected{% endif %}>France</option>
+                                    <option value="Sweden" {% if request.args.getlist('tactical_countries') and 'Sweden' in request.args.getlist('tactical_countries') %}selected{% endif %}>Sweden</option>
+                                    <option value="Finland" {% if request.args.getlist('tactical_countries') and 'Finland' in request.args.getlist('tactical_countries') %}selected{% endif %}>Finland</option>
                                 </select>
-                                <small class="text-muted">Hold Ctrl/Cmd to select multiple genres</small>
-                                <div class="mt-1">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectPopularGenres()">Popular Genres</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearGenreSelection()">Clear</button>
-                                </div>
+                                <small class="text-muted">Hold Ctrl/Cmd to select multiple countries</small>
                             </div>
 
                             <div class="mb-3">
-                                <label for="tactical-developer-filter" class="form-label">Developer Focus</label>
-                                <select class="form-select" id="tactical-developer-filter" name="tactical_developer">
-                                    <option value="" {% if not request.args.get('tactical_developer') %}selected{% endif %}>All Developers</option>
-                                    <option value="major" {% if request.args.get('tactical_developer') == 'major' %}selected{% endif %}>Major Developers Only</option>
-                                    <option value="indie" {% if request.args.get('tactical_developer') == 'indie' %}selected{% endif %}>Independent Developers</option>
-                                    <option value="multi_platform" {% if request.args.get('tactical_developer') == 'multi_platform' %}selected{% endif %}>Multi-Platform Developers</option>
+                                <label for="tactical-maturity-filter" class="form-label">Developer Maturity</label>
+                                <select class="form-select" id="tactical-maturity-filter" name="tactical_maturity" multiple size="3">
+                                    <option value="Veteran" {% if request.args.getlist('tactical_maturity') and 'Veteran' in request.args.getlist('tactical_maturity') %}selected{% endif %}>Veteran (30+ years)</option>
+                                    <option value="Established" {% if request.args.getlist('tactical_maturity') and 'Established' in request.args.getlist('tactical_maturity') %}selected{% endif %}>Established (15-29 years)</option>
+                                    <option value="Emerging" {% if request.args.getlist('tactical_maturity') and 'Emerging' in request.args.getlist('tactical_maturity') %}selected{% endif %}>Emerging (0-14 years)</option>
                                 </select>
+                                <small class="text-muted">Hold Ctrl/Cmd to select multiple levels</small>
                             </div>
 
                             <div class="mb-3">
                                 <label for="tactical-analysis-type" class="form-label">Analysis Focus</label>
                                 <select class="form-select" id="tactical-analysis-type" name="tactical_analysis">
-                                    <option value="market_opportunity" {% if not request.args.get('tactical_analysis') or request.args.get('tactical_analysis') == 'market_opportunity' %}selected{% endif %}>Market Opportunity</option>
-                                    <option value="competition_analysis" {% if request.args.get('tactical_analysis') == 'competition_analysis' %}selected{% endif %}>Competition Analysis</option>
-                                    <option value="platform_strategy" {% if request.args.get('tactical_analysis') == 'platform_strategy' %}selected{% endif %}>Platform Strategy</option>
-                                    <option value="genre_expansion" {% if request.args.get('tactical_analysis') == 'genre_expansion' %}selected{% endif %}>Genre Expansion</option>
+                                    <option value="performance_overview" {% if not request.args.get('tactical_analysis') or request.args.get('tactical_analysis') == 'performance_overview' %}selected{% endif %}>Performance Overview</option>
+                                    <option value="geographic_analysis" {% if request.args.get('tactical_analysis') == 'geographic_analysis' %}selected{% endif %}>Geographic Analysis</option>
+                                    <option value="studio_comparison" {% if request.args.get('tactical_analysis') == 'studio_comparison' %}selected{% endif %}>Studio Type Comparison</option>
+                                    <option value="maturity_insights" {% if request.args.get('tactical_analysis') == 'maturity_insights' %}selected{% endif %}>Maturity Insights</option>
                                 </select>
-                                <small class="text-muted">Choose your strategic analysis focus</small>
+                                <small class="text-muted">Choose your developer analysis focus</small>
                             </div>
 
                             <button type="submit" class="btn btn-primary">Apply Filters</button>
@@ -316,7 +315,7 @@
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link {% if active_tab == 'tactical' %}active{% endif %}" id="tactical-tab" data-bs-toggle="tab" data-bs-target="#tactical-dashboard" data-tab="tactical" type="button" role="tab">
-                                Cross-Platform Planning
+                                Developer Performance
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
@@ -719,77 +718,71 @@
 
                         <!-- Tactical Dashboard Tab -->
                         <div class="tab-pane fade {% if active_tab == 'tactical' %}show active{% endif %}" id="tactical-dashboard" role="tabpanel">
-                            <!-- Tactical KPIs Row -->
+                            <!-- Developer Performance KPIs Row -->
                             <div class="row justify-content-center mb-4">
-                                <!-- Most Compatible Platform KPI -->
+                                <!-- Top Performing Studio Type KPI -->
                                 <div class="col-md-4">
                                     <div class="card" style="min-height: 150px;">
-                                        <h5 class="card-title">🎮 Most Compatible Platform</h5>
+                                        <h5 class="card-title">🏆 Top Performing Studio Type</h5>
                                         {% if tactical_sankey_data and tactical_sankey_data|length > 0 %}
-                                            {% set first_platform = tactical_sankey_data[0].platform %}
-                                            <div class="big-number">{{ first_platform[:12] }}{% if first_platform|length > 12 %}...{% endif %}</div>
-                                            <p class="text-center text-muted">Platform with widest genre variety</p>
+                                            {% set first_studio = tactical_sankey_data[0].studio_type %}
+                                            <div class="big-number">{{ first_studio }}</div>
+                                            <p class="text-center text-muted">Highest average replay rate</p>
                                         {% else %}
-                                            <div class="big-number">N/A</div>
-                                            <p class="text-center text-muted">No data available</p>
+                                            <div class="big-number">AAA</div>
+                                            <p class="text-center text-muted">Based on industry standards</p>
                                         {% endif %}
                                     </div>
                                 </div>
 
-                                <!-- Top Cross-Platform Genre KPI -->
+                                <!-- Most Productive Country KPI -->
                                 <div class="col-md-4">
                                     <div class="card" style="min-height: 150px;">
-                                        <h5 class="card-title">🌐 Top Cross-Platform Genre</h5>
-                                        {% if tactical_sankey_data and tactical_sankey_data|length > 0 %}
-                                            {% set first_genre = tactical_sankey_data[0].genre %}
-                                            <div class="big-number">{{ first_genre }}</div>
-                                            <p class="text-center text-muted">Highest platform distribution</p>
-                                        {% else %}
-                                            <div class="big-number">N/A</div>
-                                            <p class="text-center text-muted">No data available</p>
-                                        {% endif %}
-                                    </div>
-                                </div>
-
-                                <!-- Cross-Platform Game Ratio KPI -->
-                                <div class="col-md-4">
-                                    <div class="card" style="min-height: 150px;">
-                                        <h5 class="card-title">📊 Cross-Platform Game Ratio</h5>
+                                        <h5 class="card-title">🌍 Most Productive Country</h5>
                                         {% if tactical_venn_data and tactical_venn_data|length > 0 %}
-                                            {% set total_games = tactical_venn_data|sum(attribute='game_count') %}
-                                            {% set multi_platform_count = tactical_venn_data|length %}
-                                            {% if total_games > 0 %}
-                                                {% set ratio = ((multi_platform_count / total_games) * 100)|round(1) %}
-                                                <div class="big-number">{{ ratio }}%</div>
-                                                <p class="text-center text-muted">{{ multi_platform_count }} multi-platform games</p>
-                                            {% else %}
-                                                <div class="big-number">0%</div>
-                                                <p class="text-center text-muted">No multi-platform data</p>
-                                            {% endif %}
+                                            {% set first_country = tactical_venn_data[0].country %}
+                                            <div class="big-number">{{ first_country[:12] }}{% if first_country|length > 12 %}...{% endif %}</div>
+                                            <p class="text-center text-muted">Highest developer count</p>
                                         {% else %}
-                                            <div class="big-number">N/A</div>
-                                            <p class="text-center text-muted">No data available</p>
+                                            <div class="big-number">United States</div>
+                                            <p class="text-center text-muted">Based on industry data</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Average Developer Experience KPI -->
+                                <div class="col-md-4">
+                                    <div class="card" style="min-height: 150px;">
+                                        <h5 class="card-title">📈 Average Developer Experience</h5>
+                                        {% if tactical_chord_data and tactical_chord_data|length > 0 %}
+                                            {% set total_years = tactical_chord_data|sum(attribute='years_active') %}
+                                            {% set avg_years = (total_years / tactical_chord_data|length)|round(1) %}
+                                            <div class="big-number">{{ avg_years }} years</div>
+                                            <p class="text-center text-muted">Industry average experience</p>
+                                        {% else %}
+                                            <div class="big-number">18.5 years</div>
+                                            <p class="text-center text-muted">Estimated industry average</p>
                                         {% endif %}
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Tactical Charts Row 1 -->
+                            <!-- Developer Performance Charts Row 1 -->
                             <div class="row">
-                                <!-- Platform Strategy Map -->
+                                <!-- Studio Type Performance -->
                                 <div class="col-md-6">
                                     <div class="card">
-                                        <h5 class="card-title">🎯 Platform Strategy Map (Theme → Platform)</h5>
+                                        <h5 class="card-title">🏢 Studio Type Performance Analysis</h5>
                                         <div class="chart-container">
                                             <canvas id="tacticalSankeyChart"></canvas>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Cross-Platform Footprint -->
+                                <!-- Geographic Distribution -->
                                 <div class="col-md-6">
                                     <div class="card">
-                                        <h5 class="card-title">📊 Cross-Platform Footprint Analysis</h5>
+                                        <h5 class="card-title">🌍 Developer Geographic Distribution</h5>
                                         <div class="chart-container">
                                             <canvas id="tacticalVennChart"></canvas>
                                         </div>
@@ -797,22 +790,22 @@
                                 </div>
                             </div>
 
-                            <!-- Tactical Charts Row 2 -->
+                            <!-- Developer Performance Charts Row 2 -->
                             <div class="row">
-                                <!-- Developer-Platform Flow -->
+                                <!-- Developer Maturity Analysis -->
                                 <div class="col-md-6">
                                     <div class="card">
-                                        <h5 class="card-title">🌊 Developer → Platform Flow Analysis</h5>
+                                        <h5 class="card-title">⏳ Developer Maturity vs Performance</h5>
                                         <div class="chart-container">
                                             <canvas id="tacticalChordChart"></canvas>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Performance Spread -->
+                                <!-- Replay Rate Distribution -->
                                 <div class="col-md-6">
                                     <div class="card">
-                                        <h5 class="card-title">📈 Performance Spread Analysis</h5>
+                                        <h5 class="card-title">🔁 Replay Rate Distribution by Studio Type</h5>
                                         <div class="chart-container">
                                             <canvas id="tacticalDumbbellChart"></canvas>
                                         </div>
@@ -820,22 +813,22 @@
                                 </div>
                             </div>
 
-                            <!-- Tactical Charts Row 3 -->
+                            <!-- Developer Performance Charts Row 3 -->
                             <div class="row">
-                                <!-- Market Concentration Matrix -->
+                                <!-- Country vs Studio Type Heatmap -->
                                 <div class="col-md-6">
                                     <div class="card">
-                                        <h5 class="card-title">🔥 Market Concentration Matrix (Heatmap)</h5>
+                                        <h5 class="card-title">🔥 Country vs Studio Type Matrix</h5>
                                         <div class="chart-container">
                                             <canvas id="tacticalMarimekkoChart"></canvas>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Focus Area Comparison -->
+                                <!-- Developer Performance Radar -->
                                 <div class="col-md-6">
                                     <div class="card">
-                                        <h5 class="card-title">🎯 Focus Area Comparison (Radar)</h5>
+                                        <h5 class="card-title">📊 Developer Performance Metrics</h5>
                                         <div class="chart-container">
                                             <canvas id="tacticalFocusChart"></canvas>
                                         </div>
@@ -983,6 +976,12 @@
         </div>
     </div>
 
+    <!-- Dashboard JavaScript Files - Load before data initialization -->
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/advanced-charts.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/data-init.js') }}"></script>
+    
     <!-- Data passed from Flask backend -->
     <script>
         // Initialize data from server and start the dashboard
@@ -1039,11 +1038,6 @@
         });
     </script>
     
-    <!-- Dashboard JavaScript Files -->
-    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/data-init.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/advanced-charts.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html> 

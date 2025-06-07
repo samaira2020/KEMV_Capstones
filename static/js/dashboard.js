@@ -229,25 +229,7 @@ class DashboardManager {
     }
 
     initializeRangeSliders() {
-        // Lifecycle dashboard range sliders
-        const lifecycleRating = document.getElementById('lifecycle-min-rating');
-        const lifecycleRatingDisplay = document.getElementById('lifecycle-rating-display');
-        const lifecycleVotes = document.getElementById('lifecycle-min-votes');
-        const lifecycleVotesDisplay = document.getElementById('lifecycle-votes-display');
-
-        if (lifecycleRating && lifecycleRatingDisplay) {
-            lifecycleRating.addEventListener('input', () => {
-                lifecycleRatingDisplay.textContent = parseFloat(lifecycleRating.value).toFixed(1);
-            });
-        }
-
-        if (lifecycleVotes && lifecycleVotesDisplay) {
-            lifecycleVotes.addEventListener('input', () => {
-                lifecycleVotesDisplay.textContent = parseInt(lifecycleVotes.value).toLocaleString();
-            });
-        }
-
-        // Studio dashboard year range sliders
+        // Studio Performance year range sliders
         const yearStart = document.getElementById('year-start');
         const yearEnd = document.getElementById('year-end');
         const yearDisplay = document.getElementById('year-range-display');
@@ -257,6 +239,7 @@ class DashboardManager {
                 const startYear = parseInt(yearStart.value);
                 const endYear = parseInt(yearEnd.value);
                 
+                // Ensure start year is not greater than end year
                 if (startYear > endYear) {
                     yearStart.value = endYear;
                 }
@@ -269,6 +252,59 @@ class DashboardManager {
 
             yearStart.addEventListener('input', updateYearDisplay);
             yearEnd.addEventListener('input', updateYearDisplay);
+            
+            // Initialize display
+            updateYearDisplay();
+        }
+
+        // Tactical dashboard year range sliders
+        const tacticalYearStart = document.getElementById('tactical-year-start');
+        const tacticalYearEnd = document.getElementById('tactical-year-end');
+        const tacticalYearDisplay = document.getElementById('tactical-year-range-display');
+
+        if (tacticalYearStart && tacticalYearEnd && tacticalYearDisplay) {
+            const updateTacticalYearDisplay = () => {
+                const startYear = parseInt(tacticalYearStart.value);
+                const endYear = parseInt(tacticalYearEnd.value);
+                
+                // Ensure start year is not greater than end year
+                if (startYear > endYear) {
+                    tacticalYearStart.value = endYear;
+                }
+                if (endYear < startYear) {
+                    tacticalYearEnd.value = startYear;
+                }
+                
+                tacticalYearDisplay.textContent = `${tacticalYearStart.value} - ${tacticalYearEnd.value}`;
+            };
+
+            tacticalYearStart.addEventListener('input', updateTacticalYearDisplay);
+            tacticalYearEnd.addEventListener('input', updateTacticalYearDisplay);
+            
+            // Initialize display
+            updateTacticalYearDisplay();
+        }
+
+        // Lifecycle dashboard range sliders
+        const lifecycleRating = document.getElementById('lifecycle-min-rating');
+        const lifecycleRatingDisplay = document.getElementById('lifecycle-rating-display');
+        const lifecycleVotes = document.getElementById('lifecycle-min-votes');
+        const lifecycleVotesDisplay = document.getElementById('lifecycle-votes-display');
+
+        if (lifecycleRating && lifecycleRatingDisplay) {
+            const updateRatingDisplay = () => {
+                lifecycleRatingDisplay.textContent = parseFloat(lifecycleRating.value).toFixed(1);
+            };
+            lifecycleRating.addEventListener('input', updateRatingDisplay);
+            updateRatingDisplay();
+        }
+
+        if (lifecycleVotes && lifecycleVotesDisplay) {
+            const updateVotesDisplay = () => {
+                lifecycleVotesDisplay.textContent = parseInt(lifecycleVotes.value).toLocaleString();
+            };
+            lifecycleVotes.addEventListener('input', updateVotesDisplay);
+            updateVotesDisplay();
         }
     }
 

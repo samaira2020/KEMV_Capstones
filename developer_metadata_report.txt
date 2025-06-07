@@ -1,0 +1,60 @@
+============================================================
+DEVELOPER METADATA ANALYSIS REPORT
+============================================================
+
+📊 STUDIO TYPE DISTRIBUTION
+------------------------------
+Indie       : 2786 ( 73.6%)
+Mobile      :  546 ( 14.4%)
+Mid-tier    :  255 (  6.7%)
+AAA         :  190 (  5.0%)
+Legacy      :   10 (  0.3%)
+
+🌍 COUNTRY DISTRIBUTION (Top 10)
+------------------------------
+United States  :  761 ( 20.1%)
+Finland        :  637 ( 16.8%)
+United Kingdom :  610 ( 16.1%)
+Canada         :  562 ( 14.8%)
+Sweden         :  527 ( 13.9%)
+Japan          :  318 (  8.4%)
+South Korea    :  119 (  3.1%)
+China          :  104 (  2.7%)
+France         :   94 (  2.5%)
+Germany        :   54 (  1.4%)
+
+🗓 FOUNDED YEAR ANALYSIS
+------------------------------
+1880s   :   26 (  0.7%)
+1940s   :    6 (  0.2%)
+1970s   :   83 (  2.2%)
+1980s   :  382 ( 10.1%)
+1990s   :  871 ( 23.0%)
+2000s   :  953 ( 25.2%)
+2010s   : 1350 ( 35.6%)
+2020s   :  116 (  3.1%)
+
+🧑‍💼 MATURITY LEVEL DISTRIBUTION
+------------------------------
+Established : 1490 ( 39.3%)
+Emerging    : 1360 ( 35.9%)
+Veteran     :  937 ( 24.7%)
+
+🔁 REPLAY RATE STATISTICS
+------------------------------
+Mean:     0.599
+Median:   0.603
+Std Dev:  0.154
+Min:      0.203
+Max:      0.950
+
+💡 STRATEGIC INSIGHTS
+------------------------------
+AAA avg replay rate:   0.828
+Indie avg replay rate: 0.572
+AAA advantage:         +44.7%
+
+US developers:         761
+Japanese developers:   318
+
+============================================================
