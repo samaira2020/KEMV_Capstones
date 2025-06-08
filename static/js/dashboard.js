@@ -168,27 +168,54 @@ class DashboardManager {
     }
 
     setupTacticalAllOptionHandlers() {
-        // Studio Type "All" handler
-        const studioTypeSelect = document.getElementById('tactical-studio-type');
-        if (studioTypeSelect) {
-            studioTypeSelect.addEventListener('change', (e) => {
-                this.handleAllOptionSelection(e.target, 'all_studios');
+        // Handle "All" options for tactical filters
+        const tacticalStudioSelect = document.getElementById('tactical-studio-type');
+        const tacticalCountrySelect = document.getElementById('tactical-country-filter');
+        const tacticalMaturitySelect = document.getElementById('tactical-maturity-filter');
+        const tacticalPerformanceTierSelect = document.getElementById('tactical-performance-tier');
+        const tacticalYearsActiveSelect = document.getElementById('tactical-years-active');
+        const tacticalReplayRateSelect = document.getElementById('tactical-replay-rate-ranges');
+        const tacticalDeveloperSizeSelect = document.getElementById('tactical-developer-sizes');
+
+        if (tacticalStudioSelect) {
+            tacticalStudioSelect.addEventListener('change', () => {
+                this.handleAllOptionSelection(tacticalStudioSelect, 'all_studios');
             });
         }
 
-        // Country "All" handler
-        const countrySelect = document.getElementById('tactical-country-filter');
-        if (countrySelect) {
-            countrySelect.addEventListener('change', (e) => {
-                this.handleAllOptionSelection(e.target, 'all_countries');
+        if (tacticalCountrySelect) {
+            tacticalCountrySelect.addEventListener('change', () => {
+                this.handleAllOptionSelection(tacticalCountrySelect, 'all_countries');
             });
         }
 
-        // Maturity "All" handler
-        const maturitySelect = document.getElementById('tactical-maturity-filter');
-        if (maturitySelect) {
-            maturitySelect.addEventListener('change', (e) => {
-                this.handleAllOptionSelection(e.target, 'all_maturity');
+        if (tacticalMaturitySelect) {
+            tacticalMaturitySelect.addEventListener('change', () => {
+                this.handleAllOptionSelection(tacticalMaturitySelect, 'all_maturity');
+            });
+        }
+
+        if (tacticalPerformanceTierSelect) {
+            tacticalPerformanceTierSelect.addEventListener('change', () => {
+                this.handleAllOptionSelection(tacticalPerformanceTierSelect, 'all_performance_tiers');
+            });
+        }
+
+        if (tacticalYearsActiveSelect) {
+            tacticalYearsActiveSelect.addEventListener('change', () => {
+                this.handleAllOptionSelection(tacticalYearsActiveSelect, 'all_years_active');
+            });
+        }
+
+        if (tacticalReplayRateSelect) {
+            tacticalReplayRateSelect.addEventListener('change', () => {
+                this.handleAllOptionSelection(tacticalReplayRateSelect, 'all_replay_rates');
+            });
+        }
+
+        if (tacticalDeveloperSizeSelect) {
+            tacticalDeveloperSizeSelect.addEventListener('change', () => {
+                this.handleAllOptionSelection(tacticalDeveloperSizeSelect, 'all_developer_sizes');
             });
         }
     }
@@ -451,119 +478,194 @@ class DashboardManager {
     }
 
     resetFilters(dashboardType) {
-        console.log(`Resetting filters for ${dashboardType} dashboard`);
+        console.log(`Resetting ${dashboardType} filters`);
         
-        switch(dashboardType) {
-            case 'studio':
-                // Reset studio performance filters
-                const genreFilter = document.getElementById('genre-filter');
-                const platformFilter = document.getElementById('platform-filter');
-                const yearStart = document.getElementById('year-start');
-                const yearEnd = document.getElementById('year-end');
+        if (dashboardType === 'tactical') {
+            // Reset tactical filters to "All" defaults
+            const tacticalStudioSelect = document.getElementById('tactical-studio-type');
+            const tacticalCountrySelect = document.getElementById('tactical-country-filter');
+            const tacticalMaturitySelect = document.getElementById('tactical-maturity-filter');
+            const tacticalPerformanceTierSelect = document.getElementById('tactical-performance-tier');
+            const tacticalYearsActiveSelect = document.getElementById('tactical-years-active');
+            const tacticalReplayRateSelect = document.getElementById('tactical-replay-rate-ranges');
+            const tacticalDeveloperSizeSelect = document.getElementById('tactical-developer-sizes');
+            const tacticalAnalysisSelect = document.getElementById('tactical-analysis-type');
+            
+            // Reset all selects to "All" options
+            if (tacticalStudioSelect) {
+                Array.from(tacticalStudioSelect.options).forEach(option => {
+                    option.selected = option.value === 'all_studios';
+                });
+            }
+            
+            if (tacticalCountrySelect) {
+                Array.from(tacticalCountrySelect.options).forEach(option => {
+                    option.selected = option.value === 'all_countries';
+                });
+            }
+            
+            if (tacticalMaturitySelect) {
+                Array.from(tacticalMaturitySelect.options).forEach(option => {
+                    option.selected = option.value === 'all_maturity';
+                });
+            }
+            
+            if (tacticalPerformanceTierSelect) {
+                Array.from(tacticalPerformanceTierSelect.options).forEach(option => {
+                    option.selected = option.value === 'all_performance_tiers';
+                });
+            }
+            
+            if (tacticalYearsActiveSelect) {
+                Array.from(tacticalYearsActiveSelect.options).forEach(option => {
+                    option.selected = option.value === 'all_years_active';
+                });
+            }
+            
+            if (tacticalReplayRateSelect) {
+                Array.from(tacticalReplayRateSelect.options).forEach(option => {
+                    option.selected = option.value === 'all_replay_rates';
+                });
+            }
+            
+            if (tacticalDeveloperSizeSelect) {
+                Array.from(tacticalDeveloperSizeSelect.options).forEach(option => {
+                    option.selected = option.value === 'all_developer_sizes';
+                });
+            }
+            
+            if (tacticalAnalysisSelect) {
+                tacticalAnalysisSelect.value = 'performance_overview';
+            }
+            
+            // Reset year range sliders
+            const tacticalYearStart = document.getElementById('tactical-year-start');
+            const tacticalYearEnd = document.getElementById('tactical-year-end');
+            
+            if (tacticalYearStart && tacticalYearEnd) {
+                tacticalYearStart.value = tacticalYearStart.min;
+                tacticalYearEnd.value = tacticalYearEnd.max;
                 
-                if (genreFilter) genreFilter.selectedIndex = -1;
-                if (platformFilter) platformFilter.selectedIndex = -1;
-                if (yearStart) yearStart.value = yearStart.min;
-                if (yearEnd) yearEnd.value = yearEnd.max;
-                break;
-                
-            case 'op':
-            case 'operational':
-                // Reset operational dashboard filters
-                const opYearFilter = document.getElementById('op-year-filter');
-                const opMonthFilter = document.getElementById('op-month-filter');
-                const opRatingFilter = document.getElementById('op-rating-filter');
-                const opTimeframe = document.getElementById('op-timeframe');
-                
-                if (opYearFilter) opYearFilter.selectedIndex = -1;
-                if (opMonthFilter) opMonthFilter.selectedIndex = -1;
-                if (opRatingFilter) opRatingFilter.selectedIndex = 0;
-                if (opTimeframe) opTimeframe.selectedIndex = 1; // Default to 'recent'
-                break;
-                
-            case 'tactical':
-                // Reset tactical dashboard filters
-                const tacticalStudioType = document.getElementById('tactical-studio-type');
-                const tacticalCountryFilter = document.getElementById('tactical-country-filter');
-                const tacticalMaturityFilter = document.getElementById('tactical-maturity-filter');
-                const tacticalAnalysisType = document.getElementById('tactical-analysis-type');
-                const tacticalYearStart = document.getElementById('tactical-year-start');
-                const tacticalYearEnd = document.getElementById('tactical-year-end');
-                
-                // Reset to "All" options
-                if (tacticalStudioType) {
-                    Array.from(tacticalStudioType.options).forEach(option => {
-                        option.selected = option.value === 'all_studios';
-                    });
+                // Update display
+                const display = document.getElementById('tactical-year-range-display');
+                if (display) {
+                    display.textContent = `${tacticalYearStart.value} - ${tacticalYearEnd.value}`;
                 }
+            }
+            
+        } else if (dashboardType === 'studio') {
+            // Reset studio filters
+            const genreSelect = document.getElementById('genre-filter');
+            const platformSelect = document.getElementById('platform-filter');
+            
+            if (genreSelect) {
+                Array.from(genreSelect.options).forEach(option => option.selected = false);
+            }
+            
+            if (platformSelect) {
+                Array.from(platformSelect.options).forEach(option => option.selected = false);
+            }
+            
+            // Reset year range sliders
+            const yearStart = document.getElementById('year-start');
+            const yearEnd = document.getElementById('year-end');
+            
+            if (yearStart && yearEnd) {
+                yearStart.value = yearStart.min;
+                yearEnd.value = yearEnd.max;
                 
-                if (tacticalCountryFilter) {
-                    Array.from(tacticalCountryFilter.options).forEach(option => {
-                        option.selected = option.value === 'all_countries';
-                    });
+                // Update display
+                const display = document.getElementById('year-range-display');
+                if (display) {
+                    display.textContent = `${yearStart.value} - ${yearEnd.value}`;
                 }
-                
-                if (tacticalMaturityFilter) {
-                    Array.from(tacticalMaturityFilter.options).forEach(option => {
-                        option.selected = option.value === 'all_maturity';
-                    });
-                }
-                
-                if (tacticalAnalysisType) tacticalAnalysisType.selectedIndex = 0;
-                if (tacticalYearStart) tacticalYearStart.value = tacticalYearStart.min;
-                if (tacticalYearEnd) tacticalYearEnd.value = tacticalYearEnd.max;
-                
-                // Update year range display
-                const tacticalYearDisplay = document.getElementById('tactical-year-range-display');
-                if (tacticalYearDisplay && tacticalYearStart && tacticalYearEnd) {
-                    tacticalYearDisplay.textContent = `${tacticalYearStart.value} - ${tacticalYearEnd.value}`;
-                }
-                break;
-                
-            case 'lifecycle':
-                // Reset lifecycle dashboard filters
-                const lifecycleSearch = document.getElementById('lifecycle-search');
-                const lifecycleGenreFilter = document.getElementById('lifecycle-genre-filter');
-                const lifecyclePlatformFilter = document.getElementById('lifecycle-platform-filter');
-                const lifecycleMinRating = document.getElementById('lifecycle-min-rating');
-                const lifecycleMinVotes = document.getElementById('lifecycle-min-votes');
-                const lifecycleGameType = document.getElementById('lifecycle-game-type');
-                
-                if (lifecycleSearch) lifecycleSearch.value = '';
-                if (lifecycleGenreFilter) lifecycleGenreFilter.selectedIndex = -1;
-                if (lifecyclePlatformFilter) lifecyclePlatformFilter.selectedIndex = -1;
-                if (lifecycleMinRating) lifecycleMinRating.value = '0.0';
-                if (lifecycleMinVotes) lifecycleMinVotes.value = '0';
-                if (lifecycleGameType) lifecycleGameType.selectedIndex = 0;
-                
-                // Update range displays
-                const lifecycleRatingDisplay = document.getElementById('lifecycle-rating-display');
-                const lifecycleVotesDisplay = document.getElementById('lifecycle-votes-display');
-                if (lifecycleRatingDisplay) lifecycleRatingDisplay.textContent = '0.0';
-                if (lifecycleVotesDisplay) lifecycleVotesDisplay.textContent = '0';
-                break;
-                
-            case 'evolution':
-                // Reset evolution dashboard filters
-                const evolutionGenreFilter = document.getElementById('evolution-genre-filter');
-                const evolutionPlatformFilter = document.getElementById('evolution-platform-filter');
-                const evolutionTimePeriod = document.getElementById('evolution-time-period');
-                const evolutionMetric = document.getElementById('evolution-metric');
-                
-                if (evolutionGenreFilter) evolutionGenreFilter.selectedIndex = -1;
-                if (evolutionPlatformFilter) evolutionPlatformFilter.selectedIndex = -1;
-                if (evolutionTimePeriod) evolutionTimePeriod.selectedIndex = 0;
-                if (evolutionMetric) evolutionMetric.selectedIndex = 0;
-                break;
+            }
+            
+        } else if (dashboardType === 'operational') {
+            // Reset operational filters
+            const opYearsSelect = document.getElementById('op-years');
+            const opMonthsSelect = document.getElementById('op-months');
+            const opMinRatingSlider = document.getElementById('op-min-rating');
+            const opTimeframeSelect = document.getElementById('op-timeframe');
+            
+            if (opYearsSelect) {
+                Array.from(opYearsSelect.options).forEach(option => option.selected = false);
+            }
+            
+            if (opMonthsSelect) {
+                Array.from(opMonthsSelect.options).forEach(option => option.selected = false);
+            }
+            
+            if (opMinRatingSlider) {
+                opMinRatingSlider.value = 0;
+                const display = document.getElementById('op-rating-display');
+                if (display) display.textContent = '0.0';
+            }
+            
+            if (opTimeframeSelect) {
+                opTimeframeSelect.value = 'recent';
+            }
+            
+        } else if (dashboardType === 'lifecycle') {
+            // Reset lifecycle filters
+            const lifecycleSearch = document.getElementById('lifecycle-search');
+            const lifecycleGenres = document.getElementById('lifecycle-genre-filter');
+            const lifecyclePlatforms = document.getElementById('lifecycle-platform-filter');
+            const lifecycleMinRating = document.getElementById('lifecycle-min-rating');
+            const lifecycleMinVotes = document.getElementById('lifecycle-min-votes');
+            const lifecycleGameType = document.getElementById('lifecycle-game-type');
+            
+            if (lifecycleSearch) lifecycleSearch.value = '';
+            
+            if (lifecycleGenres) {
+                Array.from(lifecycleGenres.options).forEach(option => option.selected = false);
+            }
+            
+            if (lifecyclePlatforms) {
+                Array.from(lifecyclePlatforms.options).forEach(option => option.selected = false);
+            }
+            
+            if (lifecycleMinRating) {
+                lifecycleMinRating.value = 0;
+                const display = document.getElementById('lifecycle-rating-display');
+                if (display) display.textContent = '0.0';
+            }
+            
+            if (lifecycleMinVotes) {
+                lifecycleMinVotes.value = 0;
+                const display = document.getElementById('lifecycle-votes-display');
+                if (display) display.textContent = '0';
+            }
+            
+            if (lifecycleGameType) {
+                lifecycleGameType.value = '';
+            }
+            
+        } else if (dashboardType === 'evolution') {
+            // Reset evolution filters
+            const evolutionGenres = document.getElementById('evolution-genre-filter');
+            const evolutionPlatforms = document.getElementById('evolution-platform-filter');
+            const evolutionTimePeriod = document.getElementById('evolution-time-period');
+            const evolutionMetric = document.getElementById('evolution-metric');
+            
+            if (evolutionGenres) {
+                Array.from(evolutionGenres.options).forEach(option => option.selected = false);
+            }
+            
+            if (evolutionPlatforms) {
+                Array.from(evolutionPlatforms.options).forEach(option => option.selected = false);
+            }
+            
+            if (evolutionTimePeriod) {
+                evolutionTimePeriod.value = 'all_time';
+            }
+            
+            if (evolutionMetric) {
+                evolutionMetric.value = 'rating_trends';
+            }
         }
         
-        // Auto-submit the form after reset
-        const form = document.getElementById(`${dashboardType}-filter-form`);
-        if (form) {
-            setTimeout(() => {
-                form.submit();
-            }, 100);
-        }
+        console.log(`${dashboardType} filters reset successfully`);
     }
 }
 
@@ -623,9 +725,9 @@ document.addEventListener('DOMContentLoaded', function() {
 // Utility functions for chart generation
 function generateColors(count) {
     const colors = [
-        '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', 
-        '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43',
-        '#ee5a24', '#0abde3', '#10ac84', '#f368e0', '#3742fa'
+        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+        '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384',
+        '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
     ];
     
     const result = [];
@@ -633,4 +735,113 @@ function generateColors(count) {
         result.push(colors[i % colors.length]);
     }
     return result;
+}
+
+// Quick selection functions for tactical filters
+function selectMajorStudios() {
+    const select = document.getElementById('tactical-studio-type');
+    if (select) {
+        Array.from(select.options).forEach(option => {
+            option.selected = ['AAA', 'Mid-tier'].includes(option.value);
+        });
+    }
+}
+
+function selectAllStudios() {
+    const select = document.getElementById('tactical-studio-type');
+    if (select) {
+        Array.from(select.options).forEach(option => {
+            option.selected = option.value === 'all_studios';
+        });
+    }
+}
+
+function selectTopCountries() {
+    const select = document.getElementById('tactical-country-filter');
+    if (select) {
+        Array.from(select.options).forEach(option => {
+            option.selected = ['United States', 'Japan', 'United Kingdom', 'Canada', 'Germany'].includes(option.value);
+        });
+    }
+}
+
+function selectAllCountries() {
+    const select = document.getElementById('tactical-country-filter');
+    if (select) {
+        Array.from(select.options).forEach(option => {
+            option.selected = option.value === 'all_countries';
+        });
+    }
+}
+
+function selectTopPerformers() {
+    const select = document.getElementById('tactical-performance-tier');
+    if (select) {
+        Array.from(select.options).forEach(option => {
+            option.selected = ['Elite', 'High'].includes(option.value);
+        });
+    }
+}
+
+function selectAllPerformanceTiers() {
+    const select = document.getElementById('tactical-performance-tier');
+    if (select) {
+        Array.from(select.options).forEach(option => {
+            option.selected = option.value === 'all_performance_tiers';
+        });
+    }
+}
+
+function selectExperiencedDevelopers() {
+    const select = document.getElementById('tactical-years-active');
+    if (select) {
+        Array.from(select.options).forEach(option => {
+            option.selected = ['30+ years', '20-29 years', '10-19 years'].includes(option.value);
+        });
+    }
+}
+
+function selectAllYearsActive() {
+    const select = document.getElementById('tactical-years-active');
+    if (select) {
+        Array.from(select.options).forEach(option => {
+            option.selected = option.value === 'all_years_active';
+        });
+    }
+}
+
+function selectHighReplayRates() {
+    const select = document.getElementById('tactical-replay-rate-ranges');
+    if (select) {
+        Array.from(select.options).forEach(option => {
+            option.selected = ['90-100%', '80-89%', '70-79%'].includes(option.value);
+        });
+    }
+}
+
+function selectAllReplayRates() {
+    const select = document.getElementById('tactical-replay-rate-ranges');
+    if (select) {
+        Array.from(select.options).forEach(option => {
+            option.selected = option.value === 'all_replay_rates';
+        });
+    }
+}
+
+function selectLargeStudios() {
+    const select = document.getElementById('tactical-developer-sizes');
+    if (select) {
+        Array.from(select.options).forEach(option => {
+            option.selected = ['Large (AAA)', 'Medium (Mid-tier)'].includes(option.value);
+        });
+    }
+}
+
+function selectAllDeveloperSizes() {
+    const select = document.getElementById('tactical-developer-sizes');
+    if (select) {
+        Array.from(select.options).forEach(option => {
+            option.selected = option.value === 'all_developer_sizes';
+        });
+    }
 } 

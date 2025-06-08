@@ -3121,10 +3121,12 @@ class MongoDBHandler:
             print(f"Error in get_developer_geographic_data: {e}")
             return []
 
-    def get_developer_maturity_data(self, year_range=None, maturity_levels=None):
-        """Get developer maturity vs performance analysis."""
+    def get_developer_maturity_data(self, year_range=None, maturity_levels=None,
+                                   performance_tiers=None, years_active_ranges=None, 
+                                   replay_rate_ranges=None, developer_sizes=None):
+        """Get developer maturity vs performance analysis with enhanced filtering."""
         try:
-            print(f"Fetching developer maturity data with maturity_levels filter: {maturity_levels}")
+            print(f"Fetching developer maturity data with enhanced filtering")
             
             developer_collection = self.db.developer_mapping
             pipeline = []
@@ -3139,7 +3141,87 @@ class MongoDBHandler:
             if maturity_levels:
                 match_conditions['Maturity_Level'] = {'$in': maturity_levels}
             
+            if year_range and len(year_range) == 2:
+                match_conditions['Founded_Year'] = {
+                    '$gte': year_range[0],
+                    '$lte': year_range[1],
+                    '$exists': True,
+                    '$ne': None,
+                    '$type': 'number'
+                }
+            
             pipeline.append({'$match': match_conditions})
+            
+            # Add calculated fields for enhanced filtering
+            pipeline.append({
+                '$addFields': {
+                    'years_active': {
+                        '$subtract': [2024, {'$ifNull': ['$Founded_Year', 2024]}]
+                    },
+                    'performance_tier': {
+                        '$switch': {
+                            'branches': [
+                                {'case': {'$gte': ['$Replay_Rate', 0.75]}, 'then': 'Elite'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.65]}, 'then': 'High'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.55]}, 'then': 'Medium'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.45]}, 'then': 'Developing'}
+                            ],
+                            'default': 'Emerging'
+                        }
+                    },
+                    'years_active_range': {
+                        '$switch': {
+                            'branches': [
+                                {'case': {'$gte': [{'$subtract': [2024, {'$ifNull': ['$Founded_Year', 2024]}]}, 30]}, 'then': '30+ years'},
+                                {'case': {'$gte': [{'$subtract': [2024, {'$ifNull': ['$Founded_Year', 2024]}]}, 20]}, 'then': '20-29 years'},
+                                {'case': {'$gte': [{'$subtract': [2024, {'$ifNull': ['$Founded_Year', 2024]}]}, 10]}, 'then': '10-19 years'},
+                                {'case': {'$gte': [{'$subtract': [2024, {'$ifNull': ['$Founded_Year', 2024]}]}, 5]}, 'then': '5-9 years'}
+                            ],
+                            'default': '0-4 years'
+                        }
+                    },
+                    'replay_rate_range': {
+                        '$switch': {
+                            'branches': [
+                                {'case': {'$gte': ['$Replay_Rate', 0.9]}, 'then': '90-100%'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.8]}, 'then': '80-89%'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.7]}, 'then': '70-79%'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.6]}, 'then': '60-69%'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.5]}, 'then': '50-59%'}
+                            ],
+                            'default': 'Below 50%'
+                        }
+                    },
+                    'developer_size': {
+                        '$switch': {
+                            'branches': [
+                                {'case': {'$eq': ['$Studio_Type', 'AAA']}, 'then': 'Large (AAA)'},
+                                {'case': {'$eq': ['$Studio_Type', 'Mid-tier']}, 'then': 'Medium (Mid-tier)'},
+                                {'case': {'$eq': ['$Studio_Type', 'Indie']}, 'then': 'Small (Indie)'}
+                            ],
+                            'default': 'Specialized (Mobile/Legacy)'
+                        }
+                    }
+                }
+            })
+            
+            # Apply enhanced filters
+            enhanced_match = {}
+            
+            if performance_tiers:
+                enhanced_match['performance_tier'] = {'$in': performance_tiers}
+            
+            if years_active_ranges:
+                enhanced_match['years_active_range'] = {'$in': years_active_ranges}
+            
+            if replay_rate_ranges:
+                enhanced_match['replay_rate_range'] = {'$in': replay_rate_ranges}
+            
+            if developer_sizes:
+                enhanced_match['developer_size'] = {'$in': developer_sizes}
+            
+            if enhanced_match:
+                pipeline.append({'$match': enhanced_match})
             
             # Project individual developer data for analysis
             pipeline.append({
@@ -3147,10 +3229,11 @@ class MongoDBHandler:
                     '_id': 0,
                     'name': '$Name',
                     'maturity_level': '$Maturity_Level',
-                    'years_active': '$Years_Active',
+                    'years_active': '$years_active',
                     'replay_rate': '$Replay_Rate',
                     'studio_type': '$Studio_Type',
-                    'country': '$Country'
+                    'country': '$Country',
+                    'performance_tier': '$performance_tier'
                 }
             })
             
@@ -3161,7 +3244,7 @@ class MongoDBHandler:
             pipeline.append({'$limit': 100})
             
             result = list(developer_collection.aggregate(pipeline, allowDiskUse=True))
-            print(f"Developer maturity data result: {len(result)} developers")
+            print(f"Enhanced developer maturity data result: {len(result)} developers")
             return result
             
         except Exception as e:
@@ -3388,10 +3471,12 @@ class MongoDBHandler:
             print(f"Error in get_best_rated_games_by_country: {e}")
             return []
     
-    def get_developer_performance_insights(self, studio_types=None, countries=None, year_range=None):
-        """Get comprehensive developer performance insights with filtering."""
+    def get_developer_performance_insights(self, studio_types=None, countries=None, year_range=None,
+                                          performance_tiers=None, years_active_ranges=None, 
+                                          replay_rate_ranges=None, developer_sizes=None):
+        """Get comprehensive developer performance insights with enhanced filtering."""
         try:
-            print("Fetching comprehensive developer performance insights")
+            print("Fetching comprehensive developer performance insights with enhanced filtering")
             collection = self.db.developer_mapping
             
             pipeline = []
@@ -3404,7 +3489,7 @@ class MongoDBHandler:
                 'Replay_Rate': {'$exists': True, '$ne': None, '$type': 'number'}
             }
             
-            # Apply filters
+            # Apply basic filters
             if studio_types:
                 match_query['Studio_Type'] = {'$in': studio_types}
             if countries:
@@ -3420,17 +3505,76 @@ class MongoDBHandler:
             
             pipeline.append({'$match': match_query})
             
-            # Add calculated fields
+            # Add calculated fields for enhanced filtering
             pipeline.append({
                 '$addFields': {
                     'years_active': {
                         '$subtract': [2024, {'$ifNull': ['$Founded_Year', 2024]}]
                     },
-                    'performance_score': {
-                        '$multiply': ['$Replay_Rate', 100]
+                    'performance_tier': {
+                        '$switch': {
+                            'branches': [
+                                {'case': {'$gte': ['$Replay_Rate', 0.75]}, 'then': 'Elite'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.65]}, 'then': 'High'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.55]}, 'then': 'Medium'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.45]}, 'then': 'Developing'}
+                            ],
+                            'default': 'Emerging'
+                        }
+                    },
+                    'years_active_range': {
+                        '$switch': {
+                            'branches': [
+                                {'case': {'$gte': [{'$subtract': [2024, {'$ifNull': ['$Founded_Year', 2024]}]}, 30]}, 'then': '30+ years'},
+                                {'case': {'$gte': [{'$subtract': [2024, {'$ifNull': ['$Founded_Year', 2024]}]}, 20]}, 'then': '20-29 years'},
+                                {'case': {'$gte': [{'$subtract': [2024, {'$ifNull': ['$Founded_Year', 2024]}]}, 10]}, 'then': '10-19 years'},
+                                {'case': {'$gte': [{'$subtract': [2024, {'$ifNull': ['$Founded_Year', 2024]}]}, 5]}, 'then': '5-9 years'}
+                            ],
+                            'default': '0-4 years'
+                        }
+                    },
+                    'replay_rate_range': {
+                        '$switch': {
+                            'branches': [
+                                {'case': {'$gte': ['$Replay_Rate', 0.9]}, 'then': '90-100%'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.8]}, 'then': '80-89%'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.7]}, 'then': '70-79%'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.6]}, 'then': '60-69%'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.5]}, 'then': '50-59%'}
+                            ],
+                            'default': 'Below 50%'
+                        }
+                    },
+                    'developer_size': {
+                        '$switch': {
+                            'branches': [
+                                {'case': {'$eq': ['$Studio_Type', 'AAA']}, 'then': 'Large (AAA)'},
+                                {'case': {'$eq': ['$Studio_Type', 'Mid-tier']}, 'then': 'Medium (Mid-tier)'},
+                                {'case': {'$eq': ['$Studio_Type', 'Indie']}, 'then': 'Small (Indie)'}
+                            ],
+                            'default': 'Specialized (Mobile/Legacy)'
+                        }
                     }
                 }
             })
+            
+            # Apply enhanced filters
+            enhanced_match = {}
+            
+            if performance_tiers:
+                enhanced_match['performance_tier'] = {'$in': performance_tiers}
+            
+            if years_active_ranges:
+                enhanced_match['years_active_range'] = {'$in': years_active_ranges}
+            
+            if replay_rate_ranges:
+                enhanced_match['replay_rate_range'] = {'$in': replay_rate_ranges}
+            
+            if developer_sizes:
+                enhanced_match['developer_size'] = {'$in': developer_sizes}
+            
+            if enhanced_match:
+                pipeline.append({'$match': enhanced_match})
             
             # Group by studio type for insights
             pipeline.append({
@@ -3502,21 +3646,22 @@ class MongoDBHandler:
             pipeline.append({'$sort': {'avg_replay_rate': -1}})
             
             result = list(collection.aggregate(pipeline, allowDiskUse=True))
-            print(f"Developer performance insights result: {len(result)} studio types")
+            print(f"Enhanced developer performance insights result: {len(result)} studio types")
             return result
             
         except Exception as e:
             print(f"Error in get_developer_performance_insights: {e}")
             return []
     
-    def get_country_gaming_profile(self, countries=None, year_range=None):
-        """Get comprehensive gaming profile by country."""
+    def get_country_gaming_profile(self, countries=None, year_range=None, 
+                                  performance_tiers=None, years_active_ranges=None, 
+                                  replay_rate_ranges=None, developer_sizes=None):
+        """Get comprehensive gaming profile by country with enhanced filtering."""
         try:
-            print("Fetching country gaming profiles")
+            print("Fetching country gaming profiles with enhanced filtering")
             
             # Get developer data
             dev_collection = self.db.developer_mapping
-            games_collection = self.db.enriched_games
             
             pipeline = []
             
@@ -3538,6 +3683,77 @@ class MongoDBHandler:
                 }
             
             pipeline.append({'$match': match_query})
+            
+            # Add calculated fields for enhanced filtering
+            pipeline.append({
+                '$addFields': {
+                    'years_active': {
+                        '$subtract': [2024, {'$ifNull': ['$Founded_Year', 2024]}]
+                    },
+                    'performance_tier': {
+                        '$switch': {
+                            'branches': [
+                                {'case': {'$gte': ['$Replay_Rate', 0.75]}, 'then': 'Elite'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.65]}, 'then': 'High'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.55]}, 'then': 'Medium'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.45]}, 'then': 'Developing'}
+                            ],
+                            'default': 'Emerging'
+                        }
+                    },
+                    'years_active_range': {
+                        '$switch': {
+                            'branches': [
+                                {'case': {'$gte': [{'$subtract': [2024, {'$ifNull': ['$Founded_Year', 2024]}]}, 30]}, 'then': '30+ years'},
+                                {'case': {'$gte': [{'$subtract': [2024, {'$ifNull': ['$Founded_Year', 2024]}]}, 20]}, 'then': '20-29 years'},
+                                {'case': {'$gte': [{'$subtract': [2024, {'$ifNull': ['$Founded_Year', 2024]}]}, 10]}, 'then': '10-19 years'},
+                                {'case': {'$gte': [{'$subtract': [2024, {'$ifNull': ['$Founded_Year', 2024]}]}, 5]}, 'then': '5-9 years'}
+                            ],
+                            'default': '0-4 years'
+                        }
+                    },
+                    'replay_rate_range': {
+                        '$switch': {
+                            'branches': [
+                                {'case': {'$gte': ['$Replay_Rate', 0.9]}, 'then': '90-100%'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.8]}, 'then': '80-89%'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.7]}, 'then': '70-79%'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.6]}, 'then': '60-69%'},
+                                {'case': {'$gte': ['$Replay_Rate', 0.5]}, 'then': '50-59%'}
+                            ],
+                            'default': 'Below 50%'
+                        }
+                    },
+                    'developer_size': {
+                        '$switch': {
+                            'branches': [
+                                {'case': {'$eq': ['$Studio_Type', 'AAA']}, 'then': 'Large (AAA)'},
+                                {'case': {'$eq': ['$Studio_Type', 'Mid-tier']}, 'then': 'Medium (Mid-tier)'},
+                                {'case': {'$eq': ['$Studio_Type', 'Indie']}, 'then': 'Small (Indie)'}
+                            ],
+                            'default': 'Specialized (Mobile/Legacy)'
+                        }
+                    }
+                }
+            })
+            
+            # Apply enhanced filters
+            enhanced_match = {}
+            
+            if performance_tiers:
+                enhanced_match['performance_tier'] = {'$in': performance_tiers}
+            
+            if years_active_ranges:
+                enhanced_match['years_active_range'] = {'$in': years_active_ranges}
+            
+            if replay_rate_ranges:
+                enhanced_match['replay_rate_range'] = {'$in': replay_rate_ranges}
+            
+            if developer_sizes:
+                enhanced_match['developer_size'] = {'$in': developer_sizes}
+            
+            if enhanced_match:
+                pipeline.append({'$match': enhanced_match})
             
             # Group by country
             pipeline.append({
@@ -3603,7 +3819,7 @@ class MongoDBHandler:
             pipeline.append({'$sort': {'total_developers': -1}})
             
             result = list(dev_collection.aggregate(pipeline, allowDiskUse=True))
-            print(f"Country gaming profiles result: {len(result)} countries")
+            print(f"Enhanced country gaming profiles result: {len(result)} countries")
             return result
             
         except Exception as e:

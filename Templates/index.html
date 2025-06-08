@@ -15,35 +15,35 @@
         <div class="row">
             <!-- Sidebar for Filters -->
             <div class="col-md-3">
-                <div class="sidebar">
+        <div class="sidebar">
                     <!-- Studio Performance Filters -->
                     <div id="studio-filters">
                         <h3>Studio Performance Filters</h3>
                         <form id="studio-filter-form" method="GET" action="/">
                             <input type="hidden" name="tab" value="studio">
-                        <div class="mb-3">
+                         <div class="mb-3">
                             <label for="genre-filter" class="form-label">Select Genre(s)</label>
                             <select class="form-select" id="genre-filter" name="genre" multiple>
-                                {% for genre in all_genres %}
+                    {% for genre in all_genres %}
                                     <option value="{{ genre }}" {% if genre in selected_genres %}selected{% endif %}>{{ genre }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                    {% endfor %}
+                </select>
+            </div>
 
                         <div class="mb-3">
                             <label for="platform-filter" class="form-label">Select Platform(s)</label>
                             <select class="form-select" id="platform-filter" name="platform" multiple>
-                                {% for platform in all_platforms %}
+                    {% for platform in all_platforms %}
                                     <option value="{{ platform }}" {% if platform in selected_platforms %}selected{% endif %}>{{ platform }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                    {% endfor %}
+                </select>
+            </div>
 
-                        <div class="slider-container">
+                         <div class="slider-container">
                                 <label for="year-range" class="form-label">Release Year Range: <span id="year-range-display">{{ year_range[0] | default(min_year) }} - {{ year_range[1] | default(max_year) }}</span></label>
-                            <input type="range" class="form-range" id="year-start" name="year_start" min="{{ min_year }}" max="{{ max_year }}" value="{{ year_range[0] | default(min_year) }}">
-                            <input type="range" class="form-range" id="year-end" name="year_end" min="{{ min_year }}" max="{{ max_year }}" value="{{ year_range[1] | default(max_year) }}">
-                        </div>
+                              <input type="range" class="form-range" id="year-start" name="year_start" min="{{ min_year }}" max="{{ max_year }}" value="{{ year_range[0] | default(min_year) }}">
+                              <input type="range" class="form-range" id="year-end" name="year_end" min="{{ min_year }}" max="{{ max_year }}" value="{{ year_range[1] | default(max_year) }}">
+                         </div>
 
                         <button type="submit" class="btn btn-primary">Apply Filters</button>
                     </form>
@@ -170,6 +170,74 @@
                                     <option value="Emerging" {% if request.args.getlist('tactical_maturity') and 'Emerging' in request.args.getlist('tactical_maturity') %}selected{% endif %}>Emerging (0-14 years)</option>
                                 </select>
                                 <small class="text-muted">Hold Ctrl/Cmd to select multiple levels</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="tactical-performance-tier" class="form-label">Performance Tier</label>
+                                <select class="form-select" id="tactical-performance-tier" name="tactical_performance_tiers" multiple size="6">
+                                    <option value="all_performance_tiers" {% if not request.args.getlist('tactical_performance_tiers') or 'all_performance_tiers' in request.args.getlist('tactical_performance_tiers') %}selected{% endif %}>🏆 All Performance Tiers</option>
+                                    <option value="Elite" {% if request.args.getlist('tactical_performance_tiers') and 'Elite' in request.args.getlist('tactical_performance_tiers') %}selected{% endif %}>🥇 Elite (75%+ replay rate)</option>
+                                    <option value="High" {% if request.args.getlist('tactical_performance_tiers') and 'High' in request.args.getlist('tactical_performance_tiers') %}selected{% endif %}>🥈 High (65-74% replay rate)</option>
+                                    <option value="Medium" {% if request.args.getlist('tactical_performance_tiers') and 'Medium' in request.args.getlist('tactical_performance_tiers') %}selected{% endif %}>🥉 Medium (55-64% replay rate)</option>
+                                    <option value="Developing" {% if request.args.getlist('tactical_performance_tiers') and 'Developing' in request.args.getlist('tactical_performance_tiers') %}selected{% endif %}>📈 Developing (45-54% replay rate)</option>
+                                    <option value="Emerging" {% if request.args.getlist('tactical_performance_tiers') and 'Emerging' in request.args.getlist('tactical_performance_tiers') %}selected{% endif %}>🌱 Emerging (<45% replay rate)</option>
+                                </select>
+                                <small class="text-muted">Filter by performance tier based on replay rates</small>
+                                <div class="mt-1">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectTopPerformers()">Top Performers</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAllPerformanceTiers()">All</button>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="tactical-years-active" class="form-label">Years Active</label>
+                                <select class="form-select" id="tactical-years-active" name="tactical_years_active" multiple size="6">
+                                    <option value="all_years_active" {% if not request.args.getlist('tactical_years_active') or 'all_years_active' in request.args.getlist('tactical_years_active') %}selected{% endif %}>⏰ All Experience Levels</option>
+                                    <option value="30+ years" {% if request.args.getlist('tactical_years_active') and '30+ years' in request.args.getlist('tactical_years_active') %}selected{% endif %}>🏛️ Veteran (30+ years)</option>
+                                    <option value="20-29 years" {% if request.args.getlist('tactical_years_active') and '20-29 years' in request.args.getlist('tactical_years_active') %}selected{% endif %}>🏢 Established (20-29 years)</option>
+                                    <option value="10-19 years" {% if request.args.getlist('tactical_years_active') and '10-19 years' in request.args.getlist('tactical_years_active') %}selected{% endif %}>🚀 Mature (10-19 years)</option>
+                                    <option value="5-9 years" {% if request.args.getlist('tactical_years_active') and '5-9 years' in request.args.getlist('tactical_years_active') %}selected{% endif %}>💡 Growing (5-9 years)</option>
+                                    <option value="0-4 years" {% if request.args.getlist('tactical_years_active') and '0-4 years' in request.args.getlist('tactical_years_active') %}selected{% endif %}>🌟 New (0-4 years)</option>
+                                </select>
+                                <small class="text-muted">Filter by years of industry experience</small>
+                                <div class="mt-1">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectExperiencedDevelopers()">Experienced</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAllYearsActive()">All</button>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="tactical-replay-rate-ranges" class="form-label">Replay Rate Range</label>
+                                <select class="form-select" id="tactical-replay-rate-ranges" name="tactical_replay_rate_ranges" multiple size="7">
+                                    <option value="all_replay_rates" {% if not request.args.getlist('tactical_replay_rate_ranges') or 'all_replay_rates' in request.args.getlist('tactical_replay_rate_ranges') %}selected{% endif %}>📊 All Replay Rates</option>
+                                    <option value="90-100%" {% if request.args.getlist('tactical_replay_rate_ranges') and '90-100%' in request.args.getlist('tactical_replay_rate_ranges') %}selected{% endif %}>🔥 Exceptional (90-100%)</option>
+                                    <option value="80-89%" {% if request.args.getlist('tactical_replay_rate_ranges') and '80-89%' in request.args.getlist('tactical_replay_rate_ranges') %}selected{% endif %}>⭐ Excellent (80-89%)</option>
+                                    <option value="70-79%" {% if request.args.getlist('tactical_replay_rate_ranges') and '70-79%' in request.args.getlist('tactical_replay_rate_ranges') %}selected{% endif %}>👍 Good (70-79%)</option>
+                                    <option value="60-69%" {% if request.args.getlist('tactical_replay_rate_ranges') and '60-69%' in request.args.getlist('tactical_replay_rate_ranges') %}selected{% endif %}>📈 Average (60-69%)</option>
+                                    <option value="50-59%" {% if request.args.getlist('tactical_replay_rate_ranges') and '50-59%' in request.args.getlist('tactical_replay_rate_ranges') %}selected{% endif %}>📉 Below Average (50-59%)</option>
+                                    <option value="Below 50%" {% if request.args.getlist('tactical_replay_rate_ranges') and 'Below 50%' in request.args.getlist('tactical_replay_rate_ranges') %}selected{% endif %}>⚠️ Poor (Below 50%)</option>
+                                </select>
+                                <small class="text-muted">Filter by specific replay rate performance ranges</small>
+                                <div class="mt-1">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectHighReplayRates()">High Rates</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAllReplayRates()">All</button>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="tactical-developer-sizes" class="form-label">Developer Size Category</label>
+                                <select class="form-select" id="tactical-developer-sizes" name="tactical_developer_sizes" multiple size="5">
+                                    <option value="all_developer_sizes" {% if not request.args.getlist('tactical_developer_sizes') or 'all_developer_sizes' in request.args.getlist('tactical_developer_sizes') %}selected{% endif %}>🏭 All Developer Sizes</option>
+                                    <option value="Large (AAA)" {% if request.args.getlist('tactical_developer_sizes') and 'Large (AAA)' in request.args.getlist('tactical_developer_sizes') %}selected{% endif %}>🏢 Large (AAA Studios)</option>
+                                    <option value="Medium (Mid-tier)" {% if request.args.getlist('tactical_developer_sizes') and 'Medium (Mid-tier)' in request.args.getlist('tactical_developer_sizes') %}selected{% endif %}>🏬 Medium (Mid-tier Studios)</option>
+                                    <option value="Small (Indie)" {% if request.args.getlist('tactical_developer_sizes') and 'Small (Indie)' in request.args.getlist('tactical_developer_sizes') %}selected{% endif %}>🏪 Small (Indie Studios)</option>
+                                    <option value="Specialized (Mobile/Legacy)" {% if request.args.getlist('tactical_developer_sizes') and 'Specialized (Mobile/Legacy)' in request.args.getlist('tactical_developer_sizes') %}selected{% endif %}>📱 Specialized (Mobile/Legacy)</option>
+                                </select>
+                                <small class="text-muted">Filter by developer organization size and focus</small>
+                                <div class="mt-1">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectLargeStudios()">Large Studios</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAllDeveloperSizes()">All</button>
+                                </div>
                             </div>
 
                             <div class="mb-3">
@@ -300,11 +368,11 @@
                         </form>
                     </div>
                 </div>
-            </div>
+        </div>
 
             <!-- Main Content Area -->
             <div class="col-md-9">
-                <div class="main-content">
+        <div class="main-content">
                     <h1 class="text-center my-4">Gaming Analytics Dashboard</h1>
 
                     {% if error %}
@@ -354,10 +422,10 @@
                                 <h5 class="card-title">Total Games Analyzed</h5>
                                 <div class="big-number">{{ stats.total_games | default(0) }}</div>
                             </div>
-                        </div>
+                    </div>
 
                         <!-- Top Publisher Card -->
-                        <div class="col-md-3">
+                         <div class="col-md-3">
                                     <div class="card" style="min-height: 200px;">
                                 <h5 class="card-title">Top Publisher</h5>
                                         {% set filtered_publishers = [] %}
@@ -370,11 +438,11 @@
                                         {% if filtered_publishers and filtered_publishers[0] %}
                                             <div class="big-number">{{ filtered_publishers[0]._id }}</div>
                                             <p class="text-center text-muted">{{ filtered_publishers[0].count }} games</p>
-                                {% else %}
-                                    <p class="text-center text-muted">No publisher data available.</p>
-                                {% endif %}
-                            </div>
-                        </div>
+                                 {% else %}
+                                     <p class="text-center text-muted">No publisher data available.</p>
+                                 {% endif %}
+                    </div>
+                </div>
 
                         <!-- Total Votes Card -->
                         <div class="col-md-3">
@@ -392,33 +460,33 @@
 
                     <!-- Most Highly Rated and Most Voted Games Row -->
                     <div class="row">
-                        <!-- Most Highly Rated Games List -->
-                        <div class="col-md-6">
-                            <div class="card">
-                                <h5 class="card-title">Most Highly Rated Games</h5>
-                                <ul class="list-unstyled">
-                                    {% for game in top_games %}
+                         <!-- Most Highly Rated Games List -->
+                         <div class="col-md-6">
+                             <div class="card">
+                                 <h5 class="card-title">Most Highly Rated Games</h5>
+                                 <ul class="list-unstyled">
+                                     {% for game in top_games %}
                                                 <li style="color: #8be9fd;"><strong>{{ loop.index }}.</strong> {{ game.name | default('Unknown Game') }} (Rating: {{ game.rating | default(0.0) | round(1) }})</li>
-                                    {% else %}
-                                        <li class="no-data-message">No highly rated games found.</li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        </div>
+                        {% else %}
+                                         <li class="no-data-message">No highly rated games found.</li>
+                        {% endfor %}
+                    </ul>
+                             </div>
+                         </div>
 
-                        <!-- Most Voted Games List -->
-                        <div class="col-md-6">
-                            <div class="card">
-                                <h5 class="card-title">Most Voted Games</h5>
-                                <ul class="list-unstyled">
-                                    {% for game in most_voted_games %}
+                         <!-- Most Voted Games List -->
+                         <div class="col-md-6">
+                             <div class="card">
+                                 <h5 class="card-title">Most Voted Games</h5>
+                                 <ul class="list-unstyled">
+                                     {% for game in most_voted_games %}
                                                 <li style="color: #8be9fd;"><strong>{{ loop.index }}.</strong> {{ game.name | default('Unknown Game') }} ({{ "{:,}".format(game.votes) }} votes, Rating: {{ game.rating | default(0.0) }})</li>
-                                    {% else %}
-                                        <li class="no-data-message">No voting data found.</li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        </div>
+                                     {% else %}
+                                         <li class="no-data-message">No voting data found.</li>
+                                     {% endfor %}
+                                 </ul>
+                             </div>
+                         </div>
                     </div>
 
                     <!-- Charts Row 1 -->
@@ -428,7 +496,7 @@
                             <div class="card">
                                 <h5 class="card-title">Games Released Per Year</h5>
                                 <div class="chart-container">
-                                    <canvas id="gamesPerYearChart"></canvas>
+                                <canvas id="gamesPerYearChart"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -438,20 +506,20 @@
                             <div class="card">
                                 <h5 class="card-title">Game Share by Publisher (Top 10)</h5>
                                 <div class="chart-container">
-                                    <canvas id="publisherShareChart"></canvas>
+                                <canvas id="publisherShareChart"></canvas>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
+                </div>
+            </div>
+                    
                     <!-- Charts Row 2 -->
                     <div class="row">
-                        <!-- Game Counts by Platform Chart -->
+                         <!-- Game Counts by Platform Chart -->
                         <div class="col-md-6">
                             <div class="card">
                                 <h5 class="card-title">Game Distribution by Platform</h5>
                                 <div class="chart-container">
-                                    <canvas id="platformChart"></canvas>
+                                <canvas id="platformChart"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -461,20 +529,20 @@
                             <div class="card">
                                 <h5 class="card-title">Game Distribution by Genre</h5>
                                 <div class="chart-container">
-                                    <canvas id="genreChart"></canvas>
+                                <canvas id="genreChart"></canvas>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-
+                </div>
+                </div>
+            </div>
+                    
                     <!-- Charts Row 3 -->
-                    <div class="row">
-                        <!-- Average Rating by Platform Chart -->
+                     <div class="row">
+                          <!-- Average Rating by Platform Chart -->
                         <div class="col-md-6">
                             <div class="card">
                                 <h5 class="card-title">Average Rating by Platform (Top 10)</h5>
                                 <div class="chart-container">
-                                    <canvas id="avgRatingPlatformChart"></canvas>
+                                <canvas id="avgRatingPlatformChart"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -484,11 +552,11 @@
                             <div class="card">
                                 <h5 class="card-title">Average Rating by Developer (Top 10)</h5>
                                 <div class="chart-container">
-                                    <canvas id="avgRatingDeveloperChart"></canvas>
+                                <canvas id="avgRatingDeveloperChart"></canvas>
                                 </div>
                             </div>
                         </div>
-                    </div>
+            </div>
 
                     <!-- Enhanced Analytics Row 1 -->
                     <div class="row">
@@ -497,7 +565,7 @@
                             <div class="card">
                                 <h5 class="card-title">Game Type Distribution</h5>
                                 <div class="chart-container">
-                                    <canvas id="gameTypeChart"></canvas>
+                                <canvas id="gameTypeChart"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -507,7 +575,7 @@
                             <div class="card">
                                 <h5 class="card-title">Rating Distribution</h5>
                                 <div class="chart-container">
-                                    <canvas id="ratingDistributionChart"></canvas>
+                                <canvas id="ratingDistributionChart"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -520,13 +588,13 @@
                             <div class="card">
                                 <h5 class="card-title">Top Directors by Average Rating (Min 2 Games)</h5>
                                 <div class="chart-container">
-                                    <canvas id="directorAnalyticsChart"></canvas>
+                                <canvas id="directorAnalyticsChart"></canvas>
                                 </div>
+                            </div>
                             </div>
                         </div>
                     </div>
-                </div>
-
+                     
                         <!-- Operational Dashboard Tab -->
                         <div class="tab-pane fade {% if active_tab == 'operational' %}show active{% endif %}" id="operational-dashboard" role="tabpanel">
                             <!-- Operational Metrics Row -->
@@ -583,7 +651,7 @@
                             </div>
 
                             <!-- Recent Games and Platform Performance Row -->
-                            <div class="row">
+                    <div class="row">
                                 <!-- Recent Releases List -->
                                 <div class="col-md-6">
                                     <div class="card">
@@ -660,8 +728,8 @@
                             <!-- Platform Performance Row -->
                             <div class="row">
                                 <!-- Platform Performance Table -->
-                                <div class="col-md-12">
-                                    <div class="card">
+                        <div class="col-md-12">
+                            <div class="card">
                                         <h5 class="card-title">Platform Performance Metrics</h5>
                                         <div style="max-height: 300px; overflow-y: auto;">
                                             <table class="table table-dark table-sm">
@@ -686,9 +754,9 @@
                                                     {% endfor %}
                                                 </tbody>
                                             </table>
-                                        </div>
-                                    </div>
-                                </div>
+                            </div>
+                        </div>
+                    </div>
                             </div>
 
                             <!-- Operational Charts Row 1 -->
@@ -709,10 +777,10 @@
                                         <h5 class="card-title">Monthly Release Activity</h5>
                                         <div class="chart-container">
                                             <canvas id="monthlyActivityChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
                             <!-- Operational Charts Row 2 -->
                             <div class="row">
@@ -828,14 +896,21 @@
                                         </div>
                                     </div>
 
-                                    <!-- 🧱 Country × Studio Type Matrix - Heatmap Grid -->
+                                    <!-- 🧱 Country × Studio Type Matrix - Enhanced Visualizations -->
                                     <div class="col-md-6">
                                         <div class="card">
-                                            <h5 class="card-title">🧱 Country × Studio Type Matrix</h5>
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <h5 class="card-title mb-0">🧱 Country × Studio Type Matrix</h5>
+                                                <select id="matrixVisualizationType" class="form-select form-select-sm" style="width: auto;">
+                                                    <option value="heatmap">🔥 Heatmap</option>
+                                                    <option value="groupedBar">📊 Grouped Bars</option>
+                                                    <option value="stackedColumn">🧩 Stacked %</option>
+                                                </select>
+                                            </div>
                                             <div class="chart-container">
                                                 <canvas id="tacticalChart6"></canvas>
                                             </div>
-                                            <small class="text-muted">Developer count heatmap by country and studio type</small>
+                                            <small class="text-muted" id="matrixChartDescription">Color-encoded grid showing developer count by country and studio type</small>
                                         </div>
                                     </div>
                                 </div>

@@ -22,19 +22,18 @@ function initializeTacticalCharts() {
     initializeDeveloperProfileTable();
 }
 
-// Helper function for studio type colors
+// Helper function to get consistent colors for studio types
 function getStudioTypeColor(studioType) {
-    const colors = {
-        'AAA': '#ff6b6b',
-        'Mid-tier': '#4ecdc4',
-        'Indie': '#45b7d1',
-        'Mobile': '#96ceb4',
-        'Legacy': '#feca57',
-        'Independent': '#ff9ff3',
-        'Enterprise': '#6c5ce7',
-        'Startup': '#a8e6cf'
+    const colorMap = {
+        'AAA': 'rgba(233, 69, 96, 0.8)',        // Red
+        'Mid-tier': 'rgba(54, 162, 235, 0.8)',  // Blue
+        'Indie': 'rgba(255, 206, 86, 0.8)',     // Yellow
+        'Mobile': 'rgba(75, 192, 192, 0.8)',    // Teal
+        'Legacy': 'rgba(153, 102, 255, 0.8)',   // Purple
+        'Specialized': 'rgba(255, 159, 64, 0.8)' // Orange
     };
-    return colors[studioType] || '#95a5a6';
+    
+    return colorMap[studioType] || 'rgba(201, 203, 207, 0.8)'; // Default gray
 }
 
 // Helper function for maturity colors
@@ -433,175 +432,572 @@ function initializeDeveloperGeographicDualAxis() {
 // 4. 🧱 Country × Studio Type Matrix - Heatmap Grid
 function initializeDeveloperCountryStudioHeatmap() {
     try {
-        console.log('Initializing Developer Country Studio Heatmap');
+        console.log('Initializing Enhanced Country × Studio Type Matrix');
         
-        const ctx = document.getElementById('tacticalChart6');
-        if (!ctx) {
-            console.warn('Chart canvas tacticalChart6 not found');
+        const canvas = document.getElementById('tacticalChart6');
+        if (!canvas) {
+            console.warn('Canvas tacticalChart6 not found');
             return;
         }
 
-        // Create sample data if no real data available
-        let chartData = [];
-        if (window.tacticalMarimekkoData && Array.isArray(window.tacticalMarimekkoData)) {
-            chartData = window.tacticalMarimekkoData;
-        } else {
-            // Sample data for demonstration
-            const countries = ['United States', 'Japan', 'United Kingdom', 'Canada', 'Germany'];
-            const studioTypes = ['AAA', 'Mid-tier', 'Indie', 'Mobile'];
-            chartData = [];
-            countries.forEach(country => {
-                studioTypes.forEach(studioType => {
-                    chartData.push({
-                        country,
-                        studio_type: studioType,
-                        count: Math.floor(Math.random() * 100) + 10,
-                        avg_replay_rate: 0.5 + Math.random() * 0.3
-                    });
-                });
-            });
-        }
-
-        // Get top games data for tooltips
-        let topGamesData = {};
-        if (window.tacticalChordData && Array.isArray(window.tacticalChordData)) {
-            window.tacticalChordData.forEach(countryData => {
-                if (countryData.country && countryData.top_games) {
-                    topGamesData[countryData.country] = countryData.top_games.slice(0, 3);
-                }
-            });
-        }
-
-        // Process data for heatmap matrix
-        const countries = [...new Set(chartData.map(d => d.country))].slice(0, 6);
-        const studioTypes = [...new Set(chartData.map(d => d.studio_type))];
+        // Get data from global variable
+        const rawData = window.tacticalMatrixData || [];
         
-        const heatmapData = [];
-        countries.forEach((country, countryIndex) => {
-            studioTypes.forEach((studioType, studioIndex) => {
-                const dataPoint = chartData.find(d => 
-                    d.country === country && d.studio_type === studioType
-                );
-                
-                if (dataPoint) {
-                    heatmapData.push({
-                        x: studioIndex,
-                        y: countryIndex,
-                        v: dataPoint.count || 0,
-                        country: country,
-                        studioType: studioType,
-                        avgReplayRate: dataPoint.avg_replay_rate || 0
-                    });
-                }
+        console.log('=== HEATMAP DEBUG ===');
+        console.log('Raw matrix data:', rawData);
+        console.log('Data length:', rawData.length);
+        console.log('Data type:', typeof rawData);
+        console.log('Is array:', Array.isArray(rawData));
+        
+        if (!rawData || rawData.length === 0) {
+            console.warn('No matrix data available, showing error message');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas and show error message
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#ff6b6b';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('No country-studio data available', canvas.width / 2, canvas.height / 2 - 20);
+            ctx.fillStyle = '#ffa726';
+            ctx.font = '14px Arial';
+            ctx.fillText('Check data source and filters', canvas.width / 2, canvas.height / 2 + 10);
+            return;
+        }
+
+        console.log('Sample data points:', rawData.slice(0, 3));
+
+        // Process data for different chart types
+        const countries = [...new Set(rawData.map(d => d.country))].sort();
+        const studioTypes = [...new Set(rawData.map(d => d.studio_type))].sort();
+        
+        console.log('Extracted countries:', countries);
+        console.log('Extracted studio types:', studioTypes);
+        
+        // Create data lookup
+        const dataLookup = {};
+        rawData.forEach(d => {
+            const key = `${d.country}-${d.studio_type}`;
+            dataLookup[key] = d.developer_count;
+        });
+        
+        console.log('Data lookup sample:', Object.keys(dataLookup).slice(0, 5));
+
+        // Function to render chart based on selected type
+        function renderChart(visualizationType) {
+            console.log('Rendering chart type:', visualizationType);
+            
+            // Destroy existing chart
+            if (window.tacticalChart6Instance) {
+                window.tacticalChart6Instance.destroy();
+            }
+
+            const ctx = canvas.getContext('2d');
+            
+            if (visualizationType === 'heatmap') {
+                createHeatmapChart(ctx, canvas, countries, studioTypes, dataLookup, rawData);
+                updateChartDescription('Color-encoded grid showing developer count by country and studio type');
+            } else if (visualizationType === 'groupedBar') {
+                createGroupedBarChart(ctx, canvas, countries, studioTypes, dataLookup, rawData);
+                updateChartDescription('Horizontal bars comparing developer counts across countries by studio type');
+            } else if (visualizationType === 'stackedColumn') {
+                createStackedColumnChart(ctx, canvas, countries, studioTypes, dataLookup, rawData);
+                updateChartDescription('Percentage distribution of studio types within each country');
+            }
+        }
+
+        // Function to update chart description
+        function updateChartDescription(description) {
+            const descElement = document.getElementById('matrixChartDescription');
+            if (descElement) {
+                descElement.textContent = description;
+            }
+        }
+
+        // Set up visualization type selector
+        const selector = document.getElementById('matrixVisualizationType');
+        if (selector) {
+            selector.addEventListener('change', function() {
+                renderChart(this.value);
+            });
+        }
+
+        // Initial render with default type (heatmap)
+        const initialType = selector ? selector.value : 'heatmap';
+        console.log('Initial chart type:', initialType);
+        renderChart(initialType);
+
+    } catch (error) {
+        console.error('Error in initializeDeveloperCountryStudioHeatmap:', error);
+        console.error('Error stack:', error.stack);
+    }
+}
+
+function createHeatmapChart(ctx, canvas, countries, studioTypes, dataLookup, rawData) {
+    // 🔥 Enhanced Heatmap Implementation
+    const maxCount = Math.max(...rawData.map(d => d.developer_count));
+    const minCount = Math.min(...rawData.map(d => d.developer_count));
+    
+    console.log('=== HEATMAP CREATION DEBUG ===');
+    console.log('Creating heatmap with:', { countries, studioTypes, maxCount, minCount });
+    console.log('Raw data sample:', rawData.slice(0, 3));
+    
+    // Create heatmap data points
+    const heatmapData = [];
+    countries.forEach((country, countryIndex) => {
+        studioTypes.forEach((studioType, studioIndex) => {
+            const key = `${country}-${studioType}`;
+            const count = dataLookup[key] || 0;
+            const dataPoint = rawData.find(d => d.country === country && d.studio_type === studioType);
+            
+            heatmapData.push({
+                x: studioIndex,
+                y: countryIndex,
+                v: count,
+                country: country,
+                studioType: studioType,
+                replayRate: dataPoint ? dataPoint.avg_replay_rate : 0
             });
         });
+    });
+    
+    console.log('Generated heatmap data points:', heatmapData.length);
+    console.log('Sample heatmap points:', heatmapData.slice(0, 5));
+    console.log('Non-zero points:', heatmapData.filter(p => p.v > 0).length);
 
-        // Find max value for color scaling
-        const maxValue = Math.max(...heatmapData.map(d => d.v));
-
-        new Chart(ctx, {
-            type: 'scatter',
-            data: {
-                datasets: [{
-                    label: 'Developer Count',
-                    data: heatmapData,
-                    backgroundColor: function(context) {
-                        const value = context.parsed.v || 0;
-                        const intensity = value / maxValue;
-                        return `rgba(54, 162, 235, ${0.2 + intensity * 0.8})`;
-                    },
-                    borderColor: 'rgba(54, 162, 235, 1)',
+    const config = {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Developer Count',
+                data: heatmapData,
+                backgroundColor: function(context) {
+                    const value = context.parsed.v;
+                    if (value === 0) return 'rgba(100, 100, 100, 0.3)';
+                    const intensity = maxCount > 0 ? value / maxCount : 0;
+                    // Use a more vibrant color scheme
+                    const red = Math.floor(255 * intensity);
+                    const blue = Math.floor(255 * (1 - intensity));
+                    return `rgba(${red}, 100, ${blue}, 0.8)`;
+                },
+                borderColor: function(context) {
+                    const value = context.parsed.v;
+                    if (value === 0) return 'rgba(150, 150, 150, 0.5)';
+                    const intensity = maxCount > 0 ? value / maxCount : 0;
+                    const red = Math.floor(255 * intensity);
+                    const blue = Math.floor(255 * (1 - intensity));
+                    return `rgba(${red}, 100, ${blue}, 1)`;
+                },
+                borderWidth: 2,
+                pointRadius: function(context) {
+                    const value = context.parsed.v;
+                    if (value === 0) return 8;
+                    const intensity = maxCount > 0 ? value / maxCount : 0;
+                    return Math.max(12, 12 + intensity * 20);
+                },
+                pointHoverRadius: function(context) {
+                    const value = context.parsed.v;
+                    if (value === 0) return 10;
+                    const intensity = maxCount > 0 ? value / maxCount : 0;
+                    return Math.max(15, 15 + intensity * 25);
+                }
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#444',
                     borderWidth: 1,
-                    pointRadius: function(context) {
-                        const value = context.parsed.v || 0;
-                        return Math.max(5, (value / maxValue) * 20);
-                    }
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: '🧱 Country × Studio Type Matrix',
-                        font: { size: 16, weight: 'bold' }
-                    },
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            title: function(context) {
-                                const point = context[0].raw;
-                                return `${point.country} - ${point.studioType}`;
-                            },
-                            label: function(context) {
-                                const point = context.raw;
-                                return [
-                                    `Developer Count: ${point.v}`,
-                                    `Avg Replay Rate: ${(point.avgReplayRate * 100).toFixed(1)}%`
-                                ];
-                            },
-                            afterBody: function(context) {
-                                const point = context[0].raw;
-                                const topGames = topGamesData[point.country];
-                                
-                                if (topGames && topGames.length > 0) {
-                                    let gamesList = '\n🎮 Top Games from ' + point.country + ':';
-                                    topGames.forEach((game, index) => {
-                                        gamesList += `\n${index + 1}. ${game.title} (${game.rating}/10)`;
-                                        if (game.developer) {
-                                            gamesList += ` - ${game.developer}`;
-                                        }
-                                    });
-                                    return gamesList;
-                                }
-                                return '';
+                    callbacks: {
+                        title: function(context) {
+                            const point = context[0];
+                            return `${point.raw.country} × ${point.raw.studioType}`;
+                        },
+                        label: function(context) {
+                            const point = context.raw;
+                            const lines = [`Developers: ${point.v}`];
+                            if (point.replayRate > 0) {
+                                lines.push(`Replay Rate: ${(point.replayRate * 100).toFixed(1)}%`);
                             }
+                            return lines;
+                        },
+                        afterBody: function(context) {
+                            const point = context[0].raw;
+                            if (point.v === 0) {
+                                return 'No developers in this category';
+                            }
+                            const intensity = maxCount > 0 ? point.v / maxCount : 0;
+                            if (intensity > 0.7) return '🔥 High concentration';
+                            if (intensity > 0.4) return '📈 Medium concentration';
+                            return '📊 Low concentration';
                         }
                     }
-                },
-                scales: {
-                    x: {
-                        type: 'linear',
-                        position: 'bottom',
-                        title: {
-                            display: true,
-                            text: 'Studio Type'
+                }
+            },
+            scales: {
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    min: -0.5,
+                    max: studioTypes.length - 0.5,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function(value) {
+                            return studioTypes[Math.round(value)] || '';
                         },
-                        ticks: {
-                            stepSize: 1,
-                            callback: function(value) {
-                                return studioTypes[value] || '';
-                            }
-                        },
-                        min: -0.5,
-                        max: studioTypes.length - 0.5
+                        color: '#eee',
+                        font: {
+                            size: 12,
+                            weight: 'bold'
+                        }
                     },
-                    y: {
-                        type: 'linear',
-                        title: {
-                            display: true,
-                            text: 'Country'
+                    title: {
+                        display: true,
+                        text: 'Studio Type',
+                        color: '#eee',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.2)',
+                        lineWidth: 1
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    min: -0.5,
+                    max: countries.length - 0.5,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function(value) {
+                            const country = countries[Math.round(value)];
+                            return country && country.length > 12 ? country.substring(0, 12) + '...' : country || '';
                         },
-                        ticks: {
-                            stepSize: 1,
-                            callback: function(value) {
-                                return countries[value] || '';
-                            }
-                        },
-                        min: -0.5,
-                        max: countries.length - 0.5
+                        color: '#eee',
+                        font: {
+                            size: 11,
+                            weight: 'bold'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Country',
+                        color: '#eee',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.2)',
+                        lineWidth: 1
                     }
                 }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'point'
             }
-        });
+        }
+    };
 
-        console.log('Developer Country Studio Heatmap initialized successfully');
-    } catch (error) {
-        console.error('Error initializing Developer Country Studio Heatmap:', error);
-    }
+    console.log('Creating Chart.js instance with config:', config);
+    window.tacticalChart6Instance = new Chart(ctx, config);
+    console.log('Chart instance created:', window.tacticalChart6Instance);
+}
+
+function createGroupedBarChart(ctx, canvas, countries, studioTypes, dataLookup, rawData) {
+    // 📊 Enhanced Grouped Horizontal Bar Chart Implementation
+    console.log('Creating grouped bar chart with:', { countries, studioTypes });
+    
+    const datasets = studioTypes.map((studioType, index) => {
+        const data = countries.map(country => {
+            const key = `${country}-${studioType}`;
+            return dataLookup[key] || 0;
+        });
+        
+        return {
+            label: studioType,
+            data: data,
+            backgroundColor: getStudioTypeColor(studioType),
+            borderColor: getStudioTypeColor(studioType).replace('0.8', '1'),
+            borderWidth: 2,
+            borderRadius: 4,
+            borderSkipped: false,
+        };
+    });
+
+    const config = {
+        type: 'bar',
+        data: {
+            labels: countries.map(country => 
+                country.length > 15 ? country.substring(0, 15) + '...' : country
+            ),
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y', // Horizontal bars
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        color: '#eee',
+                        font: {
+                            size: 12,
+                            weight: 'bold'
+                        },
+                        usePointStyle: true,
+                        pointStyle: 'rect',
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#444',
+                    borderWidth: 1,
+                    callbacks: {
+                        title: function(context) {
+                            const fullCountryName = countries[context[0].dataIndex];
+                            return fullCountryName;
+                        },
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.parsed.x} developers`;
+                        },
+                        afterBody: function(context) {
+                            const countryIndex = context[0].dataIndex;
+                            const country = countries[countryIndex];
+                            const totalDevs = studioTypes.reduce((sum, studioType) => {
+                                const key = `${country}-${studioType}`;
+                                return sum + (dataLookup[key] || 0);
+                            }, 0);
+                            return `Total developers in ${country}: ${totalDevs}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Developers',
+                        color: '#eee',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    ticks: {
+                        color: '#eee',
+                        font: {
+                            size: 11
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.2)',
+                        lineWidth: 1
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Country',
+                        color: '#eee',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    ticks: {
+                        color: '#eee',
+                        font: {
+                            size: 11,
+                            weight: 'bold'
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        lineWidth: 1
+                    }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            }
+        }
+    };
+
+    window.tacticalChart6Instance = new Chart(ctx, config);
+}
+
+function createStackedColumnChart(ctx, canvas, countries, studioTypes, dataLookup, rawData) {
+    // 🧩 Enhanced 100% Stacked Column Chart Implementation
+    console.log('Creating stacked column chart with:', { countries, studioTypes });
+    
+    const datasets = studioTypes.map((studioType, index) => {
+        const data = countries.map(country => {
+            const key = `${country}-${studioType}`;
+            const count = dataLookup[key] || 0;
+            
+            // Calculate total for this country
+            const countryTotal = studioTypes.reduce((sum, st) => {
+                const k = `${country}-${st}`;
+                return sum + (dataLookup[k] || 0);
+            }, 0);
+            
+            // Return percentage
+            return countryTotal > 0 ? (count / countryTotal) * 100 : 0;
+        });
+        
+        return {
+            label: studioType,
+            data: data,
+            backgroundColor: getStudioTypeColor(studioType),
+            borderColor: getStudioTypeColor(studioType).replace('0.8', '1'),
+            borderWidth: 2,
+            borderRadius: {
+                topLeft: index === studioTypes.length - 1 ? 4 : 0,
+                topRight: index === studioTypes.length - 1 ? 4 : 0,
+                bottomLeft: index === 0 ? 4 : 0,
+                bottomRight: index === 0 ? 4 : 0
+            }
+        };
+    });
+
+    const config = {
+        type: 'bar',
+        data: {
+            labels: countries.map(country => 
+                country.length > 12 ? country.substring(0, 12) + '...' : country
+            ),
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        color: '#eee',
+                        font: {
+                            size: 12,
+                            weight: 'bold'
+                        },
+                        usePointStyle: true,
+                        pointStyle: 'rect',
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#444',
+                    borderWidth: 1,
+                    callbacks: {
+                        title: function(context) {
+                            const fullCountryName = countries[context[0].dataIndex];
+                            return fullCountryName;
+                        },
+                        label: function(context) {
+                            const percentage = context.parsed.y.toFixed(1);
+                            const countryIndex = context.dataIndex;
+                            const country = countries[countryIndex];
+                            const studioType = context.dataset.label;
+                            const key = `${country}-${studioType}`;
+                            const actualCount = dataLookup[key] || 0;
+                            return `${studioType}: ${percentage}% (${actualCount} developers)`;
+                        },
+                        afterBody: function(context) {
+                            const countryIndex = context[0].dataIndex;
+                            const country = countries[countryIndex];
+                            const totalDevs = studioTypes.reduce((sum, studioType) => {
+                                const key = `${country}-${studioType}`;
+                                return sum + (dataLookup[key] || 0);
+                            }, 0);
+                            return `Total developers: ${totalDevs}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Country',
+                        color: '#eee',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    ticks: {
+                        color: '#eee',
+                        maxRotation: 45,
+                        font: {
+                            size: 10,
+                            weight: 'bold'
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        lineWidth: 1
+                    }
+                },
+                y: {
+                    stacked: true,
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Percentage Distribution (%)',
+                        color: '#eee',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    ticks: {
+                        color: '#eee',
+                        font: {
+                            size: 11
+                        },
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.2)',
+                        lineWidth: 1
+                    }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            }
+        }
+    };
+
+    window.tacticalChart6Instance = new Chart(ctx, config);
 }
 
 // 5. 📊 Developer Performance Metrics - Horizontal Grouped Bar Chart
@@ -864,8 +1260,8 @@ function initializeDeveloperProfileTable() {
                             <input type="text" id="developerSearch" placeholder="Search developers..." class="form-control" style="width: 300px; display: inline-block;">
                             <button id="exportDeveloperData" class="btn btn-primary ms-2">Export CSV</button>
                         </div>
-                        <div class="table-responsive">
-                            <table id="developerTable" class="table table-striped table-hover">
+                        <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+                            <table id="developerTable" class="table table-striped table-hover table-compact table-dark">
                                 <thead class="table-dark">
                                     <tr>
                                         <th data-sort="name">Name</th>

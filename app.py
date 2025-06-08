@@ -404,6 +404,10 @@ def index():
             tactical_studio_types = request.args.getlist('tactical_studio_types')
             tactical_countries = request.args.getlist('tactical_countries')
             tactical_maturity = request.args.getlist('tactical_maturity')
+            tactical_performance_tiers = request.args.getlist('tactical_performance_tiers')
+            tactical_years_active = request.args.getlist('tactical_years_active')
+            tactical_replay_rate_ranges = request.args.getlist('tactical_replay_rate_ranges')
+            tactical_developer_sizes = request.args.getlist('tactical_developer_sizes')
             tactical_year_start = request.args.get('tactical_year_start', type=int, default=min_year_data)
             tactical_year_end = request.args.get('tactical_year_end', type=int, default=max_year_data)
             
@@ -431,14 +435,51 @@ def index():
                 if not filtered_maturity:
                     filtered_maturity = None
             
-            print(f"Developer Performance filters - Studio Types: {filtered_studio_types}, Countries: {filtered_countries}, Maturity: {filtered_maturity}, Year range: {tactical_year_range}")
+            # Handle new enhanced filters
+            filtered_performance_tiers = None
+            if tactical_performance_tiers and 'all_performance_tiers' not in tactical_performance_tiers:
+                filtered_performance_tiers = [pt for pt in tactical_performance_tiers if pt != 'all_performance_tiers']
+                if not filtered_performance_tiers:
+                    filtered_performance_tiers = None
+            
+            filtered_years_active = None
+            if tactical_years_active and 'all_years_active' not in tactical_years_active:
+                filtered_years_active = [ya for ya in tactical_years_active if ya != 'all_years_active']
+                if not filtered_years_active:
+                    filtered_years_active = None
+            
+            filtered_replay_rate_ranges = None
+            if tactical_replay_rate_ranges and 'all_replay_rates' not in tactical_replay_rate_ranges:
+                filtered_replay_rate_ranges = [rr for rr in tactical_replay_rate_ranges if rr != 'all_replay_rates']
+                if not filtered_replay_rate_ranges:
+                    filtered_replay_rate_ranges = None
+            
+            filtered_developer_sizes = None
+            if tactical_developer_sizes and 'all_developer_sizes' not in tactical_developer_sizes:
+                filtered_developer_sizes = [ds for ds in tactical_developer_sizes if ds != 'all_developer_sizes']
+                if not filtered_developer_sizes:
+                    filtered_developer_sizes = None
+            
+            print(f"Enhanced Developer Performance filters:")
+            print(f"  Studio Types: {filtered_studio_types}")
+            print(f"  Countries: {filtered_countries}")
+            print(f"  Maturity: {filtered_maturity}")
+            print(f"  Performance Tiers: {filtered_performance_tiers}")
+            print(f"  Years Active: {filtered_years_active}")
+            print(f"  Replay Rate Ranges: {filtered_replay_rate_ranges}")
+            print(f"  Developer Sizes: {filtered_developer_sizes}")
+            print(f"  Year range: {tactical_year_range}")
 
             try:
                 # Enhanced Studio Type Performance Analysis
                 tactical_sankey_data = list(db_handler.get_developer_performance_insights(
                     studio_types=filtered_studio_types,
                     countries=filtered_countries,
-                    year_range=tactical_year_range
+                    year_range=tactical_year_range,
+                    performance_tiers=filtered_performance_tiers,
+                    years_active_ranges=filtered_years_active,
+                    replay_rate_ranges=filtered_replay_rate_ranges,
+                    developer_sizes=filtered_developer_sizes
                 ))
             except Exception as e:
                 print(f"Error fetching developer performance insights: {e}")
@@ -448,7 +489,11 @@ def index():
                 # Enhanced Geographic Distribution Analysis
                 tactical_venn_data = list(db_handler.get_country_gaming_profile(
                     countries=filtered_countries,
-                    year_range=tactical_year_range
+                    year_range=tactical_year_range,
+                    performance_tiers=filtered_performance_tiers,
+                    years_active_ranges=filtered_years_active,
+                    replay_rate_ranges=filtered_replay_rate_ranges,
+                    developer_sizes=filtered_developer_sizes
                 ))
             except Exception as e:
                 print(f"Error fetching country gaming profiles: {e}")
@@ -466,10 +511,24 @@ def index():
                 tactical_chord_data = []
 
             try:
-                # Developer Maturity vs Performance (keep original for scatter plot)
+                # Country × Studio Type Matrix data
+                tactical_matrix_data = list(db_handler.get_developer_country_studio_matrix(
+                    year_range=tactical_year_range,
+                    countries=filtered_countries
+                ))
+            except Exception as e:
+                print(f"Error fetching country-studio matrix data: {e}")
+                tactical_matrix_data = []
+
+            try:
+                # Enhanced Developer Maturity Analysis
                 tactical_dumbbell_data = list(db_handler.get_developer_maturity_data(
                     year_range=tactical_year_range,
-                    maturity_levels=filtered_maturity
+                    maturity_levels=filtered_maturity,
+                    performance_tiers=filtered_performance_tiers,
+                    years_active_ranges=filtered_years_active,
+                    replay_rate_ranges=filtered_replay_rate_ranges,
+                    developer_sizes=filtered_developer_sizes
                 ))
             except Exception as e:
                 print(f"Error fetching developer maturity data: {e}")
@@ -485,13 +544,18 @@ def index():
                 print(f"Error fetching trending insights: {e}")
                 tactical_marimekko_data = {}
 
-            # Get real developer profile data for the table
+            # Get enhanced filtered developer profile data for the table
             try:
-                tactical_developer_profiles = list(db_handler.get_developer_profile_data(
+                # Enhanced Developer Profile Data for Table
+                tactical_developer_profiles = list(db_handler.get_filtered_developer_data(
                     studio_types=filtered_studio_types,
                     countries=filtered_countries,
                     year_range=tactical_year_range,
-                    limit=50
+                    performance_tiers=filtered_performance_tiers,
+                    years_active_ranges=filtered_years_active,
+                    replay_rate_ranges=filtered_replay_rate_ranges,
+                    developer_sizes=filtered_developer_sizes,
+                    limit=100
                 ))
             except Exception as e:
                 print(f"Error fetching developer profile data: {e}")
@@ -551,6 +615,11 @@ def index():
                     'studio_types': [],
                     'countries': [],
                     'maturity_levels': [],
+                    'performance_tiers': ['Elite', 'High', 'Medium', 'Developing', 'Emerging'],
+                    'years_active_ranges': ['30+ years', '20-29 years', '10-19 years', '5-9 years', '0-4 years'],
+                    'replay_rate_ranges': ['90-100%', '80-89%', '70-79%', '60-69%', '50-59%', 'Below 50%'],
+                    'developer_sizes': ['Large (AAA)', 'Medium (Mid-tier)', 'Small (Indie)', 'Specialized (Mobile/Legacy)'],
+                    'market_presence_levels': ['Global', 'Regional', 'National', 'Local'],
                     'genres': [],
                     'platforms': [],
                     'year_range': {'min_year': 1980, 'max_year': 2024}
@@ -564,10 +633,16 @@ def index():
             tactical_dumbbell_data = []
             tactical_marimekko_data = {}
             tactical_developer_profiles = []
+            tactical_matrix_data = []
             filter_options = {
                 'studio_types': [],
                 'countries': [],
                 'maturity_levels': [],
+                'performance_tiers': ['Elite', 'High', 'Medium', 'Developing', 'Emerging'],
+                'years_active_ranges': ['30+ years', '20-29 years', '10-19 years', '5-9 years', '0-4 years'],
+                'replay_rate_ranges': ['90-100%', '80-89%', '70-79%', '60-69%', '50-59%', 'Below 50%'],
+                'developer_sizes': ['Large (AAA)', 'Medium (Mid-tier)', 'Small (Indie)', 'Specialized (Mobile/Legacy)'],
+                'market_presence_levels': ['Global', 'Regional', 'National', 'Local'],
                 'genres': [],
                 'platforms': [],
                 'year_range': {'min_year': 1980, 'max_year': 2024}
@@ -745,6 +820,7 @@ def index():
                          tactical_dumbbell_data=tactical_dumbbell_data,
                          tactical_marimekko_data=tactical_marimekko_data,
                          tactical_developer_profiles=tactical_developer_profiles,
+                         tactical_matrix_data=tactical_matrix_data,
                          lifecycle_survival_data=lifecycle_survival_data,
                          lifecycle_ridgeline_data=lifecycle_ridgeline_data,
                          lifecycle_timeline_data=lifecycle_timeline_data,
