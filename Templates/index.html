@@ -114,7 +114,7 @@
 
                     <!-- Tactical Dashboard Filters -->
                     <div id="tactical-filters" style="display: none;">
-                        <h3>🏢 Developer Performance Filters</h3>
+                        <h3>Developer Performance Filters</h3>
                         <form id="tactical-filter-form" method="GET" action="/">
                             <input type="hidden" name="tab" value="tactical">
                             
@@ -367,6 +367,40 @@
                             <button type="button" class="btn btn-secondary mt-2" id="reset-evolution-filters">Reset Filters</button>
                         </form>
                     </div>
+
+                    <!-- Pixel Profits Dashboard Filters -->
+                    <div id="pixel-profits-filters" style="display: none;">
+                        <h3>Pixel Profits Filters</h3>
+                        <form id="pixel-profits-filter-form" method="GET" action="/">
+                            <input type="hidden" name="tab" value="pixel-profits">
+                            <div class="mb-3">
+                                <label for="sales-game-title" class="form-label">Game Title</label>
+                                <select class="form-select" id="sales-game-title" name="sales_game_title">
+                                    <option value="">-- All Games --</option>
+                                    {% for title in sales_game_titles %}
+                                        <option value="{{ title }}" {% if request.args.get('sales_game_title') == title %}selected{% endif %}>{{ title }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="sales-platform-filter" class="form-label">Platform(s)</label>
+                                <select class="form-select" id="sales-platform-filter" name="sales_platform" multiple>
+                                    {% for platform in sales_platforms %}
+                                        <option value="{{ platform }}" {% if platform in request.args.getlist('sales_platform') %}selected{% endif %}>{{ platform }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="sales-region-filter" class="form-label">Region(s)</label>
+                                <select class="form-select" id="sales-region-filter" name="sales_region" multiple>
+                                    {% for region in sales_regions %}
+                                        <option value="{{ region }}" {% if region in request.args.getlist('sales_region') %}selected{% endif %}>{{ region }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Apply Filters</button>
+                        </form>
+                    </div>
                 </div>
         </div>
 
@@ -399,13 +433,13 @@
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link {% if active_tab == 'analytical-lifecycle' %}active{% endif %}" id="analytical-lifecycle-tab" data-bs-toggle="tab" data-bs-target="#analytical-lifecycle-dashboard" data-tab="analytical-lifecycle" type="button" role="tab">
-                                Game Lifecycle
+                            <button class="nav-link {% if active_tab == 'game-trends' %}active{% endif %}" id="game-trends-tab" data-bs-toggle="tab" data-bs-target="#game-trends-dashboard" data-tab="game-trends" type="button" role="tab">
+                                Game Trends
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link {% if active_tab == 'analytical-evolution' %}active{% endif %}" id="analytical-evolution-tab" data-bs-toggle="tab" data-bs-target="#analytical-evolution-dashboard" data-tab="analytical-evolution" type="button" role="tab">
-                                Genre Evolution
+                            <button class="nav-link {% if active_tab == 'pixel-profits' %}active{% endif %}" id="pixel-profits-tab" data-bs-toggle="tab" data-bs-target="#pixel-profits-dashboard" data-tab="pixel-profits" type="button" role="tab">
+                                Pixel Profits
                             </button>
                         </li>
                     </ul>
@@ -803,7 +837,7 @@
                                 <!-- Top Performing Studio Type KPI -->
                                 <div class="col-md-4">
                                     <div class="card" style="min-height: 150px;">
-                                        <h5 class="card-title">🏆 Top Performing Studio Type</h5>
+                                        <h5 class="card-title">Top Performing Studio Type</h5>
                                         <div class="big-number">{{ tactical_kpis.top_studio_type.name }}</div>
                                         <p class="text-center text-muted">{{ tactical_kpis.top_studio_type.performance_tier }} Tier</p>
                                         <small class="text-center text-info d-block">{{ tactical_kpis.top_studio_type.avg_replay_rate }}% replay rate</small>
@@ -813,7 +847,7 @@
                                 <!-- Strongest Gaming Country KPI -->
                                 <div class="col-md-4">
                                     <div class="card" style="min-height: 150px;">
-                                        <h5 class="card-title">🌍 Strongest Gaming Country</h5>
+                                        <h5 class="card-title">Strongest Gaming Country</h5>
                                         <div class="big-number">{{ tactical_kpis.strongest_country.name[:12] }}{% if tactical_kpis.strongest_country.name|length > 12 %}...{% endif %}</div>
                                         <p class="text-center text-muted">{{ tactical_kpis.strongest_country.market_strength }} Market</p>
                                         <small class="text-center text-info d-block">{{ tactical_kpis.strongest_country.total_developers }} developers</small>
@@ -823,7 +857,7 @@
                                 <!-- Trending Insight KPI -->
                                 <div class="col-md-4">
                                     <div class="card" style="min-height: 150px;">
-                                        <h5 class="card-title">📈 {{ tactical_kpis.trending_insight.category }}</h5>
+                                        <h5 class="card-title">{{ tactical_kpis.trending_insight.category }}</h5>
                                         <div class="big-number">{{ tactical_kpis.trending_insight.value[:15] }}{% if tactical_kpis.trending_insight.value|length > 15 %}...{% endif %}</div>
                                         <p class="text-center text-muted">Trend: {{ tactical_kpis.trending_insight.trend|title }}</p>
                                         <small class="text-center text-success d-block">🔥 Industry leader</small>
@@ -838,7 +872,7 @@
                                     <!-- 📊 Developer Performance Metrics - Horizontal Grouped Bar Chart -->
                                     <div class="col-md-6">
                                         <div class="card">
-                                            <h5 class="card-title">📊 Developer Performance Metrics</h5>
+                                            <h5 class="card-title">Developer Performance Metrics</h5>
                                             <div class="chart-container">
                                                 <canvas id="tacticalChart1"></canvas>
                                             </div>
@@ -849,7 +883,7 @@
                                     <!-- 🌍 Developer Geographic Distribution - Dual Y-Axis Chart -->
                                     <div class="col-md-6">
                                         <div class="card">
-                                            <h5 class="card-title">🌍 Developer Geographic Distribution</h5>
+                                            <h5 class="card-title">Developer Geographic Distribution</h5>
                                             <div class="chart-container">
                                                 <canvas id="tacticalChart2"></canvas>
                                             </div>
@@ -863,7 +897,7 @@
                                     <!-- 🎮 Top-Rated Games by Country - Horizontal Bar Chart -->
                                     <div class="col-md-6">
                                         <div class="card">
-                                            <h5 class="card-title">🎮 Top-Rated Games by Country</h5>
+                                            <h5 class="card-title">Top-Rated Games by Country</h5>
                                             <div class="chart-container">
                                                 <canvas id="tacticalChart3"></canvas>
                                             </div>
@@ -874,7 +908,7 @@
                                     <!-- 🎯 Developer Maturity vs Performance - Grouped Vertical Bar Chart -->
                                     <div class="col-md-6">
                                         <div class="card">
-                                            <h5 class="card-title">🎯 Developer Maturity vs Performance</h5>
+                                            <h5 class="card-title">Developer Maturity vs Performance</h5>
                                             <div class="chart-container">
                                                 <canvas id="tacticalChart4"></canvas>
                                             </div>
@@ -888,7 +922,7 @@
                                     <!-- 🧪 Replay Rate Distribution by Studio Type - Grouped Bar Chart -->
                                     <div class="col-md-6">
                                         <div class="card">
-                                            <h5 class="card-title">🧪 Replay Rate Distribution by Studio Type</h5>
+                                            <h5 class="card-title">Replay Rate Distribution by Studio Type</h5>
                                             <div class="chart-container">
                                                 <canvas id="tacticalChart5"></canvas>
                                             </div>
@@ -900,11 +934,11 @@
                                     <div class="col-md-6">
                                         <div class="card">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <h5 class="card-title mb-0">🧱 Country × Studio Type Matrix</h5>
+                                                <h5 class="card-title mb-0">Country × Studio Type Matrix</h5>
                                                 <select id="matrixVisualizationType" class="form-select form-select-sm" style="width: auto;">
-                                                    <option value="heatmap">🔥 Heatmap</option>
-                                                    <option value="groupedBar">📊 Grouped Bars</option>
-                                                    <option value="stackedColumn">🧩 Stacked %</option>
+                                                    <option value="heatmap">Heatmap</option>
+                                                    <option value="groupedBar">Grouped Bars</option>
+                                                    <option value="stackedColumn">Stacked %</option>
                                                 </select>
                                             </div>
                                             <div class="chart-container">
@@ -925,134 +959,246 @@
                             </div>
                         </div>
 
-                        <!-- Analytical Lifecycle Dashboard Tab -->
-                        <div class="tab-pane fade {% if active_tab == 'analytical-lifecycle' %}show active{% endif %}" id="analytical-lifecycle-dashboard" role="tabpanel">
-                            <div class="row">
+                        <!-- Game Trends Dashboard Tab -->
+                        <div class="tab-pane fade {% if active_tab == 'game-trends' %}show active{% endif %}" id="game-trends-dashboard" role="tabpanel">
+                            <div class="row mb-4">
                                 <div class="col-12">
-                                </div>
-                            </div>
-
-                            <!-- Lifecycle Charts Row 1 -->
-                            <div class="row">
-                                <!-- Survival Curve -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">Game Engagement Survival Curve</h5>
-                                        <div class="chart-container">
-                                            <canvas id="lifecycleSurvivalChart"></canvas>
-                                        </div>
+                                    <!-- Genre Tag Bar -->
+                                    <div class="d-flex flex-row flex-nowrap overflow-auto mb-4" style="gap: 0.5rem;">
+                                        <span class="badge bg-secondary genre-tag active" data-genre="all" style="font-size:1rem; padding:0.7em 1.2em; cursor:pointer;">All</span>
+                                        {% for genre in game_trends_data.genres %}
+                                            <span class="badge bg-secondary genre-tag" data-genre="{{ genre.name }}" style="font-size:1rem; padding:0.7em 1.2em; cursor:pointer;">{{ genre.name }}</span>
+                                        {% endfor %}
                                     </div>
-                                </div>
-
-                                <!-- Ridgeline Plot -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">Rating Distribution by Genre</h5>
-                                        <div class="chart-container">
-                                            <canvas id="lifecycleRidgelineChart"></canvas>
-                                        </div>
+                                    <!-- Popular Right Now -->
+                                    <h4 class="mb-3">Popular Right Now</h4>
+                                    <div class="d-flex flex-row flex-nowrap overflow-auto mb-4" style="gap: 1rem;">
+                                        {% for game in game_trends_data.popular %}
+                                            <div class="card game-card" data-genres="{{ game.genres | map(attribute='name') | join(',') }}" style="min-width:200px; max-width:220px; cursor:pointer;">
+                                                <img src="{{ game.cover.url }}" class="card-img-top" alt="{{ game.name }}">
+                                                <div class="card-body p-2">
+                                                    <h6 class="card-title mb-1">{{ game.name }}</h6>
+                                                    <small class="text-muted">{{ game.genres[0].name if game.genres else '' }}</small><br>
+                                                    <small>Rating: {{ game.rating | round(1) if game.rating else 'N/A' }}</small>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
                                     </div>
-                                </div>
-                            </div>
-
-                            <!-- Lifecycle Charts Row 2 -->
-                            <div class="row">
-                                <!-- Timeline Bubble Chart -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">Most Voted Games Timeline</h5>
-                                        <div class="chart-container">
-                                            <canvas id="lifecycleTimelineChart"></canvas>
-                                        </div>
+                                    <!-- Most Anticipated -->
+                                    <h4 class="mt-4 mb-3">Most Anticipated</h4>
+                                    <div class="row mb-4" style="gap: 1rem;">
+                                        {% for game in game_trends_data.anticipated %}
+                                            <div class="col-md-3 col-6">
+                                                <div class="card h-100 text-white game-card" data-genres="{{ game.genres | map(attribute='name') | join(',') }}" style="background-image:url('{{ game.cover.url }}'); background-size:cover; background-position:center; min-height:180px; cursor:pointer;">
+                                                    <div class="card-img-overlay d-flex flex-column justify-content-end" style="background:rgba(0,0,0,0.5);">
+                                                        <h5 class="card-title">{{ game.name }}</h5>
+                                                        <div><small>{{ game.first_release_date | int | datetimeformat }}</small></div>
+                                                        <div class="countdown" data-date="{{ game.first_release_date }}"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
                                     </div>
-                                </div>
-
-                                <!-- Hexbin Plot -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">Rating vs Votes Clusters</h5>
-                                        <div class="chart-container">
-                                            <canvas id="lifecycleHexbinChart"></canvas>
-                                        </div>
+                                    <!-- Recent Critics Reviews -->
+                                    <h4 class="mt-4 mb-3">Recent Critics Reviews</h4>
+                                    <div class="row mb-4">
+                                        {% for game in game_trends_data.recently_reviewed %}
+                                            <div class="col-md-4 col-12 mb-3">
+                                                <div class="card h-100 text-white game-card" data-genres="{{ game.genres | map(attribute='name') | join(',') }}" style="background-image:url('{{ game.cover.url }}'); background-size:cover; background-position:center; min-height:120px; cursor:pointer;">
+                                                    <div class="card-img-overlay d-flex flex-column justify-content-end" style="background:rgba(0,0,0,0.4);">
+                                                        <h6 class="card-title mb-1">{{ game.name }}</h6>
+                                                        <small>{{ game.genres[0].name if game.genres else '' }}</small>
+                                                        <div class="fw-bold">{{ (game.rating * 10) | round(0) if game.rating else 'N/A' }}%</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
                                     </div>
-                                </div>
-                            </div>
-
-                            <!-- Lifecycle Charts Row 3 -->
-                            <div class="row">
-                                <!-- Parallel Coordinates -->
-                                <div class="col-md-12">
-                                    <div class="card">
-                                        <h5 class="card-title">Genre Performance Comparison</h5>
-                                        <div class="chart-container">
-                                            <canvas id="lifecycleParallelChart"></canvas>
+                                    <!-- Recently Released, Coming Soon, Most Anticipated Lists -->
+                                    <div class="row mt-4">
+                                        <div class="col-md-4 col-12">
+                                            <h5>Recently Released</h5>
+                                            <ul class="list-unstyled">
+                                                {% for game in game_trends_data.recently_released %}
+                                                    <li><span class="fw-bold">{{ game.name }}</span> <span class="text-muted">{{ game.date }}</span></li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-4 col-12">
+                                            <h5>Coming Soon</h5>
+                                            <ul class="list-unstyled">
+                                                {% for game in game_trends_data.coming_soon %}
+                                                    <li><span class="fw-bold">{{ game.name }}</span> <span class="text-muted">{{ game.date }}</span></li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-4 col-12">
+                                            <h5>Most Anticipated</h5>
+                                            <ul class="list-unstyled">
+                                                {% for game in game_trends_data.most_anticipated_list %}
+                                                    <li><span class="fw-bold">{{ game.name }}</span> <span class="text-muted">{{ game.date }}</span></li>
+                                                {% endfor %}
+                                            </ul>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Analytical Evolution Dashboard Tab -->
-                        <div class="tab-pane fade {% if active_tab == 'analytical-evolution' %}show active{% endif %}" id="analytical-evolution-dashboard" role="tabpanel">
-                            <div class="row">
+                        <!-- Pixel Profits Dashboard Tab -->
+                        <div class="tab-pane fade {% if active_tab == 'pixel-profits' %}show active{% endif %}" id="pixel-profits-dashboard" role="tabpanel">
+                            <div class="row mb-4">
                                 <div class="col-12">
                                 </div>
                             </div>
-
-                            <!-- Evolution Charts Row 1 -->
-                            <div class="row">
-                                <!-- Stream Graph -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">Genre Popularity Evolution</h5>
-                                        <div class="chart-container">
-                                            <canvas id="evolutionStreamChart"></canvas>
+                            <!-- KPIs -->
+                            <div class="row mb-4">
+                                <div class="col-md-4">
+                                    <div class="card kpi-card shadow rounded-4 border-0 bg-dark text-white">
+                                        <div class="card-body text-center">
+                                            <h5 class="card-title text-info fw-bold">Total Revenue</h5>
+                                            <p class="display-3 fw-bold text-success">${{ tactical_sales_data.total_revenue | default(0) | round(0) | int }}</p>
                                         </div>
                                     </div>
                                 </div>
-
-                                <!-- Bubble Timeline -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">High-Rated Game Launches by Genre</h5>
-                                        <div class="chart-container">
-                                            <canvas id="evolutionBubbleChart"></canvas>
+                                <div class="col-md-4">
+                                    <div class="card kpi-card shadow rounded-4 border-0 bg-dark text-white">
+                                        <div class="card-body text-center">
+                                            <h5 class="card-title text-info fw-bold">Total Units Sold</h5>
+                                            <p class="display-3 fw-bold text-warning">{{ tactical_sales_data.total_units | default(0) | int }}</p>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <!-- Evolution Charts Row 2 -->
-                            <div class="row">
-                                <!-- Hexbin Plot -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">Votes vs Rating Evolution Clusters</h5>
-                                        <div class="chart-container">
-                                            <canvas id="evolutionHexbinChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Parallel Coordinates -->
-                                <div class="col-md-6">
-                                    <div class="card">
-                                        <h5 class="card-title">Multi-Metric Genre Analysis</h5>
-                                        <div class="chart-container">
-                                            <canvas id="evolutionParallelChart"></canvas>
+                                <div class="col-md-4">
+                                    <div class="card kpi-card shadow rounded-4 border-0 bg-dark text-white">
+                                        <div class="card-body text-center">
+                                            <h5 class="card-title text-info fw-bold">Average Price per Unit</h5>
+                                            <p class="display-3 fw-bold text-primary">${{ tactical_sales_data.avg_price | default(0) | round(2) }}</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Evolution Charts Row 3 -->
-                            <div class="row">
-                                <!-- Tree Diagram -->
-                                <div class="col-md-12">
-                                    <div class="card">
-                                        <h5 class="card-title">Genre → Platform Expansion Patterns</h5>
-                                        <div class="chart-container">
-                                            <canvas id="evolutionTreeChart"></canvas>
+                            <!-- Revenue Over Time Chart -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="card shadow rounded-4 border-0">
+                                        <div class="card-body">
+                                            <h5 class="card-title text-info fw-bold">Revenue Over Time</h5>
+                                            <div class="chart-container" style="min-height:320px;">
+                                                <canvas id="revenueOverTimeChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card shadow rounded-4 border-0">
+                                        <div class="card-body">
+                                            <h5 class="card-title text-info fw-bold">Units Sold by Month</h5>
+                                            <div class="chart-container" style="min-height:320px;">
+                                                <canvas id="unitsSoldByMonthChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Top Performers -->
+                            <div class="row mb-4">
+                                <div class="col-md-4">
+                                    <div class="card shadow rounded-4 border-0">
+                                        <div class="card-body">
+                                            <h5 class="card-title text-info fw-bold">Top 10 Games by Revenue</h5>
+                                            <div class="chart-container" style="min-height:260px;">
+                                                <canvas id="topGamesByRevenueChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card shadow rounded-4 border-0">
+                                        <div class="card-body">
+                                            <h5 class="card-title text-info fw-bold">Top Platforms by Units Sold</h5>
+                                            <div class="chart-container" style="min-height:260px;">
+                                                <canvas id="topPlatformsByUnitsSoldChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card shadow rounded-4 border-0">
+                                        <div class="card-body">
+                                            <h5 class="card-title text-info fw-bold">Best-Selling Genres</h5>
+                                            <div class="chart-container" style="min-height:260px;">
+                                                <canvas id="bestSellingGenresChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Price & Region Analysis -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="card shadow rounded-4 border-0">
+                                        <div class="card-body">
+                                            <h5 class="card-title text-info fw-bold">Price Sensitivity by Region</h5>
+                                            <div class="chart-container" style="min-height:260px;">
+                                                <canvas id="priceSensitivityByRegionChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card shadow rounded-4 border-0">
+                                        <div class="card-body">
+                                            <h5 class="card-title text-info fw-bold">Revenue by Region</h5>
+                                            <div class="chart-container" style="min-height:260px;">
+                                                <canvas id="revenueByRegionChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Profitability Insight -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="card shadow rounded-4 border-0">
+                                        <div class="card-body">
+                                            <h5 class="card-title text-info fw-bold">Revenue vs Units Sold Correlation</h5>
+                                            <div class="chart-container" style="min-height:260px;">
+                                                <canvas id="revenueVsUnitsSoldChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card shadow rounded-4 border-0">
+                                        <div class="card-body">
+                                            <h5 class="card-title text-info fw-bold">Platform × Genre Matrix</h5>
+                                            <div class="chart-container" style="min-height:260px;">
+                                                <canvas id="platformGenreMatrixChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Platform Strategy & Release Effectiveness -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="card shadow rounded-4 border-0">
+                                        <div class="card-body">
+                                            <h5 class="card-title text-info fw-bold">Platform Sales Share</h5>
+                                            <div class="chart-container" style="min-height:260px;">
+                                                <canvas id="platformSalesShareChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card shadow rounded-4 border-0">
+                                        <div class="card-body">
+                                            <h5 class="card-title text-info fw-bold">Sales Velocity Post-Release</h5>
+                                            <div class="chart-container" style="min-height:260px;">
+                                                <canvas id="salesVelocityChart"></canvas>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -1106,6 +1252,7 @@
                 tacticalDumbbellData: {{ tactical_dumbbell_data | safe_tojson | safe }},
                 tacticalMarimekkoData: {{ tactical_marimekko_data | safe_tojson | safe }},
                 tacticalDeveloperProfiles: {{ tactical_developer_profiles | safe_tojson | safe }},
+                tacticalMatrixData: {{ tactical_matrix_data | safe_tojson | safe }},
                 
                 // Lifecycle dashboard data
                 lifecycleSurvivalData: {{ lifecycle_survival_data | safe_tojson | safe }},
@@ -1119,7 +1266,8 @@
                 evolutionBubbleData: {{ evolution_bubble_data | safe_tojson | safe }},
                 evolutionHexbinData: {{ evolution_hexbin_data | safe_tojson | safe }},
                 evolutionParallelData: {{ evolution_parallel_data | safe_tojson | safe }},
-                evolutionTreeData: {{ evolution_tree_data | safe_tojson | safe }}
+                evolutionTreeData: {{ evolution_tree_data | safe_tojson | safe }},
+                gameTrendsData: {{ game_trends_data | safe_tojson | safe }}
             };
             
             // Initialize data and start dashboard
@@ -1128,5 +1276,49 @@
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    // Genre tag filtering
+    const genreTags = document.querySelectorAll('.genre-tag');
+    const gameCards = document.querySelectorAll('.game-card');
+    genreTags.forEach(tag => {
+        tag.addEventListener('click', function() {
+            genreTags.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            const genre = this.getAttribute('data-genre');
+            gameCards.forEach(card => {
+                const genres = card.getAttribute('data-genres').split(',');
+                if (genre === 'all' || genres.includes(genre)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+    // Countdown timer for Most Anticipated
+    function updateCountdowns() {
+        document.querySelectorAll('.countdown').forEach(el => {
+            const date = parseInt(el.getAttribute('data-date')) * 1000;
+            const now = new Date().getTime();
+            let diff = Math.max(0, date - now);
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            diff -= days * (1000 * 60 * 60 * 24);
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            diff -= hours * (1000 * 60 * 60);
+            const minutes = Math.floor(diff / (1000 * 60));
+            diff -= minutes * (1000 * 60);
+            const seconds = Math.floor(diff / 1000);
+            el.innerHTML = `<span style='font-size:1.2em;'>${days}d ${hours}h ${minutes}m ${seconds}s</span>`;
+        });
+    }
+    setInterval(updateCountdowns, 1000);
+    updateCountdowns();
+    // Clickable game cards (demo: alert game name)
+    document.querySelectorAll('.game-card').forEach(card => {
+        card.addEventListener('click', function() {
+            alert('Game: ' + this.querySelector('.card-title').innerText);
+        });
+    });
+    </script>
 </body>
 </html> 

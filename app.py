@@ -1,10 +1,13 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, Response
 from db import MongoDBHandler
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import json
 from bson import ObjectId
+from igdb_api import get_popular_games, get_anticipated_games, get_recently_reviewed_games, get_genres, get_trending_games
+import requests
+from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 
@@ -34,24 +37,19 @@ logger = logging.getLogger(__name__)
 # Initialize database handler
 db_handler = MongoDBHandler()
 
+def datetimeformat(value, format='%d %b %Y'):
+    try:
+        return datetime.utcfromtimestamp(int(value)).strftime(format)
+    except Exception:
+        return value
+
+app.jinja_env.filters['datetimeformat'] = datetimeformat
+
 @app.route('/')
 def index():
     # Determine which tab is active
     active_tab = request.args.get('tab', 'studio')
-    
-    # Tab mapping for consistency
-    tab_mapping = {
-        'studio': 'studio',
-        'operational': 'operational', 
-        'tactical': 'tactical',
-        'analytical-lifecycle': 'analytical-lifecycle',
-        'analytical-evolution': 'analytical-evolution'
-    }
-    
-    # Normalize tab name
-    active_tab = tab_mapping.get(active_tab, 'studio')
-    
-    print(f"Active tab: {active_tab}")
+    print(f"[DEBUG] active_tab: {active_tab}")
 
     # Initialize all variables with default values
     stats_data = {'total_games': 0}
@@ -73,6 +71,8 @@ def index():
     monthly_activity = []
     platform_performance = []
     top_rated_recent = []
+    sales_dashboard_data = {}
+    game_trends_data = {}
 
     # Initialize filter variables
     selected_genres = []
@@ -84,6 +84,26 @@ def index():
     tactical_chord_data = []
     tactical_dumbbell_data = []
     tactical_marimekko_data = []
+    tactical_developer_profiles = []
+    tactical_matrix_data = []
+    tactical_kpis = {
+        'top_studio_type': {'name': 'Unknown', 'performance_tier': 'Unknown', 'avg_replay_rate': 0.0},
+        'strongest_country': {'name': 'Unknown', 'market_strength': 'Unknown', 'total_developers': 0},
+        'trending_insight': {'category': 'Unknown', 'value': 'No data', 'trend': 'stable'}
+    }
+    filter_options = {
+        'studio_types': [],
+        'countries': [],
+        'maturity_levels': [],
+        'performance_tiers': ['Elite', 'High', 'Medium', 'Developing', 'Emerging'],
+        'years_active_ranges': ['30+ years', '20-29 years', '10-19 years', '5-9 years', '0-4 years'],
+        'replay_rate_ranges': ['90-100%', '80-89%', '70-79%', '60-69%', '50-59%', 'Below 50%'],
+        'developer_sizes': ['Large (AAA)', 'Medium (Mid-tier)', 'Small (Indie)', 'Specialized (Mobile/Legacy)'],
+        'market_presence_levels': ['Global', 'Regional', 'National', 'Local'],
+        'genres': [],
+        'platforms': [],
+        'year_range': {'min_year': 1980, 'max_year': 2024}
+    }
 
     # Analytical Lifecycle dashboard variables
     lifecycle_survival_data = []
@@ -136,7 +156,7 @@ def index():
             # Validate selected genres and platforms
             valid_genres = [genre for genre in selected_genres if genre in all_genres]
             valid_platforms = [platform for platform in selected_platforms if platform in all_platforms]
-                
+            
             year_start = request.args.get('year_start', type=int, default=min_year_data)
             year_end = request.args.get('year_end', type=int, default=max_year_data)
             
@@ -233,6 +253,72 @@ def index():
             print(f"Operational year range: {op_year_range}")
             print(f"Available year data range: {min_year_data} - {max_year_data}")
 
+        elif active_tab == 'pixel-profits':
+            # === SALES DASHBOARD TAB LOGIC ===
+            revenue_by_platform = db_handler.get_revenue_by_platform()
+            top_selling_games = db_handler.get_top_selling_games_this_month()
+            monthly_sales_trend = db_handler.get_monthly_sales_trend()
+            regional_sales_split = db_handler.get_regional_sales_split()
+            units_sold_by_genre = db_handler.get_units_sold_by_genre()
+            launch_vs_lifetime_revenue = db_handler.get_launch_vs_lifetime_revenue()
+            sales_dashboard_data = {
+                'message': 'Sales dashboard loaded.',
+                'revenue_by_platform': revenue_by_platform,
+                'top_selling_games': top_selling_games,
+                'monthly_sales_trend': monthly_sales_trend,
+                'regional_sales_split': regional_sales_split,
+                'units_sold_by_genre': units_sold_by_genre,
+                'launch_vs_lifetime_revenue': launch_vs_lifetime_revenue
+            }
+            # Ensure all keys exist
+            for key in [
+                'message', 'revenue_by_platform', 'top_selling_games',
+                'monthly_sales_trend', 'regional_sales_split',
+                'units_sold_by_genre', 'launch_vs_lifetime_revenue'
+            ]:
+                sales_dashboard_data.setdefault(key, [] if key != 'message' else '')
+        elif active_tab == 'game-trends':
+            # Always use synthetic demo data for Game Trends with real IGDB covers
+            game_trends_data = {
+                'popular': [
+                    {'name': 'Konami Press Start 6.12.2025', 'cover': {'url': 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1r6p.jpg'}, 'first_release_date': int((datetime.now() + timedelta(days=10)).timestamp()), 'genres': [{'name': 'News'}], 'rating': 0},
+                    {'name': 'Clair Obscur: Expedition 33', 'cover': {'url': 'https://images.igdb.com/igdb/image/upload/t_cover_big/co8w7v.jpg'}, 'first_release_date': int((datetime.now() + timedelta(days=20)).timestamp()), 'genres': [{'name': 'Role-playing (RPG)'}], 'rating': 9.5},
+                    {'name': 'Dune: Awakening', 'cover': {'url': 'https://images.igdb.com/igdb/image/upload/t_cover_big/co6w7v.jpg'}, 'first_release_date': int((datetime.now() + timedelta(days=30)).timestamp()), 'genres': [{'name': 'Role-playing (RPG)'}], 'rating': 9.2},
+                    {'name': 'Mario Kart 8 Deluxe', 'cover': {'url': 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1wyy.jpg'}, 'first_release_date': int((datetime.now() + timedelta(days=40)).timestamp()), 'genres': [{'name': 'Racing'}], 'rating': 8.2},
+                    {'name': 'Stardew Valley', 'cover': {'url': 'https://images.igdb.com/igdb/image/upload/t_cover_big/co2p23.jpg'}, 'first_release_date': int((datetime.now() + timedelta(days=50)).timestamp()), 'genres': [{'name': 'Simulator'}], 'rating': 8.8},
+                ],
+                'anticipated': [
+                    {'name': 'Death Stranding 2: On The Beach', 'cover': {'url': 'https://images.igdb.com/igdb/image/upload/t_cover_big/co6t4b.jpg'}, 'first_release_date': int((datetime.now() + timedelta(days=10)).timestamp()), 'genres': [{'name': 'Action'}]},
+                    {'name': 'Mafia: The Old Country', 'cover': {'url': 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1q5p.jpg'}, 'first_release_date': int((datetime.now() + timedelta(days=53)).timestamp()), 'genres': [{'name': 'Action'}]},
+                    {'name': 'Metal Gear Solid Delta: Snake Eater', 'cover': {'url': 'https://images.igdb.com/igdb/image/upload/t_cover_big/co6v9z.jpg'}, 'first_release_date': int((datetime.now() + timedelta(days=73)).timestamp()), 'genres': [{'name': 'Action'}]},
+                    {'name': 'Grand Theft Auto VI', 'cover': {'url': 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1wyy.jpg'}, 'first_release_date': int((datetime.now() + timedelta(days=80)).timestamp()), 'genres': [{'name': 'Action'}]},
+                ],
+                'recently_reviewed': [
+                    {'name': 'Rune Factory: Guardians', 'cover': {'url': 'https://images.igdb.com/igdb/image/upload/t_cover_big/co5mno.jpg'}, 'genres': [{'name': 'Role-playing (RPG)'}], 'rating': 8.1, 'summary': 'A magical farming adventure.'},
+                    {'name': 'Stardew Valley', 'cover': {'url': 'https://images.igdb.com/igdb/image/upload/t_cover_big/co2p23.jpg'}, 'genres': [{'name': 'Simulator'}], 'rating': 8.8, 'summary': 'Farming and life simulation.'},
+                    {'name': 'Bravely Default: Flying Fairy', 'cover': {'url': 'https://images.igdb.com/igdb/image/upload/t_cover_big/co7stu.jpg'}, 'genres': [{'name': 'Role-playing (RPG)'}], 'rating': 8.8, 'summary': 'Classic RPG returns.'},
+                    {'name': 'Mario Kart 8 Deluxe', 'cover': {'url': 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1wyy.jpg'}, 'genres': [{'name': 'Racing'}], 'rating': 8.8, 'summary': 'Race with Mario and friends.'},
+                ],
+                'genres': [
+                    {'name': 'Action'}, {'name': 'Adventure'}, {'name': 'RPG'}, {'name': 'Racing'}, {'name': 'Simulator'}, {'name': 'Arcade'}
+                ],
+                'recently_released': [
+                    {'name': 'Pick me! Visual Novel', 'date': '2025-06-15'},
+                    {'name': 'Bioysque', 'date': '2025-06-13'},
+                    {'name': 'The Giant Crab in Space', 'date': '2025-06-13'},
+                    {'name': 'Pokémon Odyssey', 'date': '2025-06-13'},
+                ],
+                'coming_soon': [
+                    {'name': 'BrightGunner', 'date': '2025-06-16'},
+                    {'name': 'Action Game Maker', 'date': '2025-06-16'},
+                    {'name': 'Mini Painter', 'date': '2025-06-16'},
+                ],
+                'most_anticipated_list': [
+                    {'name': 'Grand Theft Auto VI', 'date': '2025-06-26'},
+                    {'name': 'Vampire: The Masquerade - Bloodlines 2', 'date': '2025-10-01'},
+                    {'name': 'Ghost of Yotei', 'date': '2025-10-26'},
+                ]
+            }
         else:
             # === OTHER DASHBOARD TABS (tactical, lifecycle, evolution) ===
             selected_genres = []
@@ -653,6 +739,106 @@ def index():
                 'trending_insight': {'category': 'Unknown', 'value': 'No data', 'trend': 'stable'}
             }
 
+        # === TACTICAL SALES DASHBOARD DATA ===
+        tactical_sales_data = {}
+        sales_platforms = []
+        sales_regions = []
+        sales_game_titles = []
+        if active_tab == 'pixel-profits':
+            # Parse filters
+            sales_game_title = request.args.get('sales_game_title', '').strip() or None
+            sales_platforms = request.args.getlist('sales_platform') or None
+            sales_regions = request.args.getlist('sales_region') or None
+            sales_date_start = request.args.get('sales_date_start') or None
+            sales_date_end = request.args.get('sales_date_end') or None
+            sales_price_min = request.args.get('sales_price_min', type=float)
+            sales_price_max = request.args.get('sales_price_max', type=float)
+            if sales_price_min is not None and sales_price_min == 0:
+                sales_price_min = None
+            if sales_price_max is not None and sales_price_max == 0:
+                sales_price_max = None
+
+            # Get available game titles and platforms from mapping collections
+            game_mapping_data = db_handler.get_mapping_data('game_mapping')
+            print(f"[DEBUG] game_mapping_data: {game_mapping_data[:5]}")
+            sales_game_titles_list = [item['Name'] for item in game_mapping_data if 'Name' in item]
+            print(f"[DEBUG] sales_game_titles_list: {sales_game_titles_list[:5]}")
+            platform_mapping_data = db_handler.get_mapping_data('platform_mapping')
+            print(f"[DEBUG] platform_mapping_data: {platform_mapping_data[:5]}")
+            sales_platforms_list = [item['Name'] for item in platform_mapping_data if 'Name' in item]
+            print(f"[DEBUG] sales_platforms_list: {sales_platforms_list[:5]}")
+            # Regions fallback: use distinct from sales data
+            sales_regions_list = db_handler.get_sales_regions()
+            print(f"[DEBUG] sales_regions_list: {sales_regions_list[:5]}")
+
+            # Get KPI data
+            tactical_sales_data = db_handler.get_tactical_sales_kpis(
+                game_title=sales_game_title,
+                platforms=sales_platforms,
+                regions=sales_regions,
+                date_start=sales_date_start,
+                date_end=sales_date_end,
+                price_min=sales_price_min,
+                price_max=sales_price_max
+            )
+
+            # Get chart data (unchanged)
+            revenue_by_platform = db_handler.get_revenue_by_platform(
+                game_title=sales_game_title,
+                platforms=sales_platforms,
+                regions=sales_regions,
+                date_start=sales_date_start,
+                date_end=sales_date_end,
+                price_min=sales_price_min,
+                price_max=sales_price_max
+            )
+            top_selling_games = db_handler.get_top_selling_games_this_month(
+                game_title=sales_game_title,
+                platforms=sales_platforms,
+                regions=sales_regions,
+                date_start=sales_date_start,
+                date_end=sales_date_end,
+                price_min=sales_price_min,
+                price_max=sales_price_max
+            )
+            regional_sales = db_handler.get_regional_sales_split(
+                game_title=sales_game_title,
+                platforms=sales_platforms,
+                regions=sales_regions,
+                date_start=sales_date_start,
+                date_end=sales_date_end,
+                price_min=sales_price_min,
+                price_max=sales_price_max
+            )
+            units_by_genre = db_handler.get_units_sold_by_genre(
+                game_title=sales_game_title,
+                platforms=sales_platforms,
+                regions=sales_regions,
+                date_start=sales_date_start,
+                date_end=sales_date_end,
+                price_min=sales_price_min,
+                price_max=sales_price_max
+            )
+            launch_vs_lifetime = db_handler.get_launch_vs_lifetime_revenue(
+                game_title=sales_game_title,
+                platforms=sales_platforms,
+                regions=sales_regions,
+                date_start=sales_date_start,
+                date_end=sales_date_end,
+                price_min=sales_price_min,
+                price_max=sales_price_max
+            )
+
+            # Pass dropdown options from mapping collections
+            sales_platforms = sales_platforms_list
+            sales_regions = sales_regions_list
+            sales_game_titles = sales_game_titles_list
+        else:
+            tactical_sales_data = {}
+            sales_platforms = []
+            sales_regions = []
+            sales_game_titles = []
+
         # === ANALYTICAL LIFECYCLE DASHBOARD DATA ===
         if active_tab == 'analytical-lifecycle':
             # Parse lifecycle filters
@@ -792,6 +978,8 @@ def index():
         selected_genres = []
         selected_platforms = []
 
+    print(f"[DEBUG] game_trends_data: {game_trends_data}")
+
     # Render the template with all data
     return render_template('index.html', 
                          active_tab=active_tab,
@@ -841,7 +1029,13 @@ def index():
                          selected_genres=selected_genres,
                          selected_platforms=selected_platforms,
                          tactical_kpis=tactical_kpis,
-                         filter_options=filter_options)
+                         filter_options=filter_options,
+                         sales_dashboard_data=sales_dashboard_data,
+                         tactical_sales_data=tactical_sales_data,
+                         sales_platforms=sales_platforms,
+                         sales_regions=sales_regions,
+                         sales_game_titles=sales_game_titles,
+                         game_trends_data=game_trends_data)
 
 @app.route('/search')
 def search():
@@ -898,6 +1092,24 @@ def get_filter_options():
     except Exception as e:
         logger.error(f"Filter options error: {e}")
         return jsonify({'genres': [], 'platforms': []}), 500
+
+@app.route('/igdb_homepage_proxy')
+def igdb_homepage_proxy():
+    url = 'https://www.igdb.com/'
+    resp = requests.get(url, timeout=10)
+    soup = BeautifulSoup(resp.text, 'html.parser')
+    # Extract the main content div (IGDB uses <main> for main content)
+    main_content = soup.find('main')
+    if not main_content:
+        return Response('Could not fetch IGDB homepage content.', status=500)
+    # Remove all script and style tags for safety
+    for tag in main_content.find_all(['script', 'style']):
+        tag.decompose()
+    # Fix image srcs to be absolute
+    for img in main_content.find_all('img'):
+        if img.has_attr('src') and img['src'].startswith('/'):
+            img['src'] = 'https://www.igdb.com' + img['src']
+    return str(main_content)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5001) 

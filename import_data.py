@@ -21,18 +21,19 @@ db = get_mongo_database()
 # Updated files dictionary with enriched developer mapping
 files = {
     "filtered_enriched_video_game_dataset.csv": "enriched_games",
-    "developer_mapping.csv": "developer_mapping",  # This now contains enriched metadata
+    "developer_mapping.csv": "developer_mapping",  
     "directors_mapping.csv": "directors_mapping",
     "game_mapping.csv": "game_mapping",
     "game_type_mapping.csv": "game_type_mapping",
     "genre_mapping.csv": "genre_mapping",
     "genres_igdb_mapping.csv": "genres_igdb_mapping",
     "platform_mapping.csv": "platform_mapping",
-    "publisher_mapping.csv": "publisher_mapping"
+    "publisher_mapping.csv": "publisher_mapping",
+    "game_sales_data.csv": "game_sales"
 }
 
 # Updated paths to match current directory structure
-mapping_csv_directory = "./mappings"  # Relative path to mappings folder
+mapping_csv_directory = "./mappings"  #Relative path to mappings folder
 root_csv_directory = "."  # Current directory
 
 if db is not None:
@@ -44,7 +45,7 @@ if db is not None:
     for file, collection_name in files.items():
         print(f"📥 Importing {file} → {collection_name}...")
 
-        if file == "filtered_enriched_video_game_dataset.csv":
+        if file in ["filtered_enriched_video_game_dataset.csv", "game_sales_data.csv"]:
             csv_directory = root_csv_directory
         else:
             csv_directory = mapping_csv_directory

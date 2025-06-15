@@ -15,6 +15,7 @@ class MongoDBHandler:
             self.client = MongoClient(connection_string)
             self.db = self.client['Capstones']
             logger.info("Successfully connected to MongoDB")
+            print(f"[DEBUG] MongoDBHandler connected to database: {self.db.name}")
         except ConnectionFailure as e:
             logger.error(f"Failed to connect to MongoDB: {e}")
             raise
@@ -4250,4 +4251,403 @@ class MongoDBHandler:
             print(f"Error in get_filtered_developer_data: {e}")
             return []
 
+    def get_revenue_by_platform(self):
+        """
+        Aggregates total revenue by platform by joining game_sales and enriched_games.
+        Returns a list of dicts: [{'platform': ..., 'revenue': ...}, ...]
+        """
+        try:
+            pipeline = [
+                {
+                    '$lookup': {
+                        'from': 'enriched_games',
+                        'localField': 'game_name',
+                        'foreignField': 'Title',
+                        'as': 'game_info'
+                    }
+                },
+                {'$unwind': '$game_info'},
+                {'$group': {
+                    '_id': '$game_info.Platform',
+                    'revenue': {'$sum': '$revenue'}
+                }},
+                {'$sort': {'revenue': -1}}
+            ]
+            results = list(self.db.game_sales.aggregate(pipeline))
+            # Format for frontend
+            return [{'platform': r['_id'], 'revenue': r['revenue']} for r in results if r['_id']]
+        except Exception as e:
+            print(f"Error in get_revenue_by_platform: {e}")
+            return []
+
+    def get_top_selling_games_this_month(self, limit=10):
+        """
+        Returns the top selling games (by units_sold) for the current month.
+        """
+        from datetime import datetime
+
+    def get_regional_sales_split(self):
+        """
+        Returns total revenue by region (regional sales split).
+        """
+        try:
+            pipeline = [
+                {'$group': {
+                    '_id': '$region',
+                    'revenue': {'$sum': '$revenue'}
+                }},
+                {'$sort': {'revenue': -1}}
+            ]
+            results = list(self.db.game_sales.aggregate(pipeline))
+            return [{'region': r['_id'], 'revenue': r['revenue']} for r in results if r['_id']]
+        except Exception as e:
+            print(f"Error in get_regional_sales_split: {e}")
+            return []
+
+    def get_units_sold_by_genre(self, limit=10):
+        """
+        Returns units sold by genre, joining game_sales and enriched_games, sorted by units sold descending.
+        """
+        try:
+            pipeline = [
+                {
+                    '$lookup': {
+                        'from': 'enriched_games',
+                        'localField': 'game_name',
+                        'foreignField': 'Title',
+                        'as': 'game_info'
+                    }
+                },
+                {'$unwind': '$game_info'},
+                {
+                    '$addFields': {
+                        'GenresArray': {'$split': [{'$ifNull': ['$game_info.Genre', '']}, ', ']}
+                    }
+                },
+                {'$unwind': '$GenresArray'},
+                {'$match': {'GenresArray': {'$ne': '', '$exists': True, '$ne': None}}},
+                {'$group': {
+                    '_id': '$GenresArray',
+                    'units_sold': {'$sum': '$units_sold'}
+                }},
+                {'$sort': {'units_sold': -1}},
+                {'$limit': limit}
+            ]
+            results = list(self.db.game_sales.aggregate(pipeline))
+            return [{'genre': r['_id'], 'units_sold': r['units_sold']} for r in results if r['_id']]
+        except Exception as e:
+            print(f"Error in get_units_sold_by_genre: {e}")
+            return []
+
+    def get_launch_vs_lifetime_revenue(self, limit=10):
+        """
+        Returns launch (first 30 days) vs lifetime revenue for top games by total revenue.
+        """
+        try:
+            pipeline = [
+                {
+                    '$lookup': {
+                        'from': 'enriched_games',
+                        'localField': 'game_name',
+                        'foreignField': 'Title',
+                        'as': 'game_info'
+                    }
+                },
+                {'$unwind': '$game_info'},
+                {
+                    '$addFields': {
+                        'release_date': {
+                            '$dateFromString': {'dateString': '$game_info.Release_Date_IGDB'}
+                        },
+                        'sales_date_obj': {
+                            '$dateFromString': {'dateString': '$sales_date'}
+                        }
+                    }
+                },
+                {
+                    '$addFields': {
+                        'days_since_release': {
+                            '$divide': [
+                                {'$subtract': ['$sales_date_obj', '$release_date']},
+                                1000 * 60 * 60 * 24
+                            ]
+                        }
+                    }
+                },
+                {
+                    '$group': {
+                        '_id': '$game_name',
+                        'lifetime_revenue': {'$sum': '$revenue'},
+                        'launch_revenue': {
+                            '$sum': {
+                                '$cond': [
+                                    {'$lte': ['$days_since_release', 30]},
+                                    '$revenue',
+                                    0
+                                ]
+                            }
+                        }
+                    }
+                },
+                {'$sort': {'lifetime_revenue': -1}},
+                {'$limit': limit}
+            ]
+            results = list(self.db.game_sales.aggregate(pipeline))
+            return [
+                {
+                    'game_name': r['_id'],
+                    'lifetime_revenue': r['lifetime_revenue'],
+                    'launch_revenue': r['launch_revenue']
+                } for r in results if r['_id']
+            ]
+        except Exception as e:
+            print(f"Error in get_launch_vs_lifetime_revenue: {e}")
+            return []
+
+    def _build_sales_filter(self, game_title=None, platforms=None, regions=None, date_start=None, date_end=None, price_min=None, price_max=None):
+        match = {}
+        if game_title:
+            match['game_name'] = {'$regex': game_title, '$options': 'i'}
+        if platforms:
+            # Handle comma-separated platform values
+            platform_regex = '|'.join([platform.replace('(', '\\(').replace(')', '\\)') for platform in platforms])
+            match['platform'] = {'$regex': platform_regex, '$options': 'i'}
+        if regions:
+            match['region'] = {'$in': regions}
+        if date_start or date_end:
+            date_filter = {}
+            if date_start:
+                date_filter['$gte'] = date_start
+            if date_end:
+                date_filter['$lte'] = date_end
+            match['sales_date'] = date_filter
+        if price_min is not None or price_max is not None:
+            price_filter = {}
+            if price_min is not None:
+                price_filter['$gte'] = price_min
+            if price_max is not None:
+                price_filter['$lte'] = price_max
+            match['price_per_unit'] = price_filter
+        return match
+
+    def get_sales_platforms(self):
+        try:
+            # Get all unique platform values
+            results = self.db.game_sales.distinct('platform')
+            # Split comma-separated platforms and flatten the list
+            platforms = set()
+            for platform_str in results:
+                if platform_str:
+                    platforms.update(p.strip() for p in platform_str.split(','))
+            return sorted(list(platforms))
+        except Exception as e:
+            print(f"Error in get_sales_platforms: {e}")
+            return []
+
+    def get_revenue_by_platform(self, game_title=None, platforms=None, regions=None, date_start=None, date_end=None, price_min=None, price_max=None):
+        try:
+            match = self._build_sales_filter(game_title, platforms, regions, date_start, date_end, price_min, price_max)
+            pipeline = []
+            if match:
+                pipeline.append({'$match': match})
+            pipeline += [
+                {'$group': {
+                    '_id': '$platform',
+                    'revenue': {'$sum': '$revenue'}
+                }},
+                {'$sort': {'revenue': -1}}
+            ]
+            results = list(self.db.game_sales.aggregate(pipeline))
+            return [{'platform': r['_id'], 'revenue': r['revenue']} for r in results if r['_id']]
+        except Exception as e:
+            print(f"Error in get_revenue_by_platform: {e}")
+            return []
+
+    def get_top_selling_games_this_month(self, game_title=None, platforms=None, regions=None, date_start=None, date_end=None, price_min=None, price_max=None, limit=10):
+        from datetime import datetime
+        try:
+            match = self._build_sales_filter(game_title, platforms, regions, date_start, date_end, price_min, price_max)
+            now = datetime.now()
+            month_str = now.strftime('%Y-%m')
+            match['sales_date'] = {'$regex': f'^{month_str}'}
+            pipeline = [
+                {'$match': match},
+                {'$group': {
+                    '_id': '$game_id',
+                    'game_name': {'$first': '$game_name'},
+                    'units_sold': {'$sum': '$units_sold'},
+                    'revenue': {'$sum': '$revenue'}
+                }},
+                {'$sort': {'revenue': -1}},
+                {'$limit': limit}
+            ]
+            results = list(self.db.game_sales.aggregate(pipeline))
+            return [{'game_id': r['_id'], 'game_name': r['game_name'], 'units_sold': r['units_sold'], 'revenue': r['revenue']} for r in results if r['_id']]
+        except Exception as e:
+            print(f"Error in get_top_selling_games_this_month: {e}")
+            return []
+
+    def get_regional_sales_split(self, game_title=None, platforms=None, regions=None, date_start=None, date_end=None, price_min=None, price_max=None):
+        try:
+            match = self._build_sales_filter(game_title, platforms, regions, date_start, date_end, price_min, price_max)
+            pipeline = []
+            if match:
+                pipeline.append({'$match': match})
+            pipeline += [
+                {'$group': {
+                    '_id': '$region',
+                    'revenue': {'$sum': '$revenue'}
+                }},
+                {'$sort': {'revenue': -1}}
+            ]
+            results = list(self.db.game_sales.aggregate(pipeline))
+            return [{'region': r['_id'], 'revenue': r['revenue']} for r in results if r['_id']]
+        except Exception as e:
+            print(f"Error in get_regional_sales_split: {e}")
+            return []
+
+    def get_units_sold_by_genre(self, game_title=None, platforms=None, regions=None, date_start=None, date_end=None, price_min=None, price_max=None, limit=10):
+        try:
+            match = self._build_sales_filter(game_title, platforms, regions, date_start, date_end, price_min, price_max)
+            pipeline = []
+            if match:
+                pipeline.append({'$match': match})
+            pipeline += [
+                {'$group': {
+                    '_id': '$genre',
+                    'units_sold': {'$sum': '$units_sold'}
+                }},
+                {'$sort': {'units_sold': -1}},
+                {'$limit': limit}
+            ]
+            results = list(self.db.game_sales.aggregate(pipeline))
+            return [{'genre': r['_id'], 'units_sold': r['units_sold']} for r in results if r['_id']]
+        except Exception as e:
+            print(f"Error in get_units_sold_by_genre: {e}")
+            return []
+
+    def get_launch_vs_lifetime_revenue(self, game_title=None, platforms=None, regions=None, date_start=None, date_end=None, price_min=None, price_max=None, limit=10):
+        try:
+            match = self._build_sales_filter(game_title, platforms, regions, date_start, date_end, price_min, price_max)
+            pipeline = []
+            if match:
+                pipeline.append({'$match': match})
+            pipeline += [
+                {'$group': {
+                    '_id': '$game_id',
+                    'game_name': {'$first': '$game_name'},
+                    'release_date': {'$first': '$release_date'},
+                    'lifetime_revenue': {'$sum': '$revenue'},
+                    'launch_revenue': {
+                        '$sum': {
+                            '$cond': [
+                                {'$lte': [{'$subtract': [{'$toDate': '$sales_date'}, {'$toDate': '$release_date'}]}, 1000 * 60 * 60 * 24 * 30]},
+                                '$revenue',
+                                0
+                            ]
+                        }
+                    }
+                }},
+                {'$sort': {'lifetime_revenue': -1}},
+                {'$limit': limit}
+            ]
+            results = list(self.db.game_sales.aggregate(pipeline))
+            return [
+                {
+                    'game_id': r['_id'],
+                    'game_name': r['game_name'],
+                    'release_date': r['release_date'],
+                    'lifetime_revenue': r['lifetime_revenue'],
+                    'launch_revenue': r['launch_revenue']
+                } for r in results if r['_id']
+            ]
+        except Exception as e:
+            print(f"Error in get_launch_vs_lifetime_revenue: {e}")
+            return []
+
+    def get_tactical_sales_kpis(self, game_title=None, platforms=None, regions=None, date_start=None, date_end=None, price_min=None, price_max=None):
+        """Aggregate total revenue, total units sold, and average price per unit for tactical sales dashboard KPIs."""
+        try:
+            match = self._build_sales_filter(game_title, platforms, regions, date_start, date_end, price_min, price_max)
+            print(f"[DEBUG] Tactical Sales KPI Filter: {match}")
+            pipeline = []
+            if match:
+                pipeline.append({'$match': match})
+            pipeline += [
+                {'$group': {
+                    '_id': None,
+                    'total_revenue': {'$sum': '$revenue'},
+                    'total_units': {'$sum': '$units_sold'},
+                    'total_price': {'$sum': {'$multiply': ['$price_per_unit', '$units_sold']}},
+                    'units_for_price': {'$sum': '$units_sold'}
+                }}
+            ]
+            print(f"[DEBUG] Tactical Sales KPI Pipeline: {pipeline}")
+            result = list(self.db.game_sales.aggregate(pipeline))
+            print(f"[DEBUG] Tactical Sales KPI Aggregation Result: {result}")
+            if result:
+                total_revenue = result[0].get('total_revenue', 0)
+                total_units = result[0].get('total_units', 0)
+                total_price = result[0].get('total_price', 0)
+                units_for_price = result[0].get('units_for_price', 0)
+                avg_price = (total_price / units_for_price) if units_for_price else 0
+                return {
+                    'total_revenue': total_revenue,
+                    'total_units': total_units,
+                    'avg_price': avg_price
+                }
+            else:
+                return {'total_revenue': 0, 'total_units': 0, 'avg_price': 0}
+        except Exception as e:
+            print(f"Error in get_tactical_sales_kpis: {e}")
+            return {'total_revenue': 0, 'total_units': 0, 'avg_price': 0}
+
+    def get_sales_regions(self):
+        try:
+            results = self.db.game_sales.distinct('region')
+            return sorted([r for r in results if r])
+        except Exception as e:
+            print(f"Error in get_sales_regions: {e}")
+            return []
+
+    def get_tactical_sales_kpis(self, game_title=None, platforms=None, regions=None, date_start=None, date_end=None, price_min=None, price_max=None):
+        """Aggregate total revenue, total units sold, and average price per unit for tactical sales dashboard KPIs."""
+        try:
+            match = self._build_sales_filter(game_title, platforms, regions, date_start, date_end, price_min, price_max)
+            pipeline = []
+            if match:
+                pipeline.append({'$match': match})
+            pipeline += [
+                {'$group': {
+                    '_id': None,
+                    'total_revenue': {'$sum': '$revenue'},
+                    'total_units': {'$sum': '$units_sold'},
+                    'total_price': {'$sum': {'$multiply': ['$price_per_unit', '$units_sold']}},
+                    'units_for_price': {'$sum': '$units_sold'}
+                }}
+            ]
+            result = list(self.db.game_sales.aggregate(pipeline))
+            if result:
+                total_revenue = result[0].get('total_revenue', 0)
+                total_units = result[0].get('total_units', 0)
+                total_price = result[0].get('total_price', 0)
+                units_for_price = result[0].get('units_for_price', 0)
+                avg_price = (total_price / units_for_price) if units_for_price else 0
+                return {
+                    'total_revenue': total_revenue,
+                    'total_units': total_units,
+                    'avg_price': avg_price
+                }
+            else:
+                return {'total_revenue': 0, 'total_units': 0, 'avg_price': 0}
+        except Exception as e:
+            print(f"Error in get_tactical_sales_kpis: {e}")
+            return {'total_revenue': 0, 'total_units': 0, 'avg_price': 0}
+
+    def get_sales_game_titles(self):
+        try:
+            return sorted([g for g in self.db.game_sales.distinct('game_name') if g])
+        except Exception as e:
+            print(f"Error in get_sales_game_titles: {e}")
+            return []
 
