@@ -367,40 +367,6 @@
                             <button type="button" class="btn btn-secondary mt-2" id="reset-evolution-filters">Reset Filters</button>
                         </form>
                     </div>
-
-                    <!-- Pixel Profits Dashboard Filters -->
-                    <div id="pixel-profits-filters" style="display: none;">
-                        <h3>Pixel Profits Filters</h3>
-                        <form id="pixel-profits-filter-form" method="GET" action="/">
-                            <input type="hidden" name="tab" value="pixel-profits">
-                            <div class="mb-3">
-                                <label for="sales-game-title" class="form-label">Game Title</label>
-                                <select class="form-select" id="sales-game-title" name="sales_game_title">
-                                    <option value="">-- All Games --</option>
-                                    {% for title in sales_game_titles %}
-                                        <option value="{{ title }}" {% if request.args.get('sales_game_title') == title %}selected{% endif %}>{{ title }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="sales-platform-filter" class="form-label">Platform(s)</label>
-                                <select class="form-select" id="sales-platform-filter" name="sales_platform" multiple>
-                                    {% for platform in sales_platforms %}
-                                        <option value="{{ platform }}" {% if platform in request.args.getlist('sales_platform') %}selected{% endif %}>{{ platform }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="sales-region-filter" class="form-label">Region(s)</label>
-                                <select class="form-select" id="sales-region-filter" name="sales_region" multiple>
-                                    {% for region in sales_regions %}
-                                        <option value="{{ region }}" {% if region in request.args.getlist('sales_region') %}selected{% endif %}>{{ region }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Apply Filters</button>
-                        </form>
-                    </div>
                 </div>
         </div>
 
@@ -1057,7 +1023,7 @@
                                     <div class="card kpi-card shadow rounded-4 border-0 bg-dark text-white">
                                         <div class="card-body text-center">
                                             <h5 class="card-title text-info fw-bold">Total Revenue</h5>
-                                            <p class="display-3 fw-bold text-success">${{ tactical_sales_data.total_revenue | default(0) | round(0) | int }}</p>
+                                            <p class="display-3 fw-bold text-success" id="pixelProfitsTotalRevenue">${{ tactical_sales_data.total_revenue | default(0) | round(0) | int }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1065,7 +1031,7 @@
                                     <div class="card kpi-card shadow rounded-4 border-0 bg-dark text-white">
                                         <div class="card-body text-center">
                                             <h5 class="card-title text-info fw-bold">Total Units Sold</h5>
-                                            <p class="display-3 fw-bold text-warning">{{ tactical_sales_data.total_units | default(0) | int }}</p>
+                                            <p class="display-3 fw-bold text-warning" id="pixelProfitsTotalUnits">{{ tactical_sales_data.total_units | default(0) | int }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1073,7 +1039,7 @@
                                     <div class="card kpi-card shadow rounded-4 border-0 bg-dark text-white">
                                         <div class="card-body text-center">
                                             <h5 class="card-title text-info fw-bold">Average Price per Unit</h5>
-                                            <p class="display-3 fw-bold text-primary">${{ tactical_sales_data.avg_price | default(0) | round(2) }}</p>
+                                            <p class="display-3 fw-bold text-primary" id="pixelProfitsAvgPrice">${{ tactical_sales_data.avg_price | default(0) | round(2) }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1118,7 +1084,7 @@
                                         <div class="card-body">
                                             <h5 class="card-title text-info fw-bold">Top Platforms by Units Sold</h5>
                                             <div class="chart-container" style="min-height:260px;">
-                                                <canvas id="topPlatformsByUnitsSoldChart"></canvas>
+                                                <canvas id="topPlatformsByUnitsChart"></canvas>
                                             </div>
                                         </div>
                                     </div>
@@ -1134,7 +1100,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- Price & Region Analysis -->
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <div class="card shadow rounded-4 border-0">
@@ -1157,14 +1122,13 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- Profitability Insight -->
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <div class="card shadow rounded-4 border-0">
                                         <div class="card-body">
                                             <h5 class="card-title text-info fw-bold">Revenue vs Units Sold Correlation</h5>
                                             <div class="chart-container" style="min-height:260px;">
-                                                <canvas id="revenueVsUnitsSoldChart"></canvas>
+                                                <canvas id="revenueVsUnitsChart"></canvas>
                                             </div>
                                         </div>
                                     </div>
@@ -1180,7 +1144,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- Platform Strategy & Release Effectiveness -->
                             <div class="row mb-4">
                                 <div class="col-md-6">
                                     <div class="card shadow rounded-4 border-0">
@@ -1253,6 +1216,7 @@
                 tacticalMarimekkoData: {{ tactical_marimekko_data | safe_tojson | safe }},
                 tacticalDeveloperProfiles: {{ tactical_developer_profiles | safe_tojson | safe }},
                 tacticalMatrixData: {{ tactical_matrix_data | safe_tojson | safe }},
+                tacticalSalesData: {{ tactical_sales_data | safe_tojson | safe }},
                 
                 // Lifecycle dashboard data
                 lifecycleSurvivalData: {{ lifecycle_survival_data | safe_tojson | safe }},

@@ -282,11 +282,50 @@ def index():
             ]:
                 sales_dashboard_data.setdefault(key, [] if key != 'message' else '')
 
-            # After all sales data loading logic, inject demo data if empty (for Pixel Profits tab)
+            # === FORCE DEMO DATA FOR PIXEL PROFITS ===
             tactical_sales_data = {
                 'total_revenue': 1234567,
                 'total_units': 54321,
-                'avg_price': 59.99
+                'avg_price': 59.99,
+                'revenue_over_time': [10000, 20000, 30000, 25000, 40000, 35000, 50000, 60000, 70000, 80000, 90000, 100000],
+                'units_sold_by_month': [500, 700, 800, 600, 900, 1000, 1200, 1300, 1400, 1500, 1600, 1700],
+                'top_games_by_revenue': [
+                    {'name': 'Super Mario Odyssey', 'revenue': 500000},
+                    {'name': 'Halo Infinite', 'revenue': 400000},
+                    {'name': 'The Legend of Zelda', 'revenue': 350000}
+                ],
+                'top_platforms_by_units': [
+                    {'platform': 'PlayStation 5', 'units': 20000},
+                    {'platform': 'Xbox Series X', 'units': 18000},
+                    {'platform': 'Nintendo Switch', 'units': 16000}
+                ],
+                'best_selling_genres': [
+                    {'genre': 'Action', 'units': 25000},
+                    {'genre': 'Adventure', 'units': 20000},
+                    {'genre': 'RPG', 'units': 15000}
+                ],
+                'price_sensitivity_by_region': [
+                    {'region': 'North America', 'avg_price': 59.99},
+                    {'region': 'Europe', 'avg_price': 54.99},
+                    {'region': 'Asia', 'avg_price': 49.99}
+                ],
+                'revenue_by_region': [
+                    {'region': 'North America', 'revenue': 600000},
+                    {'region': 'Europe', 'revenue': 400000},
+                    {'region': 'Asia', 'revenue': 200000}
+                ],
+                'revenue_vs_units': [
+                    {'revenue': 10000, 'units': 200},
+                    {'revenue': 20000, 'units': 400},
+                    {'revenue': 30000, 'units': 600}
+                ],
+                'platform_genre_matrix': [
+                    {'platform': 'PlayStation 5', 'genre': 'Action', 'units': 8000},
+                    {'platform': 'Xbox Series X', 'genre': 'Adventure', 'units': 7000},
+                    {'platform': 'Nintendo Switch', 'genre': 'RPG', 'units': 6000}
+                ],
+                'platform_sales_share': [40, 30, 20, 10],
+                'sales_velocity': [100, 200, 300, 400, 500, 600]
             }
             sales_platforms = ['PlayStation 5', 'Xbox Series X', 'Nintendo Switch', 'PC']
             sales_regions = ['North America', 'Europe', 'Asia', 'Rest of World']

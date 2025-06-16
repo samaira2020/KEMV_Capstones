@@ -25,6 +25,10 @@ function initializeCharts() {
         console.log('Initializing evolution charts...');
         initializeEvolutionCharts();
         
+        // Pixel Profits Charts
+        console.log('Initializing Pixel Profits charts...');
+        initializePixelProfitsCharts();
+        
         console.log('All charts initialized successfully');
     } catch (error) {
         console.error('Error initializing charts:', error);
@@ -1079,4 +1083,257 @@ function initializeOperationalCharts() {
             }
         });
     }
+}
+
+function initializePixelProfitsCharts() {
+    // ALWAYS use demo data for Pixel Profits
+    const data = {
+        total_revenue: 1234567,
+        total_units: 54321,
+        avg_price: 59.99,
+        revenue_over_time: [10000, 20000, 30000, 25000, 40000, 35000, 50000, 60000, 70000, 80000, 90000, 100000],
+        units_sold_by_month: [500, 700, 800, 600, 900, 1000, 1200, 1300, 1400, 1500, 1600, 1700],
+        top_games_by_revenue: [
+            { name: 'Super Mario Odyssey', revenue: 500000 },
+            { name: 'Halo Infinite', revenue: 400000 },
+            { name: 'The Legend of Zelda', revenue: 350000 }
+        ],
+        top_platforms_by_units: [
+            { platform: 'PlayStation 5', units: 20000 },
+            { platform: 'Xbox Series X', units: 18000 },
+            { platform: 'Nintendo Switch', units: 16000 }
+        ],
+        best_selling_genres: [
+            { genre: 'Action', units: 25000 },
+            { genre: 'Adventure', units: 20000 },
+            { genre: 'RPG', units: 15000 }
+        ],
+        price_sensitivity_by_region: [
+            { region: 'North America', avg_price: 59.99 },
+            { region: 'Europe', avg_price: 54.99 },
+            { region: 'Asia', avg_price: 49.99 }
+        ],
+        revenue_by_region: [
+            { region: 'North America', revenue: 600000 },
+            { region: 'Europe', revenue: 400000 },
+            { region: 'Asia', revenue: 200000 }
+        ],
+        revenue_vs_units: [
+            { revenue: 10000, units: 200 },
+            { revenue: 20000, units: 400 },
+            { revenue: 30000, units: 600 }
+        ],
+        platform_genre_matrix: [
+            { platform: 'PlayStation 5', genre: 'Action', units: 8000 },
+            { platform: 'Xbox Series X', genre: 'Adventure', units: 7000 },
+            { platform: 'Nintendo Switch', genre: 'RPG', units: 6000 }
+        ],
+        platform_sales_share: [40, 30, 20, 10],
+        sales_velocity: [100, 200, 300, 400, 500, 600]
+    };
+    // KPIs
+    document.getElementById('pixelProfitsTotalRevenue').innerText = `$${data.total_revenue.toLocaleString()}`;
+    document.getElementById('pixelProfitsTotalUnits').innerText = data.total_units.toLocaleString();
+    document.getElementById('pixelProfitsAvgPrice').innerText = `$${data.avg_price.toFixed(2)}`;
+
+    // Revenue Over Time
+    const revenueCtx = document.getElementById('revenueOverTimeChart').getContext('2d');
+    new Chart(revenueCtx, {
+        type: 'line',
+        data: {
+            labels: [
+                'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+            ],
+            datasets: [{
+                label: 'Revenue',
+                data: data.revenue_over_time,
+                borderColor: '#50fa7b',
+                backgroundColor: 'rgba(80,250,123,0.2)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                title: { display: true, text: 'Revenue Over Time', color: '#50fa7b' }
+            },
+            scales: {
+                x: { ticks: { color: '#f8f8f2' } },
+                y: { beginAtZero: true, ticks: { color: '#f8f8f2' } }
+            }
+        }
+    });
+    // Units Sold by Month
+    const unitsCtx = document.getElementById('unitsSoldByMonthChart').getContext('2d');
+    new Chart(unitsCtx, {
+        type: 'bar',
+        data: {
+            labels: [
+                'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+            ],
+            datasets: [{
+                label: 'Units Sold',
+                data: data.units_sold_by_month,
+                backgroundColor: '#8be9fd',
+                borderColor: '#50fa7b',
+                borderWidth: 2,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                title: { display: true, text: 'Units Sold by Month', color: '#8be9fd' }
+            },
+            scales: {
+                x: { ticks: { color: '#f8f8f2' } },
+                y: { beginAtZero: true, ticks: { color: '#f8f8f2' } }
+            }
+        }
+    });
+    // Top Games by Revenue
+    const topGamesCtx = document.getElementById('topGamesByRevenueChart').getContext('2d');
+    new Chart(topGamesCtx, {
+        type: 'bar',
+        data: {
+            labels: data.top_games_by_revenue.map(g => g.name),
+            datasets: [{
+                label: 'Revenue',
+                data: data.top_games_by_revenue.map(g => g.revenue),
+                backgroundColor: '#ffb86c',
+                borderColor: '#ffb86c',
+                borderWidth: 2
+            }]
+        },
+        options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {display: false}, title: {display: true, text: 'Top 10 Games by Revenue', color: '#50fa7b'}},scales: {x: {ticks: {color: '#f8f8f2'}},y: {beginAtZero: true, ticks: {color: '#f8f8f2'}}}}
+    });
+    // Top Platforms by Units Sold
+    const topPlatformsCtx = document.getElementById('topPlatformsByUnitsChart').getContext('2d');
+    new Chart(topPlatformsCtx, {
+        type: 'bar',
+        data: {
+            labels: data.top_platforms_by_units.map(p => p.platform),
+            datasets: [{
+                label: 'Units Sold',
+                data: data.top_platforms_by_units.map(p => p.units),
+                backgroundColor: '#f1fa8c',
+                borderColor: '#f1fa8c',
+                borderWidth: 2
+            }]
+        },
+        options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {display: false}, title: {display: true, text: 'Top Platforms by Units Sold', color: '#f1fa8c'}},scales: {x: {ticks: {color: '#f8f8f2'}},y: {beginAtZero: true, ticks: {color: '#f8f8f2'}}}}
+    });
+    // Best-Selling Genres
+    const genresCtx = document.getElementById('bestSellingGenresChart').getContext('2d');
+    new Chart(genresCtx, {
+        type: 'pie',
+        data: {
+            labels: data.best_selling_genres.map(g => g.genre),
+            datasets: [{
+                label: 'Units Sold',
+                data: data.best_selling_genres.map(g => g.units),
+                backgroundColor: ['#50fa7b', '#ff79c6', '#8be9fd']
+            }]
+        },
+        options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {labels: {color: '#f8f8f2'}}, title: {display: true, text: 'Best-Selling Genres', color: '#ff79c6'}}}
+    });
+    // Price Sensitivity by Region
+    const priceRegionCtx = document.getElementById('priceSensitivityByRegionChart').getContext('2d');
+    new Chart(priceRegionCtx, {
+        type: 'bar',
+        data: {
+            labels: data.price_sensitivity_by_region.map(r => r.region),
+            datasets: [{
+                label: 'Avg Price',
+                data: data.price_sensitivity_by_region.map(r => r.avg_price),
+                backgroundColor: '#bd93f9',
+                borderColor: '#bd93f9',
+                borderWidth: 2
+            }]
+        },
+        options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {display: false}, title: {display: true, text: 'Price Sensitivity by Region', color: '#bd93f9'}},scales: {x: {ticks: {color: '#f8f8f2'}},y: {beginAtZero: true, ticks: {color: '#f8f8f2'}}}}
+    });
+    // Revenue by Region
+    const revenueRegionCtx = document.getElementById('revenueByRegionChart').getContext('2d');
+    new Chart(revenueRegionCtx, {
+        type: 'bar',
+        data: {
+            labels: data.revenue_by_region.map(r => r.region),
+            datasets: [{
+                label: 'Revenue',
+                data: data.revenue_by_region.map(r => r.revenue),
+                backgroundColor: '#ff5555',
+                borderColor: '#ff5555',
+                borderWidth: 2
+            }]
+        },
+        options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {display: false}, title: {display: true, text: 'Revenue by Region', color: '#ff5555'}},scales: {x: {ticks: {color: '#f8f8f2'}},y: {beginAtZero: true, ticks: {color: '#f8f8f2'}}}}
+    });
+    // Revenue vs Units Sold Correlation
+    const revUnitsCtx = document.getElementById('revenueVsUnitsChart').getContext('2d');
+    new Chart(revUnitsCtx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Revenue vs Units',
+                data: data.revenue_vs_units,
+                backgroundColor: '#8be9fd'
+            }]
+        },
+        options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {display: false}, title: {display: true, text: 'Revenue vs Units Sold Correlation', color: '#8be9fd'}},scales: {x: {type: 'linear', position: 'bottom', title: {display: true, text: 'Revenue', color: '#8be9fd'}, ticks: {color: '#f8f8f2'}},y: {title: {display: true, text: 'Units Sold', color: '#8be9fd'}, ticks: {color: '#f8f8f2'}}}}
+    });
+    // Platform x Genre Matrix
+    const matrixCtx = document.getElementById('platformGenreMatrixChart').getContext('2d');
+    new Chart(matrixCtx, {
+        type: 'bar',
+        data: {
+            labels: data.platform_genre_matrix.map(m => `${m.platform} - ${m.genre}`),
+            datasets: [{
+                label: 'Units',
+                data: data.platform_genre_matrix.map(m => m.units),
+                backgroundColor: '#ffb86c',
+                borderColor: '#ffb86c',
+                borderWidth: 2
+            }]
+        },
+        options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {display: false}, title: {display: true, text: 'Platform x Genre Matrix', color: '#ffb86c'}},scales: {x: {ticks: {color: '#f8f8f2', font: {size: 9}},},y: {beginAtZero: true, ticks: {color: '#f8f8f2'}}}}
+    });
+    // Platform Sales Share
+    const shareCtx = document.getElementById('platformSalesShareChart').getContext('2d');
+    new Chart(shareCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['PlayStation 5', 'Xbox Series X', 'Nintendo Switch', 'PC'],
+            datasets: [{
+                label: 'Sales Share',
+                data: data.platform_sales_share,
+                backgroundColor: ['#50fa7b', '#ff79c6', '#8be9fd', '#f1fa8c']
+            }]
+        },
+        options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {labels: {color: '#f8f8f2'}}, title: {display: true, text: 'Platform Sales Share', color: '#50fa7b'}}}
+    });
+    // Sales Velocity Post-Release
+    const velocityCtx = document.getElementById('salesVelocityChart').getContext('2d');
+    new Chart(velocityCtx, {
+        type: 'line',
+        data: {
+            labels: data.sales_velocity.map((_, i) => `Week ${i+1}`),
+            datasets: [{
+                label: 'Sales Velocity',
+                data: data.sales_velocity,
+                borderColor: '#ff79c6',
+                backgroundColor: 'rgba(255,121,198,0.2)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {display: false}, title: {display: true, text: 'Sales Velocity Post-Release', color: '#ff79c6'}},scales: {x: {ticks: {color: '#f8f8f2'}},y: {beginAtZero: true, ticks: {color: '#f8f8f2'}}}}
+    });
 } 

@@ -158,6 +158,9 @@ function initializeData(dataFromServer) {
             console.error('initializeCharts function not found! Available functions:', Object.keys(window).filter(key => typeof window[key] === 'function'));
         }
         
+        // After all assignments, add:
+        window.pixelProfitsData = dataFromServer.tacticalSalesData;
+        
     } catch (error) {
         console.error('Error during data initialization:', error);
         console.error('Error stack:', error.stack);
